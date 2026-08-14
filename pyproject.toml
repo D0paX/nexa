@@ -1,0 +1,41 @@
+[project]
+name = "nexa"
+version = "0.1.0"
+description = "NEXA - Local network visibility and security observation"
+readme = "docs/README.md"
+requires-python = ">=3.12"
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "pip-audit>=2.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "W", "I"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]

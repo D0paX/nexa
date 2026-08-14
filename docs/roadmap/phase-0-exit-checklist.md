@@ -1,0 +1,21 @@
+# Phase 0 Exit Checklist
+
+- [ ] Repository root is confirmed as the project root.
+- [ ] Python 3.12 project environment is defined.
+- [ ] Master roadmap is approved and treated as locked.
+- [ ] System architecture is approved.
+- [ ] Security boundaries are approved.
+- [ ] Threat model is established.
+- [ ] Trust model direction is established.
+- [ ] Cryptography policy is established.
+- [ ] Testing strategy is established.
+- [ ] Definition of done is established.
+- [ ] AI-agent governance is established.
+- [ ] ADR workflow is established.
+- [ ] Change-management workflow is established.
+- [ ] Configuration and secret-handling rules are established.
+- [ ] Release and versioning policy is established.
+- [ ] UI design rules are established.
+- [ ] Documentation manifest is reviewed and complete.
+- [ ] Initial CI/tooling plan is approved.
+- [ ] Human review confirms readiness for Phase 1.
