@@ -32,4 +32,12 @@ Use:
 
 ## Index
 
-The current ADR index is maintained in this directory.
+The current ADR index is maintained in this directory:
+
+- [ADR-001: Project Runtime](ADR-001-project-runtime.md)
+- [ADR-002: Service Boundaries](ADR-002-service-boundaries.md)
+- [ADR-003: Device Identity](ADR-003-device-identity.md)
+- [ADR-004: Cryptographic Trust Model](ADR-004-cryptographic-trust-model.md)
+- [ADR-005: Event Architecture](ADR-005-event-architecture.md)
+- [ADR-006: Notification Architecture](ADR-006-notification-architecture.md)
+- [ADR-007: Linux Network Discovery Mechanism](ADR-007-linux-network-discovery-mechanism.md)
