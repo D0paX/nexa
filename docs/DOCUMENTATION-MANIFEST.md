@@ -19,6 +19,7 @@ This manifest is the Phase 0 baseline. It intentionally lists the authoritative 
 - `docs/adr/ADR-004-cryptographic-trust-model.md`
 - `docs/adr/ADR-005-event-architecture.md`
 - `docs/adr/ADR-006-notification-architecture.md`
+- `docs/adr/ADR-007-linux-network-discovery-mechanism.md`
 - `docs/adr/README.md`
 - `docs/architecture/component-architecture.md`
 - `docs/architecture/data-flow.md`
@@ -51,6 +52,7 @@ This manifest is the Phase 0 baseline. It intentionally lists the authoritative 
 - `docs/release/release-process.md`
 - `docs/release/versioning.md`
 - `docs/roadmap/master-roadmap.md`
+- `docs/roadmap/phase-1-network-visibility.md`
 - `docs/roadmap/phase-gates.md`
 - `docs/roadmap/roadmap-change-policy.md`
 - `docs/security/credential-lifecycle.md`
