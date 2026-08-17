@@ -10,13 +10,17 @@ Build reliable local-network interface detection, subnet discovery, ARP-based de
 
 The complete Phase 1 structure is as follows:
 
-* **1A Environment & Network Interface Discovery** (Currently active)
-* **1B Subnet & Gateway Discovery** (Planned)
+* **1A Environment & Network Interface Discovery** (Done)
+* **1B Network Scope & Reachability** (Currently active)
 * **1C ARP Observation Engine** (Planned)
 * **1D Device Observation Model** (Planned)
 * **1E Device Lifecycle & Persistence** (Planned)
 * **1F Reliability & Testing** (Planned)
 * **1G Phase 1 Exit / Verification** (Planned)
+
+### Phase 1A / 1B Boundary
+* **Phase 1A** owns operating-system interface discovery, `iproute2` interaction, OS-specific parsing, and network interface selection to produce a `NetworkContext`.
+* **Phase 1B** consumes the `NetworkContext` and owns the canonical `NetworkScope` representation, enforcing network-size safety constraints, bounds calculation, and scope normalization without any OS interactions.
 
 ## Non-goals
 
