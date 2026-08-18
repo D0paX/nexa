@@ -22,6 +22,7 @@ This manifest is the Phase 0 baseline. It intentionally lists the authoritative 
 - `docs/adr/ADR-007-linux-network-discovery-mechanism.md`
 - `docs/adr/ADR-008-network-scope-model.md`
 - `docs/adr/ADR-009-arp-observation-engine.md`
+- `docs/adr/ADR-010-device-correlation-model.md`
 - `docs/adr/README.md`
 - `docs/architecture/component-architecture.md`
 - `docs/architecture/data-flow.md`
