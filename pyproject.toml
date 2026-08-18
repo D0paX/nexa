@@ -5,6 +5,7 @@ description = "NEXA - Local network visibility and security observation"
 readme = "docs/README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "scapy>=2.5.0",
 ]
 
 [project.optional-dependencies]

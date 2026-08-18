@@ -42,3 +42,4 @@ The current ADR index is maintained in this directory:
 - [ADR-006: Notification Architecture](ADR-006-notification-architecture.md)
 - [ADR-007: Linux Network Discovery Mechanism](ADR-007-linux-network-discovery-mechanism.md)
 - [ADR-008: Network Scope Model and Safety Bounds](ADR-008-network-scope-model.md)
+- [ADR-009: ARP Observation Engine](ADR-009-arp-observation-engine.md)
