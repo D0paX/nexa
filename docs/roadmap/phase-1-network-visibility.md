@@ -11,8 +11,8 @@ Build reliable local-network interface detection, subnet discovery, ARP-based de
 The complete Phase 1 structure is as follows:
 
 * **1A Environment & Network Interface Discovery** (Done)
-* **1B Network Scope & Reachability** (Currently active)
-* **1C ARP Observation Engine** (Planned)
+* **1B Network Scope & Reachability** (Done)
+* **1C ARP Observation Engine** (Currently active)
 * **1D Device Observation Model** (Planned)
 * **1E Device Lifecycle & Persistence** (Planned)
 * **1F Reliability & Testing** (Planned)
@@ -21,6 +21,16 @@ The complete Phase 1 structure is as follows:
 ### Phase 1A / 1B Boundary
 * **Phase 1A** owns operating-system interface discovery, `iproute2` interaction, OS-specific parsing, and network interface selection to produce a `NetworkContext`.
 * **Phase 1B** consumes the `NetworkContext` and owns the canonical `NetworkScope` representation, enforcing network-size safety constraints, bounds calculation, and scope normalization without any OS interactions.
+
+### Phase 1B / 1C Boundary
+* **Phase 1B** owns the canonical `NetworkScope` representation, enforcing network-size safety constraints, bounds calculation, and scope normalization without any OS interactions.
+* **Phase 1C** consumes the `NetworkScope` and owns read-only network observation using bounded ARP discovery requests, target generation, rate-limited execution using Scapy, and normalizing responses into `DeviceObservation` domain models.
+
+### Phase 1C Deliverables
+* **Scapy infrastructure adapter:** A secure, privilege-aware abstraction around the Scapy library.
+* **Target Generator:** Deterministic iteration over safe `NetworkScope` bounds.
+* **ARP Observer Engine:** Batching, rate-limiting, and timing out ARP `who-has` requests over the local interface.
+* **DeviceObservation model:** A pure Python domain model representing an individual MAC/IP discovery event.
 
 ## Non-goals
 
@@ -48,7 +58,7 @@ All network observation must be passive. Subprocess executions targeting Linux `
 * `NetworkContext` domain model
 * Linux-specific `iproute2` network discovery adapter
 * Subnet boundary calculation logic
-* Passive ARP observation engine
+* Read-only bounded ARP observation engine
 * Device presence tracking and history
 
 ## Test strategy
