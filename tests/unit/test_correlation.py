@@ -291,3 +291,36 @@ def test_security_invariant_no_trust_state() -> None:
     assert not hasattr(DeviceRecord, "authenticated")
     assert not hasattr(DeviceRecord, "enrolled")
     assert not hasattr(DeviceRecord, "cryptographically_verified")
+
+
+def test_initial_records_hydration(mock_scope: NetworkScope) -> None:
+    """Verify that correlator state is correctly initialized from prior records."""
+    known_id = uuid.uuid4()
+    t1 = datetime(2026, 8, 18, 12, 0, 0, tzinfo=timezone.utc)
+
+    # Create a persisted Phase 1D-compatible DeviceRecord
+    record = DeviceRecord(
+        device_id=known_id,
+        network_scope=mock_scope,
+        mac_addresses=frozenset(["aa:bb:cc:dd:ee:ff"]),
+        ipv4_addresses=frozenset([IPv4Address("192.168.1.42")]),
+        first_observed_at=t1,
+        last_observed_at=t1,
+        presence_state=PresenceState.UNSEEN,
+        conflicts=frozenset(),
+    )
+
+    # Hydrate correlator (reconstructing the in-memory dictionary natively)
+    correlator = ObservationCorrelator(initial_records=[record])
+
+    # Ensure the exact same UUID and scope-bound state survives
+    scan_ctx = ScanContext(uuid.uuid4(), t1, mock_scope)
+    # Re-correlating with an empty list should simply return the hydrated record
+    records = correlator.correlate(scan_ctx, [])
+
+    assert len(records) == 1
+    hydrated_record = records[0]
+    assert hydrated_record.device_id == known_id
+    assert hydrated_record.network_scope == mock_scope
+    assert hydrated_record.presence_state == PresenceState.UNSEEN
+    assert hydrated_record.mac_addresses == frozenset(["aa:bb:cc:dd:ee:ff"])
