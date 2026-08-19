@@ -12,8 +12,8 @@ The complete Phase 1 structure is as follows:
 
 * **1A Environment & Network Interface Discovery** (Done)
 * **1B Network Scope & Reachability** (Done)
-* **1C ARP Observation Engine** (Currently active)
-* **1D Device Observation Model** (Planned)
+* **1C ARP Observation Engine** (Done)
+* **1D Device Observation Model** (Currently active)
 * **1E Device Lifecycle & Persistence** (Planned)
 * **1F Reliability & Testing** (Planned)
 * **1G Phase 1 Exit / Verification** (Planned)
@@ -25,6 +25,10 @@ The complete Phase 1 structure is as follows:
 ### Phase 1B / 1C Boundary
 * **Phase 1B** owns the canonical `NetworkScope` representation, enforcing network-size safety constraints, bounds calculation, and scope normalization without any OS interactions.
 * **Phase 1C** consumes the `NetworkScope` and owns read-only network observation using bounded ARP discovery requests, target generation, rate-limited execution using Scapy, and normalizing responses into `DeviceObservation` domain models.
+
+### Phase 1C / 1D Boundary
+* **Phase 1C** produces ephemeral, raw `DeviceObservation` events.
+* **Phase 1D** consumes `DeviceObservation`s and a `ScanContext` to perform strictly in-memory, scope-bound correlation. It produces `DeviceRecord`s using an opaque identifier, models observation conflicts, and maintains current presence state. It explicitly avoids cryptographic identity or database persistence.
 
 ### Phase 1C Deliverables
 * **Scapy infrastructure adapter:** A secure, privilege-aware abstraction around the Scapy library.
