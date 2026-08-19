@@ -13,8 +13,8 @@ The complete Phase 1 structure is as follows:
 * **1A Environment & Network Interface Discovery** (Done)
 * **1B Network Scope & Reachability** (Done)
 * **1C ARP Observation Engine** (Done)
-* **1D Device Observation Model** (Currently active)
-* **1E Device Lifecycle & Persistence** (Planned)
+* **1D Device Observation Model** (Done)
+* **1E Device Lifecycle & Persistence** (Currently active)
 * **1F Reliability & Testing** (Planned)
 * **1G Phase 1 Exit / Verification** (Planned)
 
@@ -29,6 +29,23 @@ The complete Phase 1 structure is as follows:
 ### Phase 1C / 1D Boundary
 * **Phase 1C** produces ephemeral, raw `DeviceObservation` events.
 * **Phase 1D** consumes `DeviceObservation`s and a `ScanContext` to perform strictly in-memory, scope-bound correlation. It produces `DeviceRecord`s using an opaque identifier, models observation conflicts, and maintains current presence state. It explicitly avoids cryptographic identity or database persistence.
+
+### Phase 1D / 1E Boundary
+* **Phase 1D** produces correlated, ephemeral `DeviceRecord`s with opaque IDs.
+* **Phase 1E** consumes `DeviceRecord`s and persists them dually to a repository, managing restart continuity, retention, and lifecycle state changes without embedding identity trust.
+
+### Phase 1E Deliverables
+* **DeviceRepository interface:** Abstract persistence boundary explicitly hydrated into domain/application layer without exposing private dictionary structures.
+* **SQLite Persistence Adapter:** Parameterized execution, WAL connection handling, and schema initialization using `PRAGMA user_version`.
+* **Lifecycle Engine:** Translates correlation output into strongly-typed `LifecycleEvent`s using a deterministic SHA-256 canonical CIDR scope key.
+* **Degraded Persistence Model:** Transactional fallback that maintains an ordered Pending Persistence Queue of complete scan transaction envelopes, ensuring strict causal ordering and bounded memory usage.
+* **Atomic Pruning and Retention:** Enforces a 30-day retention cutoff for `UNSEEN` devices and lifecycle events, executed atomically via foreign-key cascading deletes.
+* **Deterministic Configuration:** Relies on `NEXA_DATA_DIR` (e.g. `~/.nexa/data/nexa.db`) rather than hardcoded `.data` paths.
+
+### Phase 1D Deliverables
+* **ObservationCorrelator:** Deterministic engine resolving IP collisions and identity presence without database states.
+* **DeviceRecord model:** Opaque-ID driven record of observed MACs and IPs, lacking cryptographic trust.
+* **ObservationConflict model:** Strongly typed conflict state mapping.
 
 ### Phase 1C Deliverables
 * **Scapy infrastructure adapter:** A secure, privilege-aware abstraction around the Scapy library.

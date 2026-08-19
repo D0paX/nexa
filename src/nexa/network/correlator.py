@@ -27,17 +27,25 @@ class ObservationCorrelator:
     pruning semantics are deferred to Phase 1E.
     """
 
-    def __init__(self, id_factory: Callable[[], uuid.UUID] | None = None) -> None:
+    def __init__(
+        self,
+        id_factory: Callable[[], uuid.UUID] | None = None,
+        initial_records: List[DeviceRecord] | None = None,
+    ) -> None:
         """
         Initialize the correlator.
 
         Args:
             id_factory: Injectable factory for generating opaque device IDs.
                         Defaults to uuid.uuid4.
+            initial_records: Optional list of records to hydrate state from persistence.
         """
         self._id_factory = id_factory or uuid.uuid4
         # State: device_id -> DeviceRecord
         self._records: Dict[uuid.UUID, DeviceRecord] = {}
+        if initial_records:
+            for record in initial_records:
+                self._records[record.device_id] = record
 
     def correlate(
         self, context: ScanContext, observations: List[DeviceObservation]
