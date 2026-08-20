@@ -14,8 +14,8 @@ The complete Phase 1 structure is as follows:
 * **1B Network Scope & Reachability** (Done)
 * **1C ARP Observation Engine** (Done)
 * **1D Device Observation Model** (Done)
-* **1E Device Lifecycle & Persistence** (Currently active)
-* **1F Reliability & Testing** (Planned)
+* **1E Device Lifecycle & Persistence** (Done)
+* **1F Reliability & Testing** (Done)
 * **1G Phase 1 Exit / Verification** (Planned)
 
 ### Phase 1A / 1B Boundary

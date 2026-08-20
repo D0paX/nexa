@@ -64,6 +64,13 @@ def mock_subprocess_run(
         assert kwargs.get("capture_output") is True
         assert kwargs.get("text") is True
 
+        # Verify literal arguments
+        valid_args = (
+            ["ip", "-j", "-4", "route", "show", "default"],
+            ["ip", "-j", "-4", "addr", "show"],
+        )
+        assert args in valid_args, f"Unexpected command args: {args}"
+
         mock_result = MagicMock()
         mock_result.returncode = returncode
         if "route" in args:
