@@ -151,3 +151,9 @@ def test_degraded_persistence_recovery(mock_repo: Any, scan_context: Any) -> Non
     # then during the second process_scan, it tries to drain the queue (1 call)
     # and then saves the new envelope (1 call).
     assert mock_repo.save_scan_transaction.call_count == 3
+
+
+def test_default_max_queue_size(mock_repo: Any) -> None:
+    """Verify that the queue saturates at exactly 500 items by default."""
+    engine = LifecycleEngine(mock_repo)
+    assert engine.max_queue_size == 500

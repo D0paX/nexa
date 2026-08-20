@@ -43,5 +43,6 @@ The current ADR index is maintained in this directory:
 - [ADR-007: Linux Network Discovery Mechanism](ADR-007-linux-network-discovery-mechanism.md)
 - [ADR-008: Network Scope Model and Safety Bounds](ADR-008-network-scope-model.md)
 - [ADR 009: ARP Observation Engine (Phase 1C)](ADR-009-arp-observation-engine.md)
-- [ADR 010: Device Correlation Model (Phase 1D)](ADR-010-device-correlation-model.md)
-- [ADR 011: Device Lifecycle and Persistence Model (Phase 1E)](ADR-011-device-lifecycle-persistence.md)
+- [ADR-010: Device Correlation Model](ADR-010-device-correlation-model.md)
+- [ADR-011: Device Lifecycle and Persistence Model](ADR-011-device-lifecycle-persistence.md)
+- [ADR-012: Phase 1F Reliability & Testing Design](ADR-012-phase-1f-reliability-testing.md)

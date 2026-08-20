@@ -201,3 +201,43 @@ def test_privilege_error_propagation() -> None:
 
     with pytest.raises(NexaPrivilegeError):
         observer.observe(scope)
+
+
+def test_malformed_response() -> None:
+    """Test that malformed ARP responses are safely ignored."""
+    scope = create_test_scope("10.0.0.0/24")
+    mock_transport = Mock()
+
+    # Missing IP or MAC
+    mock_transport.send_arp_requests.return_value = [
+        {"ip": "10.0.0.5"},  # Missing MAC
+        {"mac": "aa:bb:cc:dd:ee:11"},  # Missing IP
+        {"ip": "10.0.0.6", "mac": "aa:bb:cc:dd:ee:22"},  # Valid
+        {},  # Empty
+        {"garbage": "data"},  # Irrelevant
+    ]
+
+    observer = ARPObserver(transport=mock_transport, inter_batch_delay=0.0)
+    obs = observer.observe(scope)
+
+    assert len(obs) == 1
+    assert obs[0].ipv4_address == IPv4Address("10.0.0.6")
+    assert obs[0].mac_address == "aa:bb:cc:dd:ee:22"
+
+
+def test_retry_limit() -> None:
+    """Test that retries are limited to exactly one retry for unanswered targets."""
+    scope = create_test_scope("10.0.0.0/31")  # 2 targets: .0 and .1
+    mock_transport = Mock()
+
+    # Always return empty to force retries
+    mock_transport.send_arp_requests.return_value = []
+
+    observer = ARPObserver(
+        transport=mock_transport, batch_size=2, inter_batch_delay=0.0
+    )
+    observer.observe(scope)
+
+    # Should be called exactly twice: initial batch,
+    # then 1 retry for the unanswered batch
+    assert mock_transport.send_arp_requests.call_count == 2

@@ -221,3 +221,15 @@ def test_transaction_rollback(repo: Any) -> None:
 
     # Verify nothing was saved (r1 should have rolled back)
     assert len(repo.get_records_by_scope("test_scope")) == 0
+
+
+def test_sqlite_configuration(repo: Any) -> None:
+    """Test that SQLite connections enforce WAL mode and foreign keys."""
+    with repo._get_connection() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute("PRAGMA journal_mode")
+        assert cursor.fetchone()[0].upper() == "WAL"
+
+        cursor.execute("PRAGMA foreign_keys")
+        assert cursor.fetchone()[0] == 1
