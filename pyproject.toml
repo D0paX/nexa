@@ -6,6 +6,8 @@ readme = "docs/README.md"
 requires-python = ">=3.12"
 dependencies = [
     "scapy>=2.5.0",
+    "cryptography>=42.0.0",
+    "jcs>=0.2.1",
 ]
 
 [project.optional-dependencies]
