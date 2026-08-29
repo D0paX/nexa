@@ -5,7 +5,8 @@ SQLite implementation of the TrustRepository.
 import json
 import logging
 import sqlite3
-from typing import List
+from contextlib import contextmanager
+from typing import Iterator, List
 from uuid import UUID
 
 from nexa.crypto.primitives import from_rfc3339, to_rfc3339
@@ -67,22 +68,33 @@ class SqliteTrustRepository(TrustRepository):
 
     def __init__(self, db_path: str):
         self.db_path = db_path
+        self._shared_conn: sqlite3.Connection | None = None
         self._initialize_db()
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Returns a configured SQLite connection."""
-        conn = sqlite3.connect(
-            self.db_path,
-            timeout=10.0,
-        )
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        return conn
+    def set_shared_connection(self, conn: sqlite3.Connection | None) -> None:
+        self._shared_conn = conn
+
+    @contextmanager
+    def _connection(self) -> Iterator[sqlite3.Connection]:
+        if self._shared_conn:
+            yield self._shared_conn
+        else:
+            conn = sqlite3.connect(
+                self.db_path,
+                timeout=10.0,
+            )
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            try:
+                with conn:
+                    yield conn
+            finally:
+                conn.close()
 
     def _initialize_db(self) -> None:
         """Initializes schema and runs migrations."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute("PRAGMA user_version")
             row = cursor.fetchone()
@@ -102,7 +114,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def save_identity(self, identity: TrustedDeviceIdentity) -> None:
         """Persist a TrustedDeviceIdentity."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -124,7 +136,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def get_identity(self, identity_id: str) -> TrustedDeviceIdentity | None:
         """Retrieve a TrustedDeviceIdentity."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT * FROM trusted_identities WHERE identity_id = ?",
@@ -142,7 +154,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def save_credential(self, credential: Credential) -> None:
         """Persist a Credential."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -168,7 +180,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def get_credential_by_fingerprint(self, fingerprint: str) -> Credential | None:
         """Retrieve a Credential by its SHA-256 fingerprint."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT * FROM credentials WHERE fingerprint_sha256 = ?",
@@ -191,7 +203,7 @@ class SqliteTrustRepository(TrustRepository):
         """
         Link an ephemeral DeviceRecord UUID to a persistent TrustedDeviceIdentity UUID.
         """
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -205,7 +217,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def get_identity_for_device(self, device_id: str) -> str | None:
         """Retrieve the associated identity_id for a device_id, if any."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT identity_id FROM device_identity_mappings WHERE device_id = ?",
@@ -216,9 +228,20 @@ class SqliteTrustRepository(TrustRepository):
                 return None
             return str(row["identity_id"])
 
+    def get_device_ids_for_identity(self, identity_id: str) -> list[str]:
+        """Retrieve all device_ids associated with a given identity_id."""
+        with self._connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT device_id FROM device_identity_mappings WHERE identity_id = ?",
+                (identity_id,),
+            )
+            rows = cursor.fetchall()
+            return [str(row["device_id"]) for row in rows]
+
     def get_active_credential_for_identity(self, identity_id: str) -> Credential | None:
         """Retrieve the currently ACTIVE credential for a given identity."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -243,7 +266,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def append_audit_event(self, event: TrustAuditEvent) -> None:
         """Persist an immutable audit event."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -263,7 +286,7 @@ class SqliteTrustRepository(TrustRepository):
 
     def get_audit_events(self, identity_id: str) -> List[TrustAuditEvent]:
         """Retrieve audit events for an identity."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """

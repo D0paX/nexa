@@ -166,6 +166,10 @@ class TrustRepository(Protocol):
         """Retrieve the associated identity_id for a device_id, if any."""
         ...
 
+    def get_device_ids_for_identity(self, identity_id: str) -> list[str]:
+        """Retrieve all device_ids associated with a given identity_id."""
+        ...
+
     def get_active_credential_for_identity(self, identity_id: str) -> Credential | None:
         """Retrieve the currently ACTIVE credential for a given identity."""
         ...
@@ -176,4 +180,18 @@ class TrustRepository(Protocol):
 
     def get_audit_events(self, identity_id: str) -> List[TrustAuditEvent]:
         """Retrieve audit events for an identity."""
+        ...
+
+
+class TrustSessionManager(Protocol):
+    """
+    Interface for managing trust verification sessions.
+    Defines the boundary where Phase 4 can request Phase 2 state invalidation.
+    """
+
+    def require_reverification(self, identity_id: str, reason: str) -> None:
+        """
+        Invalidates the current verification session for the given identity,
+        forcing a fresh Phase 2 cryptographic verification.
+        """
         ...

@@ -225,7 +225,7 @@ def test_transaction_rollback(repo: Any) -> None:
 
 def test_sqlite_configuration(repo: Any) -> None:
     """Test that SQLite connections enforce WAL mode and foreign keys."""
-    with repo._get_connection() as conn:
+    with repo._connection() as conn:
         cursor = conn.cursor()
 
         cursor.execute("PRAGMA journal_mode")
