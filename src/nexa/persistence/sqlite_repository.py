@@ -5,9 +5,10 @@ SQLite implementation of the DeviceRepository.
 import json
 import logging
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from ipaddress import IPv4Address, IPv4Network
-from typing import List
+from typing import Iterator, List
 from uuid import UUID
 
 from nexa.domain.correlation import (
@@ -76,24 +77,33 @@ class SqliteDeviceRepository(DeviceRepository):
 
     def __init__(self, db_path: str):
         self.db_path = db_path
+        self._shared_conn: sqlite3.Connection | None = None
         self._initialize_db()
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Returns a configured SQLite connection."""
-        conn = sqlite3.connect(
-            self.db_path,
-            timeout=10.0,  # Busy timeout of 10s
-        )
-        # Return dictionaries
-        conn.row_factory = sqlite3.Row
-        # Enable WAL mode and foreign key constraints
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        return conn
+    def set_shared_connection(self, conn: sqlite3.Connection | None) -> None:
+        self._shared_conn = conn
+
+    @contextmanager
+    def _connection(self) -> Iterator[sqlite3.Connection]:
+        if self._shared_conn:
+            yield self._shared_conn
+        else:
+            conn = sqlite3.connect(
+                self.db_path,
+                timeout=10.0,
+            )
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            try:
+                with conn:
+                    yield conn
+            finally:
+                conn.close()
 
     def _initialize_db(self) -> None:
         """Initializes schema and runs migrations."""
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute("PRAGMA user_version")
             row = cursor.fetchone()
@@ -114,7 +124,7 @@ class SqliteDeviceRepository(DeviceRepository):
         """
         Persists a complete scan transaction envelope atomically.
         """
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             try:
                 cursor = conn.cursor()
 
@@ -227,11 +237,83 @@ class SqliteDeviceRepository(DeviceRepository):
                 logger.error(f"Persistence transaction failed: {e}")
                 raise
 
+    def get_record_by_id(self, device_id: str) -> DeviceRecord | None:
+        """
+        Retrieves a specific DeviceRecord by its UUID.
+        """
+        with self._connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM devices WHERE device_id = ?", (str(device_id),)
+            )
+            d_row = cursor.fetchone()
+
+            if not d_row:
+                return None
+
+            # Fetch MACs
+            cursor.execute(
+                "SELECT mac_address FROM device_macs WHERE device_id = ?",
+                (str(device_id),),
+            )
+            macs = frozenset(row["mac_address"] for row in cursor.fetchall())
+
+            # Fetch IPs
+            cursor.execute(
+                "SELECT ip_address FROM device_ips WHERE device_id = ?",
+                (str(device_id),),
+            )
+            ips = frozenset(IPv4Address(row["ip_address"]) for row in cursor.fetchall())
+
+            # Fetch Conflicts
+            cursor.execute(
+                "SELECT * FROM device_conflicts WHERE device_id = ?", (str(device_id),)
+            )
+            conflicts_set = set()
+            for c_row in cursor.fetchall():
+                conflicts_set.add(
+                    ObservationConflict(
+                        classification=ConflictClassification(c_row["classification"]),
+                        description=c_row["description"],
+                        involved_macs=frozenset(json.loads(c_row["involved_macs"])),
+                        observed_at=datetime.fromisoformat(c_row["observed_at"]),
+                    )
+                )
+
+            # Deserialize NetworkScope
+            ns_data = json.loads(d_row["network_scope"])
+            gw = IPv4Address(ns_data["gateway"]) if ns_data.get("gateway") else None
+            net = IPv4Network(ns_data["network"])
+            hosts_list = list(net.hosts())
+            host_count = len(hosts_list)
+
+            network_scope = NetworkScope(
+                network_address=net.network_address,
+                broadcast_address=net.broadcast_address,
+                prefix_length=net.prefixlen,
+                host_count=host_count,
+                first_usable_host=hosts_list[0] if host_count > 0 else None,
+                last_usable_host=hosts_list[-1] if host_count > 0 else None,
+                interface_name=ns_data["interface_name"],
+                gateway=gw,
+            )
+
+            return DeviceRecord(
+                device_id=UUID(str(device_id)),
+                network_scope=network_scope,
+                mac_addresses=macs,
+                ipv4_addresses=ips,
+                first_observed_at=datetime.fromisoformat(d_row["first_observed_at"]),
+                last_observed_at=datetime.fromisoformat(d_row["last_observed_at"]),
+                presence_state=PresenceState(d_row["presence_state"]),
+                conflicts=frozenset(conflicts_set),
+            )
+
     def get_records_by_scope(self, scope_key: str) -> List[DeviceRecord]:
         """
         Hydrates all active records for a specific scope.
         """
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM devices WHERE scope_key = ?", (scope_key,))
             device_rows = cursor.fetchall()
@@ -313,10 +395,10 @@ class SqliteDeviceRepository(DeviceRepository):
         where last_observed_at < threshold.
         Returns the number of deleted records.
         """
-        with self._get_connection() as conn:
+        with self._connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "DELETE FROM devices WHERE presence_state = ? AND last_observed_at < ?",
                 (PresenceState.UNSEEN.value, threshold.isoformat()),
             )
-            return cursor.rowcount
+            return int(cursor.rowcount)

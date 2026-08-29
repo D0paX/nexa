@@ -57,6 +57,12 @@ class DeviceRepository(Protocol):
         """
         ...
 
+    def get_record_by_id(self, device_id: str) -> DeviceRecord | None:
+        """
+        Retrieves a specific DeviceRecord by its UUID.
+        """
+        ...
+
     def get_records_by_scope(self, scope_key: str) -> List[DeviceRecord]:
         """
         Hydrates all active records for a specific scope.

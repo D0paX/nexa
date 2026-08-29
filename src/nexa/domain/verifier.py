@@ -210,3 +210,33 @@ class IdentityVerifier:
                 self.rate_limiter.release_enrollment()
             else:
                 self.rate_limiter.release_verification(scope_id)
+
+    def require_reverification(self, identity_id: str, reason: str) -> None:
+        """
+        Invalidates the current verification session for the given identity,
+        forcing a fresh Phase 2 cryptographic verification.
+
+        This satisfies the TrustSessionManager protocol for Phase 4.
+        """
+        # Since Phase 2 verification is stateless challenge/response,
+        # we invalidate any cached proof state for the active credential
+        # and emit an audit event to signal that a new proof is required.
+        credential = self.trust_repo.get_active_credential_for_identity(identity_id)
+        if credential:
+            with self._proof_lock:
+                self._recent_proofs.pop(credential.fingerprint_sha256, None)
+
+        audit = TrustAuditEvent(
+            event_id=uuid.uuid4(),
+            identity_id=uuid.UUID(identity_id),
+            event_type=TrustAuditEventType.IDENTITY_CONCURRENCY_ANOMALY,
+            timestamp=datetime.now(timezone.utc),
+            details={
+                "reason": "require_reverification",
+                "trigger": reason,
+            },
+        )
+        self.trust_repo.append_audit_event(audit)
+        logger.info(
+            f"Reverification required for identity {identity_id}. Reason: {reason}"
+        )
