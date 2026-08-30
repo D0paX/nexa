@@ -5,17 +5,18 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 private val NexaColorScheme = darkColorScheme(
-    primary = NexaPrimary,
-    secondary = NexaSecondary,
+    primary = NexaAction,
+    secondary = NexaTextSecondary,
     background = NexaBackground,
-    surface = NexaSurface,
-    surfaceVariant = NexaSurfaceVariant,
+    surface = NexaElevatedBackground,
+    surfaceVariant = NexaGlassSurface,
     onPrimary = NexaBackground,
     onSecondary = NexaTextPrimary,
     onBackground = NexaTextPrimary,
     onSurface = NexaTextPrimary,
+    onSurfaceVariant = NexaTextPrimary,
     error = NexaDanger,
-    onError = NexaBackground
+    onError = NexaTextPrimary
 )
 
 @Composable

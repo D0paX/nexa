@@ -2,14 +2,28 @@ package com.example.nexa.theme
 
 import androidx.compose.ui.graphics.Color
 
-// NEXA Dark Theme Colors
-val NexaBackground = Color(0xFF0D1117)
-val NexaSurface = Color(0xFF161B22)
-val NexaSurfaceVariant = Color(0xFF21262D)
-val NexaPrimary = Color(0xFF58A6FF)
-val NexaSecondary = Color(0xFF8B949E)
-val NexaTextPrimary = Color(0xFFC9D1D9)
-val NexaTextSecondary = Color(0xFF8B949E)
-val NexaSuccess = Color(0xFF2EA043)
-val NexaWarning = Color(0xFFD29922)
-val NexaDanger = Color(0xFFF85149)
+// NEXA Dark Atmospheric Background
+val NexaBackground = Color(0xFF090A0C)
+val NexaElevatedBackground = Color(0xFF101216)
+
+// Liquid Glass Surfaces
+val NexaGlassSurface = Color(0xFF1A1D24).copy(alpha = 0.4f)
+val NexaStrongGlassSurface = Color(0xFF232730).copy(alpha = 0.6f)
+val NexaGlassBorder = Color(0xFFFFFFFF).copy(alpha = 0.1f)
+val NexaGlassHighlight = Color(0xFFFFFFFF).copy(alpha = 0.05f)
+
+// Typography Colors
+val NexaTextPrimary = Color(0xFFE2E8F0)
+val NexaTextSecondary = Color(0xFF94A3B8)
+val NexaTextMuted = Color(0xFF64748B)
+
+// Semantic Colors
+val NexaSecure = Color(0xFF10B981) // Success
+val NexaInformation = Color(0xFF3B82F6) // Information
+val NexaWarning = Color(0xFFF59E0B) // Warning
+val NexaDanger = Color(0xFFEF4444) // Danger
+val NexaCritical = Color(0xFFB91C1C) // Critical
+val NexaNeutral = Color(0xFF64748B) // Neutral
+val NexaUnknown = Color(0xFF8B5CF6) // Unknown
+val NexaDisabled = Color(0xFF334155) // Disabled
+val NexaAction = Color(0xFF38BDF8) // Primary Action (Restrained Retro-Futurism accent)
