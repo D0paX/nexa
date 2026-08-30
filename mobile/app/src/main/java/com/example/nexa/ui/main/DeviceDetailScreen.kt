@@ -7,10 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.example.nexa.ActionConfirmation
 import com.example.nexa.theme.*
+import com.example.nexa.ui.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,121 +32,100 @@ fun DeviceDetailScreen(
                         style = Typography.titleLarge,
                         color = NexaAction,
                         modifier = Modifier
-                            .padding(16.dp)
+                            .padding(NexaTokens.SpacingMedium)
                             .clickable(onClick = onBack)
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = NexaBackground,
+                    containerColor = Color.Transparent,
                     titleContentColor = NexaTextPrimary
                 )
             )
         },
-        containerColor = NexaBackground,
+        containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = NexaTokens.SpacingMedium),
+            verticalArrangement = Arrangement.spacedBy(NexaTokens.SpacingMedium)
         ) {
             item {
                 Text(
                     text = "Identity",
                     style = Typography.titleMedium,
                     color = NexaTextSecondary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = NexaTokens.SpacingSmall)
                 )
             }
 
-            // TrustedDeviceIdentity
+            // TrustedDeviceIdentity (Stronger Surface)
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlass(strong = true)
-                        .padding(16.dp)
-                ) {
+                GlassSurface(variant = GlassVariant.Strong, modifier = Modifier.fillMaxWidth()) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Trusted Identity", style = Typography.labelLarge, color = NexaSecure)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Surface(color = NexaSecure.copy(alpha = 0.2f), shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)) {
-                                Text(" VERIFIED ", style = Typography.labelMedium, color = NexaSecure)
-                            }
+                            Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+                            StatusBadge(text = "VERIFIED", color = NexaSecure)
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Text("Corp Laptop - Engineering", style = Typography.bodyLarge, color = NexaTextPrimary)
                         Text("Owner: jsmith@example.com", style = Typography.bodyMedium, color = NexaTextSecondary)
                     }
                 }
             }
 
-            // DeviceRecord
+            // DeviceRecord (Standard Surface)
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlass()
-                        .padding(16.dp)
-                ) {
+                GlassSurface(variant = GlassVariant.Standard, modifier = Modifier.fillMaxWidth()) {
                     Column {
                         Text("Network Record", style = Typography.labelLarge, color = NexaTextPrimary)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("MAC Address", style = Typography.bodyMedium, color = NexaTextSecondary)
-                            Text(mac, style = MonospaceTextStyle, color = NexaTextPrimary)
+                            TechnicalValue(mac)
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Current IP", style = Typography.bodyMedium, color = NexaTextSecondary)
-                            Text("192.168.1.105", style = MonospaceTextStyle, color = NexaTextPrimary)
+                            TechnicalValue("192.168.1.105")
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Scope", style = Typography.bodyMedium, color = NexaTextSecondary)
-                            Text("VLAN_SECURE", style = MonospaceTextStyle, color = NexaInformation)
+                            TechnicalValue("VLAN_SECURE", color = NexaInformation)
                         }
                     }
                 }
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                 Text("Enforcement & Actions", style = Typography.titleMedium, color = NexaTextSecondary)
             }
 
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .liquidGlass()
-                        .padding(16.dp)
-                ) {
+                GlassSurface(variant = GlassVariant.Standard, modifier = Modifier.fillMaxWidth()) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                             Text("State", style = Typography.bodyLarge, color = NexaTextPrimary)
-                            Text("PERMITTED", style = Typography.labelLarge, color = NexaSecure)
+                            StatusBadge(text = "PERMITTED", color = NexaSecure)
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingLarge))
                         
-                        // Action Button
-                        Button(
+                        NexaButton(
+                            text = "QUARANTINE",
                             onClick = { onNavigate(ActionConfirmation("QUARANTINE_DEVICE", mac, "Quarantine Device")) },
-                            colors = ButtonDefaults.buttonColors(containerColor = NexaDanger),
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                        ) {
-                            Text("QUARANTINE", style = Typography.labelLarge, color = NexaBackground)
-                        }
+                            isDestructive = true
+                        )
                     }
                 }
             }
             
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
             }
         }
     }
