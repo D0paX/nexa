@@ -197,7 +197,8 @@ object OverviewPreview {
             title = "Quarantine applied",
             target = "00:1A:2B:3C:4D:5E",
             timeAgo = "2m ago",
-            status = NexaStatus.Simulation
+            status = NexaStatus.Simulation,
+            executionMode = ExecutionMode.AuditOnly
         ),
         ActivityEntry(
             id = "ACT-4407",
@@ -213,7 +214,8 @@ object OverviewPreview {
             title = "Quarantine released",
             target = "AA:BB:CC:DD:EE:FF",
             timeAgo = "38m ago",
-            status = NexaStatus.Secure
+            status = NexaStatus.Secure,
+            executionMode = ExecutionMode.Enforce
         ),
         ActivityEntry(
             id = "ACT-4401",

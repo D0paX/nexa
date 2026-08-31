@@ -273,11 +273,19 @@ private fun EnforcementCard(enforcement: EnforcementState) {
 
             if (enforcement.executionMode == ExecutionMode.AuditOnly) {
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-                Text(
-                    text = "Actions are simulated. No firewall mutation will occur.",
-                    style = NexaType.Metadata,
-                    color = NexaTextSecondary
-                )
+                Row(verticalAlignment = Alignment.Top) {
+                    NexaIcon(
+                        icon = NexaIcons.Simulated,
+                        size = NexaTokens.IconSmall,
+                        tint = NexaSimulation
+                    )
+                    Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+                    Text(
+                        text = "Actions are simulated. No firewall mutation will occur. Counts below describe existing bindings, not simulated activity.",
+                        style = NexaType.Metadata,
+                        color = NexaTextSecondary
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
@@ -381,7 +389,20 @@ private fun ActivityRow(entry: ActivityEntry, onItemClick: (NavKey) -> Unit) {
         leadingContentDescription = style.label,
         titleColor = NexaTextSecondary,
         technical = entry.target,
-        timestamp = entry.timeAgo
+        // A simulated execution is labelled as one. Live and simulated events
+        // are never distinguished by color alone.
+        timestamp = if (entry.isSimulated) null else entry.timeAgo,
+        trailing = if (entry.isSimulated) {
+            {
+                Column(horizontalAlignment = Alignment.End) {
+                    StatusBadge(status = NexaStatus.Simulation, label = "SIMULATED")
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+                    Text(entry.timeAgo, style = NexaType.Metadata, color = NexaTextMuted)
+                }
+            }
+        } else {
+            null
+        }
     )
 }
 

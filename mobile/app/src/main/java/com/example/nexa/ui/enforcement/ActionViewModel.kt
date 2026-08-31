@@ -97,7 +97,7 @@ class ActionViewModel : ViewModel() {
                     context = context,
                     state = ExecutionState.Denied,
                     reconciled = false,
-                    detail = ExecutionState.Denied.explanation
+                    detail = resultExplanation(ExecutionState.Denied, context.executionMode)
                 )
                 return@launch
             }
@@ -111,7 +111,7 @@ class ActionViewModel : ViewModel() {
                         context = context,
                         state = ExecutionState.Unknown,
                         reconciled = false,
-                        detail = ExecutionState.Unknown.explanation
+                        detail = resultExplanation(ExecutionState.Unknown, context.executionMode)
                     )
                 }
 
@@ -120,7 +120,7 @@ class ActionViewModel : ViewModel() {
                         context = context,
                         state = ExecutionState.Failed,
                         reconciled = false,
-                        detail = ExecutionState.Failed.explanation
+                        detail = resultExplanation(ExecutionState.Failed, context.executionMode)
                     )
                 }
 
@@ -129,8 +129,10 @@ class ActionViewModel : ViewModel() {
                     _state.value = ActionUiState.Result(
                         context = context,
                         state = ExecutionState.RolledBack,
-                        reconciled = true,
-                        detail = ExecutionState.RolledBack.explanation
+                        // A simulated rollback reconciles nothing: there was no
+                        // kernel state to restore in the first place.
+                        reconciled = context.executionMode != com.example.nexa.ui.common.ExecutionMode.AuditOnly,
+                        detail = resultExplanation(ExecutionState.RolledBack, context.executionMode)
                     )
                 }
 
@@ -140,7 +142,7 @@ class ActionViewModel : ViewModel() {
                         context = context,
                         state = ExecutionState.RollbackFailed,
                         reconciled = false,
-                        detail = ExecutionState.RollbackFailed.explanation
+                        detail = resultExplanation(ExecutionState.RollbackFailed, context.executionMode)
                     )
                 }
 
@@ -161,12 +163,10 @@ class ActionViewModel : ViewModel() {
                     _state.value = ActionUiState.Result(
                         context = context,
                         state = ExecutionState.Succeeded,
-                        reconciled = true,
-                        detail = if (context.executionMode == com.example.nexa.ui.common.ExecutionMode.AuditOnly) {
-                            "Simulation completed. No firewall mutation occurred."
-                        } else {
-                            "Execution completed and enforcement was reconciled."
-                        }
+                        // A simulation is never reported as reconciled — there is
+                        // no kernel state for it to have reconciled against.
+                        reconciled = context.executionMode != com.example.nexa.ui.common.ExecutionMode.AuditOnly,
+                        detail = resultExplanation(ExecutionState.Succeeded, context.executionMode)
                     )
                 }
             }
@@ -174,7 +174,7 @@ class ActionViewModel : ViewModel() {
     }
 
     private suspend fun step(context: ActionContext, state: ExecutionState) {
-        _state.value = ActionUiState.InFlight(context, state, state.explanation)
+        _state.value = ActionUiState.InFlight(context, state, resultExplanation(state, context.executionMode))
         delay(STEP_DELAY_MS)
     }
 

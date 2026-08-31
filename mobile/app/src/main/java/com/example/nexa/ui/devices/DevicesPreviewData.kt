@@ -4,6 +4,7 @@ import com.example.nexa.theme.NexaStatus
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.ActivityKind
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
 import com.example.nexa.ui.common.TrustState
 
 /**
@@ -244,7 +245,7 @@ object DevicesPreview {
         val activity = when (device.id) {
             "DEV-1001" -> listOf(
                 ActivityEntry("A1", ActivityKind.AlertRaised, "Suspicious Port Scan", device.mac, "2m ago", NexaStatus.Critical),
-                ActivityEntry("A2", ActivityKind.EnforcementCompleted, "Quarantine applied", device.mac, "2m ago", NexaStatus.Simulation),
+                ActivityEntry("A2", ActivityKind.EnforcementCompleted, "Quarantine applied", device.mac, "2m ago", NexaStatus.Simulation, ExecutionMode.AuditOnly),
                 ActivityEntry("A3", ActivityKind.TrustChanged, "Trust session renewed", device.mac, "41m ago", NexaStatus.Secure)
             )
             "DEV-1003" -> listOf(

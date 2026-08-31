@@ -348,7 +348,11 @@ private fun ConfirmationContent(
                     // Simulation is never dressed as live enforcement.
                     destructive = state.consequence.destructive &&
                         context.executionMode != ExecutionMode.AuditOnly,
-                    confirmIcon = context.action.icon
+                    confirmIcon = context.action.icon,
+                    // In AUDIT_ONLY the operator is asked to simulate, not to
+                    // confirm a mutation that will not happen.
+                    confirmLabel = confirmLabel(context.action, context.executionMode),
+                    simulation = context.executionMode == ExecutionMode.AuditOnly
                 )
             }
         }
@@ -367,6 +371,26 @@ private fun InFlightContent(state: ActionUiState.InFlight, modifier: Modifier = 
         item {
             GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
+                    // Execution mode stays visible while the action runs, not
+                    // only on the screen where it was confirmed.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        NexaIcon(
+                            icon = if (state.context.executionMode == ExecutionMode.AuditOnly) {
+                                NexaIcons.Simulated
+                            } else {
+                                NexaIcons.Enforcing
+                            },
+                            size = NexaTokens.IconMedium,
+                            tint = state.context.executionMode.status.style.onDark
+                        )
+                        Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+                        Text(
+                            text = inFlightModeLabel(state.context.executionMode),
+                            style = NexaType.Metadata,
+                            color = state.context.executionMode.status.style.onDark
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                     Text(
                         text = state.context.action.label.uppercase(),
                         style = NexaType.Metadata,
@@ -376,7 +400,7 @@ private fun InFlightContent(state: ActionUiState.InFlight, modifier: Modifier = 
                     Text(state.state.label, style = NexaType.Display, color = NexaTextOnDark)
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                     Text(
-                        text = state.state.explanation,
+                        text = resultExplanation(state.state, state.context.executionMode),
                         style = NexaType.BodySecondary,
                         color = NexaTextOnDarkMuted
                     )
@@ -441,8 +465,10 @@ private fun ResultContent(
                         color = NexaTextOnDarkMuted
                     )
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                    // A simulated run reports a simulation outcome. It never
+                    // borrows the word an enforced action would have used.
                     Text(
-                        text = state.state.label.uppercase(),
+                        text = resultHeadline(state.state, state.context.executionMode),
                         style = NexaType.Display,
                         color = state.state.status.style.onDark
                     )
@@ -465,12 +491,20 @@ private fun ResultContent(
                     }
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                     ContextLine("Reconciliation") {
+                        // A simulation is never reported as reconciled: there is
+                        // no kernel state it could have reconciled against.
                         StatusBadge(
-                            status = if (state.reconciled) NexaStatus.Secure else NexaStatus.Warning,
-                            label = if (state.reconciled) "RECONCILED" else "NOT CONFIRMED"
+                            status = reconciliationStatus(state.context.executionMode, state.reconciled),
+                            label = reconciliationLabel(state.context.executionMode, state.reconciled)
                         )
                     }
-                    if (!state.reconciled && state.state == ExecutionState.Succeeded) {
+                    // Only meaningful for a real execution: a simulation has no
+                    // pending reconciliation to wait for, and saying otherwise
+                    // would imply a mutation is settling somewhere.
+                    if (!state.reconciled &&
+                        state.state == ExecutionState.Succeeded &&
+                        state.context.executionMode != ExecutionMode.AuditOnly
+                    ) {
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Text(
                             text = "Execution completed, but the resulting enforcement state has not been confirmed. Do not treat this target as enforced until reconciliation completes.",
@@ -480,11 +514,19 @@ private fun ResultContent(
                     }
                     if (state.context.executionMode == ExecutionMode.AuditOnly) {
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-                        Text(
-                            text = "This ran in AUDIT_ONLY. No firewall mutation occurred.",
-                            style = NexaType.Metadata,
-                            color = NexaSimulation
-                        )
+                        Row(verticalAlignment = Alignment.Top) {
+                            NexaIcon(
+                                icon = NexaIcons.Simulated,
+                                size = NexaTokens.IconSmall,
+                                tint = NexaSimulation
+                            )
+                            Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+                            Text(
+                                text = "This ran in AUDIT_ONLY. No firewall mutation occurred and the target's enforcement state is unchanged.",
+                                style = NexaType.Metadata,
+                                color = NexaSimulation
+                            )
+                        }
                     }
                 }
             }

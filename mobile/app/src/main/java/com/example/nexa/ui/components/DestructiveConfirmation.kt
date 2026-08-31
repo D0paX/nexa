@@ -33,7 +33,14 @@ fun DestructiveConfirmation(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     destructive: Boolean = true,
-    confirmIcon: ImageVector = NexaIcons.Quarantine
+    confirmIcon: ImageVector = NexaIcons.Quarantine,
+    /** Overrides the confirm label. Used so a simulation reads "SIMULATE …". */
+    confirmLabel: String? = null,
+    /**
+     * Marks the request as a simulation, which gives the confirm control its
+     * own non-red treatment so it cannot be mistaken for a live-fire command.
+     */
+    simulation: Boolean = false
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -56,9 +63,13 @@ fun DestructiveConfirmation(
         Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
 
         NexaButton(
-            text = "CONFIRM $actionName",
+            text = confirmLabel ?: "CONFIRM $actionName",
             onClick = onConfirm,
-            variant = if (destructive) NexaButtonVariant.Destructive else NexaButtonVariant.Primary,
+            variant = when {
+                simulation -> NexaButtonVariant.Simulation
+                destructive -> NexaButtonVariant.Destructive
+                else -> NexaButtonVariant.Primary
+            },
             icon = confirmIcon
         )
 

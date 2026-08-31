@@ -218,7 +218,16 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
         AuthorizationState.Authorized, AuthorizationState.ApprovalRequired -> Unit
     }
 
-    // 3. The circuit breaker halts enforcement globally. Trust operations are
+    // 3. An unknown execution mode is unsafe in both directions: NEXA cannot
+    // promise the operator a simulation, and must not offer them a live
+    // mutation it cannot confirm. It refuses rather than guessing either way.
+    if (context.executionMode == ExecutionMode.Unknown) {
+        return ActionAvailability.Disabled(
+            "Execution mode is unknown. NEXA cannot confirm whether this would simulate or mutate firewall state."
+        )
+    }
+
+    // 4. The circuit breaker halts enforcement globally. Trust operations are
     // not firewall mutations and are unaffected by it.
     if (action.mutatesEnforcement && !context.circuitBreaker.allowsExecution) {
         return ActionAvailability.Disabled(
@@ -226,14 +235,14 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
         )
     }
 
-    // 4. An unknown enforcement state makes the outcome unreasonable to predict.
+    // 5. An unknown enforcement state makes the outcome unreasonable to predict.
     if (action.mutatesEnforcement && enforcement == DeviceEnforcement.Unknown) {
         return ActionAvailability.Disabled(
             "Current enforcement state for this target is unknown."
         )
     }
 
-    // 5. Idempotency, stated rather than hidden.
+    // 6. Idempotency, stated rather than hidden.
     if (context.alreadyInDesiredState) {
         return ActionAvailability.Disabled(
             when (action) {
@@ -244,8 +253,10 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
         )
     }
 
-    // 6. A stale observation is a security condition for anything that mutates
+    // 7. A stale observation is a security condition for anything that mutates
     // enforcement: the target it names may no longer be the target it reaches.
+    // Simulation does not lift this — the requirement exists to keep the
+    // request honest, not merely to protect the firewall.
     if (action.mutatesEnforcement && context.targetIsStale) {
         return ActionAvailability.Disabled(
             "Target observation is stale. Re-resolve the target before requesting this action."

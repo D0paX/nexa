@@ -23,6 +23,7 @@ import com.example.nexa.theme.NexaBorderNeutral
 import com.example.nexa.theme.NexaDanger
 import com.example.nexa.theme.NexaDisabled
 import com.example.nexa.theme.NexaShapes
+import com.example.nexa.theme.NexaSimulation
 import com.example.nexa.theme.NexaTextMuted
 import com.example.nexa.theme.NexaTextOnDark
 import com.example.nexa.theme.NexaTextPrimary
@@ -35,7 +36,15 @@ enum class NexaButtonVariant {
     Primary,
 
     /** Changes enforcement state. Carries semantic danger, not brand. */
-    Destructive
+    Destructive,
+
+    /**
+     * Requests a simulated action that will not mutate anything.
+     *
+     * Deliberately not red: an operator glancing at the control must be able
+     * to tell a simulation from a live-fire command without reading it.
+     */
+    Simulation
 }
 
 /**
@@ -59,6 +68,7 @@ fun NexaButton(
     val containerColor = when (variant) {
         NexaButtonVariant.Primary -> NexaAction
         NexaButtonVariant.Destructive -> NexaDanger
+        NexaButtonVariant.Simulation -> NexaSimulation
     }
 
     Button(

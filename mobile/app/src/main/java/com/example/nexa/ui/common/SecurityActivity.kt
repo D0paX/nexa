@@ -20,6 +20,12 @@ enum class ActivityKind {
 /**
  * A single security event: what happened, to whom, when, and what state it
  * ended in.
+ *
+ * [executionMode] is carried structurally rather than implied by a color,
+ * so a simulated action can never be read as a live one — in the feed, and
+ * later in the audit history. A null mode means the event is not an action
+ * execution at all (an alert being raised, a device appearing), not that it
+ * was live.
  */
 data class ActivityEntry(
     val id: String,
@@ -27,8 +33,15 @@ data class ActivityEntry(
     val title: String,
     val target: String,
     val timeAgo: String,
-    val status: NexaStatus
-)
+    val status: NexaStatus,
+    val executionMode: ExecutionMode? = null
+) {
+    /** True only when this event records a simulated execution. */
+    val isSimulated: Boolean get() = executionMode == ExecutionMode.AuditOnly
+
+    /** True only when this event records a real firewall mutation. */
+    val isLiveEnforcement: Boolean get() = executionMode == ExecutionMode.Enforce
+}
 
 /** The shape a piece of security history takes. */
 val ActivityKind.icon: ImageVector

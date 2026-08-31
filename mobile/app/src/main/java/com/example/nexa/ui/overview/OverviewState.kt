@@ -284,17 +284,40 @@ fun buildAttentionItems(
  * Wording is deliberately precise: ENFORCING states what NEXA is doing, not
  * that every target is safe, and Unknown never implies health.
  */
-fun postureDetail(posture: SecurityPosture, enforcement: EnforcementState): String = when (posture) {
-    SecurityPosture.Secure ->
-        "Enforcement is available. No outstanding conditions."
-    SecurityPosture.Enforcing ->
-        "Enforcement is active on ${enforcement.quarantinedDevices} device(s). Other targets are unaffected."
+fun postureDetail(posture: SecurityPosture, enforcement: EnforcementState): String {
+    // In AUDIT_ONLY nothing the operator does mutates the firewall, so the
+    // posture sentence must not describe enforcement as something being
+    // applied. The bindings it reports are pre-existing state, not the result
+    // of anything this client can currently cause.
+    if (enforcement.executionMode == ExecutionMode.AuditOnly) {
+        return when (posture) {
+            SecurityPosture.Secure ->
+                "Enforcement is available in AUDIT_ONLY. Actions are simulated and no firewall mutation will occur."
+            SecurityPosture.Enforcing ->
+                "${enforcement.quarantinedDevices} device(s) carry an existing enforcement binding. NEXA is in AUDIT_ONLY: new actions are simulated and will not mutate firewall state."
+            SecurityPosture.Degraded ->
+                "NEXA is running with reduced capability in AUDIT_ONLY. Actions are simulated."
+            SecurityPosture.Paused ->
+                "Enforcement is halted by the circuit breaker. NEXA is also in AUDIT_ONLY: actions are simulated."
+            SecurityPosture.Critical ->
+                "One or more conditions require operator attention now. NEXA is in AUDIT_ONLY: response actions are simulated."
+            SecurityPosture.Unknown ->
+                "NEXA cannot confirm the current state of the system."
+        }
+    }
+
+    return when (posture) {
+        SecurityPosture.Secure ->
+            "Enforcement is available. No outstanding conditions."
+        SecurityPosture.Enforcing ->
+            "Enforcement is active on ${enforcement.quarantinedDevices} device(s). Other targets are unaffected."
     SecurityPosture.Degraded ->
         "NEXA is running with reduced capability. Enforcement results may be incomplete."
     SecurityPosture.Paused ->
         "Enforcement is halted by the circuit breaker. Existing rules remain in place."
     SecurityPosture.Critical ->
         "One or more conditions require operator attention now."
-    SecurityPosture.Unknown ->
-        "NEXA cannot confirm the current state of the system."
+        SecurityPosture.Unknown ->
+            "NEXA cannot confirm the current state of the system."
+    }
 }
