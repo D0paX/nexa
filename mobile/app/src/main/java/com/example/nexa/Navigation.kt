@@ -29,13 +29,14 @@ import com.example.nexa.ui.main.DeviceDetailScreen
 import com.example.nexa.ui.main.DevicesScreen
 import com.example.nexa.ui.main.IdentitiesScreen
 import com.example.nexa.ui.main.IdentityDetailScreen
+import com.example.nexa.ui.main.LinkProblemScreen
 import com.example.nexa.ui.main.NotificationCenterScreen
 import com.example.nexa.ui.main.NotificationDetailScreen
 import com.example.nexa.ui.main.OverviewScreen
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.nexa.push.PushNavigation
-import com.example.nexa.push.toNavKey
+import com.example.nexa.ui.deeplink.DeepLinkRouter
+import com.example.nexa.ui.deeplink.toNavKey
 import com.example.nexa.ui.navigation.NavigationDirectionResolver
 import com.example.nexa.ui.navigation.navigationTransform
 import com.example.nexa.ui.navigation.rememberReducedMotion
@@ -53,15 +54,29 @@ fun MainNavigation() {
 
     val reducedMotion = rememberReducedMotion()
 
-    // A tapped notification asks to be taken somewhere. It is pushed onto the
+    // A link asks to be taken somewhere. The destination is pushed onto the
     // existing stack rather than replacing it, so Back returns to wherever the
-    // operator already was — or to Overview on a cold start.
-    val pendingPush by PushNavigation.pending.collectAsStateWithLifecycle()
-    LaunchedEffect(pendingPush) {
-        val destination = pendingPush ?: return@LaunchedEffect
-        val key = destination.toNavKey()
-        if (backStack.lastOrNull() != key) backStack.add(key)
-        PushNavigation.consume()
+    // operator already was — or to Overview on a cold start. A link that
+    // resolves to the screen already on top does nothing, which is what keeps
+    // a repeated tap from stacking duplicates.
+    val pendingLink by DeepLinkRouter.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingLink) {
+        val resolution = pendingLink ?: return@LaunchedEffect
+        val key = resolution.toNavKey()
+        val top = backStack.lastOrNull()
+        when {
+            // The same link twice does nothing, so a repeated tap cannot
+            // stack duplicates.
+            top == key -> Unit
+            // One failed link followed by another replaces the message rather
+            // than burying it, so Back does not walk through a pile of them.
+            key is LinkProblem && top is LinkProblem -> {
+                backStack.removeLastOrNull()
+                backStack.add(key)
+            }
+            else -> backStack.add(key)
+        }
+        DeepLinkRouter.consume()
     }
 
     // Direction is resolved once per destination change and read by both
@@ -173,6 +188,14 @@ fun MainNavigation() {
                             alertId = alertDetail.id,
                             onBack = { backStack.removeLastOrNull() },
                             onNavigate = { navKey -> backStack.add(navKey) },
+                            modifier = Modifier.safeDrawingPadding()
+                        )
+                    }
+                    entry<LinkProblem> { problem ->
+                        LinkProblemScreen(
+                            title = problem.title,
+                            message = problem.message,
+                            onBack = { backStack.removeLastOrNull() },
                             modifier = Modifier.safeDrawingPadding()
                         )
                     }

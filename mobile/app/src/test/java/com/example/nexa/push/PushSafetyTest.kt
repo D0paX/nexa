@@ -6,8 +6,16 @@ import com.example.nexa.DeviceDetail
 import com.example.nexa.IdentityDetail
 import com.example.nexa.NotificationCenter
 import com.example.nexa.NotificationDetail
+import com.example.nexa.LinkProblem
 import com.example.nexa.push.debug.PushFixtures
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.deeplink.DeepLinkResolution
+import com.example.nexa.ui.deeplink.DeepLinkSource
+import com.example.nexa.ui.deeplink.NexaDeepLink
+import com.example.nexa.ui.deeplink.NexaDeepLinkParser
+import com.example.nexa.ui.deeplink.PreviewDeepLinkCatalog
+import com.example.nexa.ui.deeplink.NexaDeepLinkResolver
+import com.example.nexa.ui.deeplink.toNavKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -46,35 +54,46 @@ class PushSafetyTest {
         PushFixtures.addressesInBody
     ).map(::payloadOf)
 
+    private val resolver = NexaDeepLinkResolver(PreviewDeepLinkCatalog)
+
+    private fun navKeyFor(payload: PushPayload) =
+        resolver.resolve(deepLinkFor(payload)).toNavKey()
+
     // ============================================================
     // A TAP CANNOT EXECUTE
     // ============================================================
 
     /**
-     * The load-bearing test of this checkpoint. No payload, of any source
-     * type, in any mode, resolves to the screen that submits enforcement
-     * requests.
+     * The load-bearing test. No payload, of any source type, in any mode,
+     * becomes a link that reaches the screen submitting enforcement requests.
      */
     @Test
     fun `no push can route into the action confirmation flow`() {
         allWellFormed.forEach { payload ->
-            val key = destinationFor(payload).toNavKey()
-            assertFalse(
-                "${payload.notificationId} routed to $key",
-                key is ActionConfirmation
-            )
+            val key = navKeyFor(payload)
+            assertFalse("${payload.notificationId} routed to $key", key is ActionConfirmation)
         }
     }
 
     @Test
-    fun `every destination lands on a surface that only reads state`() {
+    fun `every push destination lands on a surface that only reads state`() {
         allWellFormed.forEach { payload ->
-            val key = destinationFor(payload).toNavKey()
+            val key = navKeyFor(payload)
             assertTrue(
                 "${payload.notificationId} routed to $key",
                 key is AlertDetail || key is DeviceDetail || key is IdentityDetail ||
-                    key is NotificationDetail || key == NotificationCenter
+                    key is NotificationDetail || key == NotificationCenter ||
+                    key is LinkProblem
             )
+        }
+    }
+
+    /** The push layer produces links, never screens. */
+    @Test
+    fun `a push produces a deep link with no executable variant`() {
+        allWellFormed.forEach { payload ->
+            val link = deepLinkFor(payload)
+            assertEquals(DeepLinkSource.Notification, link.source)
         }
     }
 
@@ -85,8 +104,10 @@ class PushSafetyTest {
     @Test
     fun `an action push routes to its delivery record`() {
         val payload = payloadOf(PushFixtures.actionExecuting)
-        val destination = destinationFor(payload)
-        assertEquals(PushDestination.DeliveryRecord(payload.notificationId), destination)
+        assertEquals(
+            NexaDeepLink.Notification(payload.notificationId, DeepLinkSource.Notification),
+            deepLinkFor(payload)
+        )
     }
 
     @Test
@@ -100,64 +121,50 @@ class PushSafetyTest {
     }
 
     // ============================================================
-    // INTENT EXTRAS ARE UNTRUSTED TOO
-    // ============================================================
-
-    /**
-     * Any app on the device can build an intent with these extra names, so
-     * what comes back out is re-validated exactly like what came in.
-     */
-    @Test
-    fun `an unknown destination kind in extras is refused`() {
-        assertNull(pushDestinationFromExtras("EXECUTE", "QUARANTINE_DEVICE"))
-        assertNull(pushDestinationFromExtras("ACTION_CONFIRMATION", "ctx-1"))
-        assertNull(pushDestinationFromExtras(null, "ALRT-1"))
-        assertNull(pushDestinationFromExtras("ALERT", null))
-    }
-
-    @Test
-    fun `an unsafe identifier in extras is refused`() {
-        listOf("../../secret", "id with space", "nexa://x", "A".repeat(65)).forEach { id ->
-            assertNull("\"$id\" was accepted", pushDestinationFromExtras("ALERT", id))
-        }
-    }
-
-    @Test
-    fun `valid extras round-trip to the destination they encode`() {
-        assertEquals(
-            PushDestination.Alert("ALRT-1092"),
-            pushDestinationFromExtras(PushIntentKeys.DESTINATION_ALERT, "ALRT-1092")
-        )
-        assertEquals(
-            PushDestination.Center,
-            pushDestinationFromExtras(PushIntentKeys.DESTINATION_CENTER, null)
-        )
-    }
-
-    // ============================================================
     // AN ADDRESS IS NOT A TARGET
     // ============================================================
 
     /**
-     * The stale-IP rule, applied in the tap handler. A device push carrying an
-     * address gets no device route: reconstructing a target from an address is
-     * exactly what Phase 4 exists to prevent.
+     * The stale-identifier rule, applied to the link format. A device push
+     * carrying an address produces no device link: reconstructing a target
+     * from an address is exactly what Phase 4 exists to prevent.
      */
     @Test
-    fun `a device push carrying an address gets no device route`() {
+    fun `a device push carrying an address gets no device link`() {
         val payload = payloadOf(PushFixtures.deviceReferencedByAddress)
-        val destination = destinationFor(payload)
-        assertFalse(destination is PushDestination.Device)
-        assertEquals(PushDestination.DeliveryRecord(payload.notificationId), destination)
+        val link = deepLinkFor(payload)
+        assertFalse(link is NexaDeepLink.Device)
+        assertEquals(
+            NexaDeepLink.Notification(payload.notificationId, DeepLinkSource.Notification),
+            link
+        )
     }
 
     @Test
-    fun `only a MAC is accepted as a device route`() {
-        assertTrue(isRoutableMac("00:1A:2B:3C:4D:5E"))
-        assertFalse(isRoutableMac("192.168.1.105"))
-        assertFalse(isRoutableMac("DEV-1001"))
-        assertFalse(isRoutableMac("00:1A:2B:3C:4D"))
-        assertNull(pushDestinationFromExtras(PushIntentKeys.DESTINATION_DEVICE, "10.0.0.1"))
+    fun `a device push addressed by record id produces a device link`() {
+        val payload = payloadOf(PushFixtures.informationalDevice)
+        val link = deepLinkFor(payload)
+        assertTrue(link is NexaDeepLink.Device)
+        assertEquals("DEV-1001", (link as NexaDeepLink.Device).deviceId)
+    }
+
+    @Test
+    fun `no address or MAC is ever accepted as a link identifier`() {
+        assertFalse(NexaDeepLinkParser.isValidIdentifier("192.168.1.105"))
+        assertFalse(NexaDeepLinkParser.isValidIdentifier("00:1A:2B:3C:4D:5E"))
+        assertFalse(NexaDeepLinkParser.isValidIdentifier("00-1A-2B-3C-4D-5E"))
+        assertTrue(NexaDeepLinkParser.isValidIdentifier("DEV-1001"))
+    }
+
+    /** The resolved address comes from the inventory, never from the link. */
+    @Test
+    fun `a device link resolves its address from the inventory`() {
+        val resolution = resolver.resolve(NexaDeepLink.Device("DEV-1001"))
+        assertTrue(resolution is DeepLinkResolution.Resolved)
+        assertEquals(
+            "00:1A:2B:3C:4D:5E",
+            (resolution as DeepLinkResolution.Resolved).resolvedDeviceMac
+        )
     }
 
     // ============================================================

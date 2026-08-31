@@ -66,3 +66,12 @@ import kotlinx.serialization.Serializable
  * the target. It never reconstructs one.
  */
 @Serializable data class ActionConfirmation(val actionContextId: String) : NavKey
+
+/**
+ * Where a link that went nowhere lands.
+ *
+ * Carries finished operator-facing wording chosen from NEXA's own closed set
+ * of messages — never a parser reason, and never anything that came out of
+ * the link itself.
+ */
+@Serializable data class LinkProblem(val title: String, val message: String) : NavKey

@@ -6,11 +6,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.nexa.MainActivity
 import com.example.nexa.R
+import com.example.nexa.ui.deeplink.toUri
 
 /**
  * Posts NEXA notifications through the platform.
@@ -127,18 +129,22 @@ object PushNotifier {
     /**
      * The tap target.
      *
-     * Opens MainActivity carrying a validated destination kind and id. It
-     * cannot carry a command, because the receiving side only understands the
-     * closed destination vocabulary.
+     * Carries a canonical NEXA deep link, which is re-parsed and re-validated
+     * on arrival exactly like a link from anywhere else. Routing the internal
+     * path through the same text form the outside world uses means it gets
+     * the same scrutiny, rather than a trusted shortcut nobody tests.
+     *
+     * A link cannot carry a command: the format has no way to express one.
      */
     private fun contentIntent(context: Context, payload: PushPayload): PendingIntent {
-        val destination = destinationFor(payload)
+        val link = deepLinkFor(payload)
         val intent = Intent(context, MainActivity::class.java)
             .setAction(Intent.ACTION_VIEW)
+            .setData(Uri.parse(link.toUri()))
+            .putExtra(EXTRA_FROM_NOTIFICATION, true)
             // Resume the existing task rather than stacking a second copy of
             // the app behind the notification.
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .putPushDestination(destination)
 
         return PendingIntent.getActivity(
             context,
@@ -147,6 +153,15 @@ object PushNotifier {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
+
+    /**
+     * Marks an intent NEXA itself built for a notification tap.
+     *
+     * Used only to label the source for navigation purposes. It is forgeable
+     * like any extra, and nothing security-relevant reads it — a link is
+     * validated identically whatever it claims about where it came from.
+     */
+    const val EXTRA_FROM_NOTIFICATION = "com.example.nexa.push.FROM_NOTIFICATION"
 
     /** NEXA red, used only as the small-icon accent Android tints. */
     private const val BRAND_ACCENT = 0xFFD11A2A.toInt()

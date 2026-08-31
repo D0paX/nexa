@@ -5,9 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.nexa.push.PushIntentKeys
-import com.example.nexa.push.PushNavigation
-import com.example.nexa.push.pushDestinationFromExtras
+import com.example.nexa.push.PushNotifier
+import com.example.nexa.ui.deeplink.DeepLinkRouter
+import com.example.nexa.ui.deeplink.DeepLinkSource
 import com.example.nexa.theme.NexaAtmosphere
 import com.example.nexa.theme.NexaTheme
 
@@ -16,9 +16,10 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    // Cold start from a notification tap: the intent is already here, and the
-    // navigation host picks the destination up as soon as it composes.
-    handlePushIntent(intent)
+    // Cold start from a link. The router holds the resolution until the
+    // navigation host composes and consumes it, so nothing races the graph
+    // being ready.
+    handleDeepLinkIntent(intent)
 
     enableEdgeToEdge()
     setContent {
@@ -30,29 +31,33 @@ class MainActivity : ComponentActivity() {
     }
   }
 
-  /** A tap while the task was already running. */
+  /** A link arriving while the task was already running. */
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
-    handlePushIntent(intent)
+    handleDeepLinkIntent(intent)
   }
 
   /**
-   * Turns notification extras into a navigation request.
+   * Hands an incoming link to the router.
    *
-   * The extras are re-validated on the way in. Any app on the device can
-   * construct an intent with these names, so what arrives here gets the same
-   * treatment as what arrives off the network: a destination kind from a
-   * closed vocabulary and an identifier that passes the same checks, or
-   * nothing happens.
+   * The activity does no parsing of its own. It reads the URI off the intent
+   * and passes the string on; validation, access and existence are all the
+   * router's job, and it treats this string exactly as it treats one typed
+   * into a browser.
    *
-   * A tap can only ever ask to be shown something. There is no encoding for
-   * an action, so there is nothing here that could execute one.
+   * The source hint is derived from the intent's own action rather than from
+   * anything inside the link, and it is used for navigation behaviour only —
+   * no security decision reads it. A link is not trusted for arriving from a
+   * notification.
    */
-  private fun handlePushIntent(intent: Intent?) {
-    val kind = intent?.getStringExtra(PushIntentKeys.EXTRA_DESTINATION) ?: return
-    val id = intent.getStringExtra(PushIntentKeys.EXTRA_ID)
-    val destination = pushDestinationFromExtras(kind, id) ?: return
-    PushNavigation.request(destination)
+  private fun handleDeepLinkIntent(intent: Intent?) {
+    val uri = intent?.data?.toString() ?: return
+    val source = if (intent.getBooleanExtra(PushNotifier.EXTRA_FROM_NOTIFICATION, false)) {
+      DeepLinkSource.Notification
+    } else {
+      DeepLinkSource.External
+    }
+    DeepLinkRouter.submit(uri, source)
   }
 }

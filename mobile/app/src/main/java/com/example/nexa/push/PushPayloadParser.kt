@@ -37,10 +37,12 @@ object PushPayloadParser {
      * Identifiers are conservative on purpose.
      *
      * No spaces, no punctuation beyond dash, underscore, dot and colon — colon
-     * so a MAC address passes. Nothing that could be read as a path, a scheme
-     * or a separator by anything downstream.
+     * so a MAC address passes as a target hint. Nothing that could be read as
+     * a path, a scheme or a separator by anything downstream, and it must
+     * begin with an alphanumeric so a bare ".." cannot pass as a name.
      */
-    private val IDENTIFIER = Regex("^[A-Za-z0-9._:-]{1,$MAX_IDENTIFIER_LENGTH}$")
+    private val IDENTIFIER =
+        Regex("^[A-Za-z0-9][A-Za-z0-9._:-]{0,${MAX_IDENTIFIER_LENGTH - 1}}$")
 
     /** Sanity window for a timestamp: 2020-01-01 to 2100-01-01. */
     private const val MIN_EPOCH_SECONDS = 1_577_836_800L

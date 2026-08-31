@@ -52,7 +52,9 @@ object PushFixtures {
     val informationalDevice: Map<String, String> = payload(
         notificationId = "NTF-9003",
         sourceType = "DEVICE",
-        sourceId = DEVICE_MAC,
+        // Addressed by the Phase 1 record identifier. A link cannot carry an
+        // address, so neither does the payload that becomes one.
+        sourceId = "DEV-1001",
         title = "Device observed",
         body = "A device was observed on the network for the first time.",
         severity = "INFORMATION",

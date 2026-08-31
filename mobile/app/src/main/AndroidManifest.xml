@@ -31,6 +31,21 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+              The NEXA deep-link surface.
+
+              Restricted to the nexa scheme, so an arbitrary external intent
+              cannot reach this activity as a link. Everything that does reach
+              it is re-parsed and re-validated by the deep-link router: the
+              filter narrows what arrives, it is not what makes it safe.
+            -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="nexa" />
+            </intent-filter>
         </activity>
 
         <service
