@@ -3,6 +3,7 @@ package com.example.nexa.theme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CloudOff
@@ -15,8 +16,11 @@ import androidx.compose.material.icons.outlined.HistoryToggleOff
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PauseCircleOutline
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SyncProblem
@@ -63,8 +67,12 @@ object NexaIcons {
 
     // --- Actions ---
     val Quarantine: ImageVector = Icons.Outlined.Block
+    val Release: ImageVector = Icons.Outlined.LockOpen
     val Acknowledge: ImageVector = Icons.Outlined.Check
     val Cancel: ImageVector = Icons.Outlined.Close
+    val Reverification: ImageVector = Icons.Outlined.Autorenew
+    val Pending: ImageVector = Icons.Outlined.Schedule
+    val Refresh: ImageVector = Icons.Outlined.Refresh
 
     /** Severity is never carried by color alone — every level has a shape. */
     fun forSeverity(severity: String): ImageVector = when (severity) {
