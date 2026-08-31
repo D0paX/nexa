@@ -140,11 +140,13 @@ fun AlertItem(alert: AlertItemData, onClick: () -> Unit) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                color = severityColor,
-                shape = androidx.compose.foundation.shape.CircleShape,
-                modifier = Modifier.size(if (alert.severity == "CRITICAL") 12.dp else 8.dp)
-            ) {}
+            // Severity carries a shape as well as a color — never color alone.
+            NexaIcon(
+                icon = NexaIcons.forSeverity(alert.severity),
+                contentDescription = alert.severity,
+                size = NexaTokens.IconMedium,
+                tint = severityColor
+            )
             Spacer(modifier = Modifier.width(NexaTokens.SpacingMedium))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

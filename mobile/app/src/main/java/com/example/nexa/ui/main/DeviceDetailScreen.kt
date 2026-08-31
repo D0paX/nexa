@@ -59,7 +59,7 @@ fun DeviceDetailScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("TRUSTED IDENTITY", style = Typography.labelMedium, color = NexaSecureOnDark)
                             Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
-                            StatusBadge(text = "VERIFIED", color = NexaSecureOnDark)
+                            StatusBadge(text = "VERIFIED", color = NexaSecureOnDark, icon = NexaIcons.Secure)
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Text("Corp Laptop - Engineering", style = Typography.headlineMedium, color = NexaTextOnDark)
@@ -102,14 +102,15 @@ fun DeviceDetailScreen(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                             Text("State", style = Typography.bodyLarge, color = NexaTextPrimary)
-                            StatusBadge(text = "PERMITTED", color = NexaSecure)
+                            StatusBadge(text = "PERMITTED", color = NexaSecure, icon = NexaIcons.Acknowledge)
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingLarge))
                         
                         NexaButton(
                             text = "QUARANTINE",
                             onClick = { onNavigate(ActionConfirmation("QUARANTINE_DEVICE", mac, "Quarantine Device")) },
-                            isDestructive = true
+                            isDestructive = true,
+                            icon = NexaIcons.Quarantine
                         )
                     }
                 }

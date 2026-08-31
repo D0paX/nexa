@@ -1,17 +1,20 @@
 package com.example.nexa.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.*
 
@@ -21,7 +24,8 @@ fun NexaButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isDestructive: Boolean = false,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     val containerColor = if (isDestructive) NexaDanger else NexaAction
     val contentColor = NexaTextOnDark
@@ -40,6 +44,11 @@ fun NexaButton(
             .fillMaxWidth()
             .heightIn(min = NexaTokens.MinTouchTarget)
     ) {
+        // The label names the action; the icon only helps it be recognized faster.
+        if (icon != null) {
+            NexaIcon(icon = icon, size = NexaTokens.IconMedium, tint = LocalContentColor.current)
+            Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+        }
         Text(text.uppercase(), style = Typography.labelLarge)
     }
 }
@@ -50,7 +59,8 @@ fun NexaOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    color: Color = NexaTextPrimary
+    color: Color = NexaTextPrimary,
+    icon: ImageVector? = null
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -65,6 +75,10 @@ fun NexaOutlinedButton(
             .fillMaxWidth()
             .heightIn(min = NexaTokens.MinTouchTarget)
     ) {
+        if (icon != null) {
+            NexaIcon(icon = icon, size = NexaTokens.IconMedium, tint = LocalContentColor.current)
+            Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+        }
         Text(text.uppercase(), style = Typography.labelLarge)
     }
 }

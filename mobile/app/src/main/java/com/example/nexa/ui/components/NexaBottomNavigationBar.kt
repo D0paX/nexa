@@ -6,7 +6,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,6 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaAction
@@ -75,9 +77,12 @@ fun NexaBottomNavigationItem(
         modifier = modifier
             .fillMaxHeight()
             .clip(RoundedCornerShape(percent = 50))
+            .semantics { selected = item.isSelected }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
+                role = Role.Tab,
+                onClickLabel = item.label,
                 onClick = item.onClick
             ),
         contentAlignment = Alignment.Center
@@ -100,11 +105,10 @@ fun NexaBottomNavigationItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
-                        tint = NexaAction,
-                        modifier = Modifier.size(NexaTokens.NavigationIconSize)
+                    NexaIcon(
+                        icon = item.icon,
+                        size = NexaTokens.NavigationIconSize,
+                        tint = NexaAction
                     )
                     Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                     Text(
@@ -120,11 +124,10 @@ fun NexaBottomNavigationItem(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = item.label,
-                    tint = NexaTextSecondary,
-                    modifier = Modifier.size(NexaTokens.NavigationIconSize)
+                NexaIcon(
+                    icon = item.icon,
+                    size = NexaTokens.NavigationIconSize,
+                    tint = NexaTextSecondary
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(

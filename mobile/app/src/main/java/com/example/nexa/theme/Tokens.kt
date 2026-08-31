@@ -6,8 +6,13 @@ object NexaTokens {
     // Touch targets
     val MinTouchTarget = 48.dp
 
-    // Iconography
-    val BackIconSize = 24.dp
+    // Iconography — one scale, chosen optically against the type it sits beside
+    val IconSmall = 16.dp    // inline with metadata / label text
+    val IconMedium = 20.dp   // list rows, badges, inline affordances
+    val IconLarge = 24.dp    // navigation, icon-only controls, buttons
+    val IconHero = 40.dp     // empty and error states
+
+    val BackIconSize = IconLarge
     
     // Spacing
     val SpacingXSmall = 4.dp
@@ -37,5 +42,5 @@ object NexaTokens {
     val NavigationBarVerticalPadding = 6.dp
     val NavigationActivePillHeight = 44.dp
     val NavigationActivePillVerticalPadding = 4.dp
-    val NavigationIconSize = 20.dp
+    val NavigationIconSize = IconLarge
 }

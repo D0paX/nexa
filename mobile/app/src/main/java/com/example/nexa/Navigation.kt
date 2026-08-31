@@ -23,11 +23,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.PhoneAndroid
+import com.example.nexa.theme.NexaIcons
 import com.example.nexa.ui.components.EmptyState
 import com.example.nexa.ui.components.NavItem
 import com.example.nexa.ui.components.NexaBottomNavigationBar
@@ -51,10 +47,10 @@ fun MainNavigation() {
             if (isRoot) {
                 NexaBottomNavigationBar(
                     items = listOf(
-                        NavItem("Overview", Icons.Outlined.Home, currentKey == Overview) { if (currentKey != Overview) backStack.add(Overview) },
-                        NavItem("Devices", Icons.Outlined.PhoneAndroid, currentKey == Devices) { if (currentKey != Devices) backStack.add(Devices) },
-                        NavItem("Alerts", Icons.Outlined.Notifications, currentKey == Alerts) { if (currentKey != Alerts) backStack.add(Alerts) },
-                        NavItem("Audit", Icons.Outlined.History, currentKey == Audit) { if (currentKey != Audit) backStack.add(Audit) }
+                        NavItem("Overview", NexaIcons.Overview, currentKey == Overview) { if (currentKey != Overview) backStack.add(Overview) },
+                        NavItem("Devices", NexaIcons.Devices, currentKey == Devices) { if (currentKey != Devices) backStack.add(Devices) },
+                        NavItem("Alerts", NexaIcons.Alerts, currentKey == Alerts) { if (currentKey != Alerts) backStack.add(Alerts) },
+                        NavItem("Audit", NexaIcons.Audit, currentKey == Audit) { if (currentKey != Audit) backStack.add(Audit) }
                     ),
                     modifier = Modifier.padding(bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
                 )
@@ -74,13 +70,13 @@ fun MainNavigation() {
                         )
                     }
                     entry<Devices> {
-                        EmptyState("Devices", "Placeholder for Devices view.", modifier = Modifier.safeDrawingPadding())
+                        EmptyState("Devices", "Placeholder for Devices view.", modifier = Modifier.safeDrawingPadding(), icon = NexaIcons.Devices)
                     }
                     entry<Alerts> {
-                        EmptyState("Alerts", "Placeholder for Alerts view.", modifier = Modifier.safeDrawingPadding())
+                        EmptyState("Alerts", "Placeholder for Alerts view.", modifier = Modifier.safeDrawingPadding(), icon = NexaIcons.Alerts)
                     }
                     entry<Audit> {
-                        EmptyState("Audit", "Placeholder for Audit log.", modifier = Modifier.safeDrawingPadding())
+                        EmptyState("Audit", "Placeholder for Audit log.", modifier = Modifier.safeDrawingPadding(), icon = NexaIcons.Audit)
                     }
                     entry<DeviceDetail> { deviceDetail ->
                         DeviceDetailScreen(

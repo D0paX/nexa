@@ -53,7 +53,15 @@ fun ActionConfirmationScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text("SIMULATION ONLY", style = Typography.headlineMedium.copy(color = NexaInformationOnDark))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            NexaIcon(
+                                icon = NexaIcons.Simulated,
+                                size = NexaTokens.IconLarge,
+                                tint = NexaInformationOnDark
+                            )
+                            Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+                            Text("SIMULATION ONLY", style = Typography.headlineMedium.copy(color = NexaInformationOnDark))
+                        }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Text("NO FIREWALL MUTATION WILL OCCUR", style = Typography.labelMedium, color = NexaTextOnDarkMuted)
                     }
@@ -81,7 +89,7 @@ fun ActionConfirmationScreen(
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("TRUST STATE", style = Typography.labelMedium, color = NexaTextSecondary)
-                            StatusBadge(text = "VERIFIED", color = NexaSecure)
+                            StatusBadge(text = "VERIFIED", color = NexaSecure, icon = NexaIcons.Secure)
                         }
                     }
                 }

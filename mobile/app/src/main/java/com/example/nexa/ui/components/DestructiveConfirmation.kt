@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaDanger
+import com.example.nexa.theme.NexaIcons
 import com.example.nexa.theme.NexaTextOnDark
 import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.Typography
@@ -38,14 +39,16 @@ fun DestructiveConfirmation(
         NexaButton(
             text = "CONFIRM $actionName",
             onClick = onConfirm,
-            isDestructive = true
+            isDestructive = true,
+            icon = NexaIcons.Quarantine
         )
-        
+
         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-        
+
         NexaOutlinedButton(
             text = "CANCEL",
-            onClick = onCancel
+            onClick = onCancel,
+            icon = NexaIcons.Cancel
         )
     }
 }

@@ -58,7 +58,11 @@ fun AlertDetailScreen(
                         else -> NexaInformation
                     }
                     
-                    StatusBadge(text = alert.severity, color = severityColor)
+                    StatusBadge(
+                        text = alert.severity,
+                        color = severityColor,
+                        icon = NexaIcons.forSeverity(alert.severity)
+                    )
                     Text(alert.timeAgo, style = Typography.labelMedium, color = NexaTextMuted)
                 }
             }
@@ -109,7 +113,14 @@ fun AlertDetailScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             TechnicalValue(alert.targetMac)
                         }
-                        Text("Context →", style = Typography.labelMedium, color = NexaAction)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Context", style = Typography.labelMedium, color = NexaAction)
+                            NexaIcon(
+                                icon = NexaIcons.Forward,
+                                size = NexaTokens.IconMedium,
+                                tint = NexaAction
+                            )
+                        }
                     }
                 }
             }
@@ -120,14 +131,16 @@ fun AlertDetailScreen(
                 NexaButton(
                     text = "QUARANTINE TARGET",
                     onClick = { onNavigate(ActionConfirmation("QUARANTINE_DEVICE", alert.targetMac, "Quarantine Target")) },
-                    isDestructive = true
+                    isDestructive = true,
+                    icon = NexaIcons.Quarantine
                 )
-                
+
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-                
+
                 NexaOutlinedButton(
                     text = "ACKNOWLEDGE",
-                    onClick = { /* Acknowledge */ }
+                    onClick = { /* Acknowledge */ },
+                    icon = NexaIcons.Acknowledge
                 )
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
             }
