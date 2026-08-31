@@ -13,6 +13,15 @@ import kotlinx.serialization.Serializable
 @Serializable data class DeviceDetail(val mac: String) : NavKey
 @Serializable data class AlertDetail(val id: String) : NavKey
 
+/**
+ * One historical security record, addressed by its stable event id.
+ *
+ * The id is the one the event store assigned, not a list position, so the
+ * route stays valid as history grows and is the seam a future deep link
+ * resolves against.
+ */
+@Serializable data class AuditDetail(val eventId: String) : NavKey
+
 /** The cryptographic identity inventory. Reached from Devices, not a root tab. */
 @Serializable data object Identities : NavKey
 

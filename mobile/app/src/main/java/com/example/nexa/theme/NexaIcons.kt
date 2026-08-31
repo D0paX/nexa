@@ -3,12 +3,16 @@ package com.example.nexa.theme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.DoNotDisturbOn
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FilterList
@@ -24,13 +28,17 @@ import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.PauseCircleOutline
+import androidx.compose.material.icons.outlined.PowerSettingsNew
+import androidx.compose.material.icons.outlined.PublishedWithChanges
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Rule
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.VerifiedUser
@@ -109,6 +117,31 @@ object NexaIcons {
     val Search: ImageVector = Icons.Outlined.Search
     val Filter: ImageVector = Icons.Outlined.FilterList
     val Sort: ImageVector = Icons.Outlined.SwapVert
+
+    // --- Security history (Phase 5.15) ---
+    /** An observed address changed. Observation only — never an identity change. */
+    val AddressChange: ImageVector = Icons.Outlined.SwapHoriz
+
+    /** Trust standing moved. Distinct from verification, which only confirms. */
+    val TrustChange: ImageVector = Icons.Outlined.PublishedWithChanges
+
+    /** An execution in progress. */
+    val Executing: ImageVector = Icons.Outlined.Bolt
+
+    /** Intent confirmed against actual system state. Never used for a simulation. */
+    val Reconciled: ImageVector = Icons.Outlined.Rule
+
+    /** A lifecycle that reached its end successfully. */
+    val Completed: ImageVector = Icons.Outlined.CheckCircleOutline
+
+    /** A prior state being restored after a failure. */
+    val Rollback: ImageVector = Icons.AutoMirrored.Outlined.Undo
+
+    /** Authorization refused. Distinct in shape from an enforcement block. */
+    val Denied: ImageVector = Icons.Outlined.DoNotDisturbOn
+
+    /** The Phase 4 enforcement circuit breaker. */
+    val CircuitBreaker: ImageVector = Icons.Outlined.PowerSettingsNew
 
     /** Severity is never carried by color alone — every level has a shape. */
     fun forSeverity(severity: String): ImageVector = when (severity) {
