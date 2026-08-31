@@ -86,7 +86,16 @@ fun deliveryExplanation(delivery: NotificationDeliverySummary): String {
             "NEXA cannot read the delivery record for this notification. Whether it was delivered is unknown — this is not a report that it failed."
     }
     val reason = delivery.failureReason
-    return if (reason != null && delivery.state.isFailure) "$base Reported reason: $reason" else base
+    val withReason =
+        if (reason != null && delivery.state.isFailure) "$base Reported reason: $reason" else base
+
+    // Arrival on this handset is worth stating, and worth keeping separate
+    // from the notification service confirming delivery.
+    return if (delivery.receivedOnThisDevice) {
+        "$withReason This message arrived on this device, which is not the same as the notification service confirming delivery."
+    } else {
+        withReason
+    }
 }
 
 val NotificationDeliverySummary.status: NexaStatus get() = state.status
@@ -176,18 +185,27 @@ fun sourceProvenance(source: NotificationSource): String {
  * successfully its notification arrived.
  */
 fun sourceStateSummary(source: NotificationSource): String? = when (source) {
-    is NotificationSource.Alert -> "${severityWord(source)} · ${source.lifecycle.label.uppercase()}"
+    is NotificationSource.Alert ->
+        "${severityWord(source)} · ${source.lifecycle?.label?.uppercase() ?: STATE_NOT_READ}"
     // The execution state only. The action code is long, appears in the
     // detail fields and in the subject, and squeezes the row that has to
     // state the delivery outcome.
-    is NotificationSource.Action -> source.executionState.label.uppercase()
-    is NotificationSource.Trust -> "TRUST ${trustWord(source.trust)}"
+    is NotificationSource.Action -> source.executionState?.label?.uppercase() ?: STATE_NOT_READ
+    is NotificationSource.Trust -> "TRUST ${source.trust?.let(::trustWord) ?: STATE_NOT_READ}"
     is NotificationSource.SecurityEvent -> null
     NotificationSource.Unknown -> null
 }
 
 private fun severityWord(source: NotificationSource.Alert): String =
     source.severity.label.uppercase()
+
+/**
+ * What the interface says when it has an identifier but no state.
+ *
+ * Not "unknown", which in this product is a state the system reports. This is
+ * NEXA saying it has not looked yet.
+ */
+const val STATE_NOT_READ = "STATE NOT READ"
 
 private fun trustWord(trust: TrustState): String = when (trust) {
     TrustState.Trusted -> "TRUSTED"
@@ -232,8 +250,13 @@ fun deliveryImpactStatement(record: NotificationRecord): String {
 }
 
 private fun alertImpact(source: NotificationSource.Alert, state: DeliveryState): String {
-    val lifecycle = source.lifecycle.label.uppercase()
     val severity = source.severity.label.uppercase()
+
+    // No lifecycle read means no claim about the incident, in either
+    // direction. The operator is pointed at where the real answer lives.
+    val lifecycle = source.lifecycle?.label?.uppercase()
+        ?: return "Alert ${source.alertId} was reported as $severity by the notification. Its current state has not been read from the alert service. Open the alert to see where the incident actually stands."
+
     return when {
         state.isFailure ->
             "Alert ${source.alertId} remains $lifecycle and $severity. A delivery failure does not change an incident's state or its severity, and does not reopen or close it."
@@ -247,8 +270,9 @@ private fun alertImpact(source: NotificationSource.Alert, state: DeliveryState):
 }
 
 private fun actionImpact(source: NotificationSource.Action, state: DeliveryState): String {
-    val execution = source.executionState.label.uppercase()
     val simulated = source.executionMode == ExecutionMode.AuditOnly
+    val execution = source.executionState?.label?.uppercase()
+        ?: return actionImpactWithoutState(source, simulated)
     val simulationNote = if (simulated) {
         " This action ran in AUDIT_ONLY: no firewall mutation occurred."
     } else {
@@ -264,8 +288,27 @@ private fun actionImpact(source: NotificationSource.Action, state: DeliveryState
     }
 }
 
+/**
+ * An action whose execution state has not been read.
+ *
+ * The mode is known, because it travelled with the message. The outcome is
+ * the enforcement pipeline to report, and nothing has reported it yet.
+ */
+private fun actionImpactWithoutState(
+    source: NotificationSource.Action,
+    simulated: Boolean
+): String {
+    val simulationNote = if (simulated) {
+        " This action ran in AUDIT_ONLY: no firewall mutation occurred."
+    } else {
+        ""
+    }
+    return "The outcome of action ${source.actionId} has not been read from the enforcement pipeline. This record reports that a message was sent, which is not a statement about what the action did.$simulationNote"
+}
+
 private fun trustImpact(source: NotificationSource.Trust, state: DeliveryState): String {
-    val trust = trustWord(source.trust)
+    val trust = source.trust?.let(::trustWord)
+        ?: return "The trust standing of identity ${source.identityId} has not been read. Notification delivery neither verifies an identity nor changes its standing, so nothing here says what that standing is."
     return when {
         state == DeliveryState.Delivered ->
             "The notification was delivered. Identity ${source.identityId} is $trust — delivering a message about an identity does not verify it or change its trust standing."
@@ -317,12 +360,15 @@ fun notificationSourceFields(record: NotificationRecord): List<NotificationField
             fields += NotificationField("ALERT", source.alertId, technical = true)
             fields += NotificationField("TITLE", source.title)
             fields += NotificationField("SEVERITY", source.severity.label)
-            fields += NotificationField("ALERT STATE", source.lifecycle.label)
+            fields += NotificationField("ALERT STATE", source.lifecycle?.label ?: "Not read")
         }
         is NotificationSource.Action -> {
             fields += NotificationField("ACTION", source.actionId, technical = true)
             fields += NotificationField("ACTION CODE", source.actionCode, technical = true)
-            fields += NotificationField("EXECUTION STATE", source.executionState.label)
+            fields += NotificationField(
+                "EXECUTION STATE",
+                source.executionState?.label ?: "Not read"
+            )
             fields += NotificationField(
                 "EXECUTION MODE",
                 when (source.executionMode) {
@@ -335,7 +381,10 @@ fun notificationSourceFields(record: NotificationRecord): List<NotificationField
         is NotificationSource.Trust -> {
             fields += NotificationField("IDENTITY", source.identityId, technical = true)
             fields += NotificationField("SUBJECT", source.label)
-            fields += NotificationField("TRUST STANDING", trustWord(source.trust))
+            fields += NotificationField(
+                "TRUST STANDING",
+                source.trust?.let(::trustWord) ?: "Not read"
+            )
         }
         is NotificationSource.SecurityEvent -> {
             fields += NotificationField("EVENT", source.eventId, technical = true)
@@ -356,6 +405,13 @@ fun notificationSourceFields(record: NotificationRecord): List<NotificationField
             fields += NotificationField("IDENTITY", target.identityId, technical = true)
             target.scope?.let { fields += NotificationField("SCOPE", it, technical = true) }
         }
+        // Only what the reference actually carried. No label, no scope, no
+        // freshness: none of it was read, and filling it in would present a
+        // target assembled from a message as one observed on the network.
+        is NotificationTarget.UnresolvedDevice ->
+            fields += NotificationField("MAC", target.mac, technical = true)
+        is NotificationTarget.UnresolvedIdentity ->
+            fields += NotificationField("IDENTITY", target.identityId, technical = true)
         NotificationTarget.None -> Unit
     }
 
@@ -378,6 +434,11 @@ fun notificationLinks(record: NotificationRecord): List<NotificationLink> {
     }
     when (val target = record.target) {
         is NotificationTarget.Device -> links += NotificationLink.Device(target.mac)
+        is NotificationTarget.UnresolvedDevice -> links += NotificationLink.Device(target.mac)
+        is NotificationTarget.UnresolvedIdentity ->
+            if (links.none { it is NotificationLink.Identity }) {
+                links += NotificationLink.Identity(target.identityId)
+            }
         is NotificationTarget.Identity ->
             if (links.none { it is NotificationLink.Identity }) {
                 links += NotificationLink.Identity(target.identityId)

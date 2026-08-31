@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only additions.
+
+  This manifest is merged into debug builds and no other. The receiver below
+  exists so the push path can be driven from adb without a Firebase project;
+  it is not present in a release build, and it re-checks the debuggable flag
+  at runtime before doing anything.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <receiver
+            android:name="com.example.nexa.push.debug.NexaPushTestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.nexa.debug.TEST_PUSH" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

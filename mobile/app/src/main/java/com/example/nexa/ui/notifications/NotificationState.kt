@@ -76,6 +76,15 @@ data class NotificationDeliverySummary(
     val createdLabel: String,
     val lastAttemptLabel: String,
     val nextRetryLabel: String? = null,
+    /**
+     * True when this record exists because a push arrived on this device.
+     *
+     * Arrival here is not the Phase 3 delivery model reporting success: the
+     * backend confirms delivery, and a message reaching one handset is a
+     * different fact from that confirmation. Records created this way carry
+     * an unavailable delivery state and say why.
+     */
+    val receivedOnThisDevice: Boolean = false,
     /** Why the last attempt failed, when the record says. Never a generic apology. */
     val failureReason: String? = null,
     val attempts: List<DeliveryAttempt> = emptyList(),
@@ -106,24 +115,34 @@ enum class NotificationSourceType { Alert, Action, Trust, SecurityEvent, Unknown
  */
 sealed interface NotificationSource {
 
+    /**
+     * [lifecycle] is null when the alert's own state has not been read.
+     *
+     * A push carries identifiers and hints, never authoritative state, so a
+     * record created from one knows the alert exists and knows nothing about
+     * where it stands. Null says exactly that, and the interface says it too
+     * rather than picking a plausible-looking lifecycle.
+     */
     data class Alert(
         val alertId: String,
         val title: String,
         val severity: AlertSeverity,
-        val lifecycle: AlertLifecycle
+        val lifecycle: AlertLifecycle?
     ) : NotificationSource
 
+    /** [executionState] is null when the execution's state has not been read. */
     data class Action(
         val actionId: String,
         val actionCode: String,
-        val executionState: ExecutionState,
+        val executionState: ExecutionState?,
         val executionMode: ExecutionMode
     ) : NotificationSource
 
+    /** [trust] is null when the identity's standing has not been read. */
     data class Trust(
         val identityId: String,
         val label: String,
-        val trust: TrustState
+        val trust: TrustState?
     ) : NotificationSource
 
     data class SecurityEvent(
@@ -181,6 +200,19 @@ sealed interface NotificationTarget {
         val scope: String?
     ) : NotificationTarget
 
+    /**
+     * A device NEXA has an address for and nothing else.
+     *
+     * What a push leaves behind. Carrying only the MAC is deliberate: the
+     * label, scope and observation freshness are unknown, and inventing
+     * plausible values would be a target reconstructed from a message rather
+     * than read from the system.
+     */
+    data class UnresolvedDevice(val mac: String) : NotificationTarget
+
+    /** An identity NEXA has an identifier for and nothing else. */
+    data class UnresolvedIdentity(val identityId: String) : NotificationTarget
+
     data object None : NotificationTarget
 }
 
@@ -188,6 +220,8 @@ val NotificationTarget.displayLabel: String?
     get() = when (this) {
         is NotificationTarget.Device -> label
         is NotificationTarget.Identity -> label
+        is NotificationTarget.UnresolvedDevice -> "Unresolved device"
+        is NotificationTarget.UnresolvedIdentity -> "Unresolved identity"
         NotificationTarget.None -> null
     }
 
@@ -195,6 +229,10 @@ val NotificationTarget.scopeOrNull: String?
     get() = when (this) {
         is NotificationTarget.Device -> scope
         is NotificationTarget.Identity -> scope
+        // An unresolved reference has no scope, and guessing one would put a
+        // record in a network segment nothing confirmed it belongs to.
+        is NotificationTarget.UnresolvedDevice -> null
+        is NotificationTarget.UnresolvedIdentity -> null
         NotificationTarget.None -> null
     }
 
@@ -360,6 +398,8 @@ private fun NotificationTarget.matchesQuery(q: String): Boolean = when (this) {
     is NotificationTarget.Identity ->
         identityId.contains(q, true) || label.contains(q, true) ||
             scope?.contains(q, true) == true
+    is NotificationTarget.UnresolvedDevice -> mac.contains(q, true)
+    is NotificationTarget.UnresolvedIdentity -> identityId.contains(q, true)
     NotificationTarget.None -> false
 }
 

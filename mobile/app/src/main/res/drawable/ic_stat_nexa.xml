@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The status-bar glyph.
+
+  Android renders a small icon as a monochrome mask: every non-transparent
+  pixel becomes the notification tint, so a full-colour launcher logo would
+  arrive as a solid white blob. This is a purpose-built single-path shield,
+  drawn at the platform's 24dp status-bar size. The official NEXA launcher
+  icon is a separate asset and is untouched.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2L4,5.5v6.2c0,4.6 3.4,8.9 8,10.3c4.6,-1.4 8,-5.7 8,-10.3V5.5L12,2zM12,4.2l6,2.6v4.9c0,3.6 -2.5,7 -6,8.2c-3.5,-1.2 -6,-4.6 -6,-8.2V6.8L12,4.2zM11,7v5h2V7H11zM11,14v2h2v-2H11z" />
+</vector>

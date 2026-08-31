@@ -139,6 +139,8 @@ private fun NotificationCenterContent(
                 Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                 DeliveryFreshness(state.freshness)
             }
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+            PushStatusCard()
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }
 

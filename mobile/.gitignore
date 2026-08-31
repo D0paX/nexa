@@ -13,3 +13,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firebase client configuration.
+#
+# Per-project configuration supplied by the project owner, not source. It is
+# ignored so that adding it locally to enable push cannot accidentally commit
+# it, and so the repository never carries one project's Firebase identifiers.
+# Service-account keys and Admin SDK credentials are server-side and must
+# never be placed in this module at all.
+google-services.json
+app/google-services.json

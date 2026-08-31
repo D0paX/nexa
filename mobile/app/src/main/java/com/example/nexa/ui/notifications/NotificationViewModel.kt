@@ -2,6 +2,7 @@ package com.example.nexa.ui.notifications
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.push.PushInbox
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +16,11 @@ import kotlinx.coroutines.launch
  * recomputes during composition and no delivery reasoning happens inside a
  * layout pass.
  *
- * [onDeliveryRecords] and [onDeliveryUpdate] are the seams a later push or
- * realtime layer feeds. Neither exists yet, and nothing in this class knows
- * what a push message is — no Firebase type appears anywhere in this package,
- * so the transport can be added later without touching the screen.
+ * [onDeliveryRecords] and [onDeliveryUpdate] are the seams the transport
+ * feeds. Push arrives through the first of them; a realtime source will use
+ * the same two. Nothing in this class knows what a push message is — no
+ * Firebase type appears anywhere in this package, and the transport reaches
+ * it only as already-validated delivery records.
  */
 class NotificationCenterViewModel : ViewModel() {
 
@@ -31,6 +33,7 @@ class NotificationCenterViewModel : ViewModel() {
 
     init {
         load()
+        observeIncomingPush()
     }
 
     fun load() {
@@ -38,7 +41,25 @@ class NotificationCenterViewModel : ViewModel() {
             _state.value = NotificationCenterUiState.Loading
             delay(LOAD_DELAY_MS)
             pageLimit = NOTIFICATION_PAGE_SIZE
-            _state.value = NotificationPreview.scenario
+            val scenario = NotificationPreview.scenario as NotificationCenterUiState.Content
+            // Messages that arrived before this screen existed are part of the
+            // record too, so the load starts from what the inbox already holds.
+            _state.value = project(
+                scenario.copy(all = PushInbox.records.value + scenario.all)
+            )
+        }
+    }
+
+    /**
+     * The delivery intelligence surface is one surface.
+     *
+     * Push arrivals feed the same read model the rest of the Notification
+     * Center uses rather than a parallel "push" list, so an operator has one
+     * place to look and one set of rules about what delivery state means.
+     */
+    private fun observeIncomingPush() {
+        viewModelScope.launch {
+            PushInbox.records.collect { onDeliveryRecords(it) }
         }
     }
 
@@ -133,7 +154,11 @@ class NotificationDetailViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = NotificationDetailUiState.Loading
             delay(LOAD_DELAY_MS)
+            // Preview records first, then messages that arrived on this
+            // device. A record for neither is reported unavailable rather
+            // than rebuilt from whatever the notification happened to say.
             _state.value = NotificationPreview.detailFor(deliveryId)
+                .orElse { detailFromInbox(deliveryId) }
         }
     }
 
@@ -143,6 +168,28 @@ class NotificationDetailViewModel : ViewModel() {
             load(it)
         }
     }
+
+    private fun detailFromInbox(deliveryId: String): NotificationDetailUiState {
+        val record = PushInbox.records.value.firstOrNull { it.id == deliveryId }
+            ?: return NotificationDetailUiState.Unavailable
+        return NotificationDetailUiState.Content(
+            NotificationDetailData(
+                record = record,
+                deliveryFields = notificationDeliveryFields(record),
+                sourceFields = notificationSourceFields(record),
+                attempts = record.delivery.attempts,
+                links = notificationLinks(record),
+                // A record built from an arriving message has read nothing
+                // from the system, so its context is unknown rather than live.
+                freshness = com.example.nexa.ui.common.DataFreshness.Unknown
+            )
+        )
+    }
+
+    private inline fun NotificationDetailUiState.orElse(
+        fallback: () -> NotificationDetailUiState
+    ): NotificationDetailUiState =
+        if (this is NotificationDetailUiState.Unavailable) fallback() else this
 
     private companion object {
         const val LOAD_DELAY_MS = 300L

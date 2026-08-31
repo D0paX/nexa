@@ -32,6 +32,10 @@ import com.example.nexa.ui.main.IdentityDetailScreen
 import com.example.nexa.ui.main.NotificationCenterScreen
 import com.example.nexa.ui.main.NotificationDetailScreen
 import com.example.nexa.ui.main.OverviewScreen
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.nexa.push.PushNavigation
+import com.example.nexa.push.toNavKey
 import com.example.nexa.ui.navigation.NavigationDirectionResolver
 import com.example.nexa.ui.navigation.navigationTransform
 import com.example.nexa.ui.navigation.rememberReducedMotion
@@ -48,6 +52,17 @@ fun MainNavigation() {
         currentKey == Alerts || currentKey == Audit
 
     val reducedMotion = rememberReducedMotion()
+
+    // A tapped notification asks to be taken somewhere. It is pushed onto the
+    // existing stack rather than replacing it, so Back returns to wherever the
+    // operator already was — or to Overview on a cold start.
+    val pendingPush by PushNavigation.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingPush) {
+        val destination = pendingPush ?: return@LaunchedEffect
+        val key = destination.toNavKey()
+        if (backStack.lastOrNull() != key) backStack.add(key)
+        PushNavigation.consume()
+    }
 
     // Direction is resolved once per destination change and read by both
     // transition specs, so push and pop agree about which way the application

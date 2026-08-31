@@ -4,6 +4,18 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+// Firebase is configured by the project owner's own google-services.json,
+// which is deliberately not in this repository: it is per-project
+// configuration, not source. Applying the plugin without that file fails the
+// build outright, so it is applied only when the file is actually present.
+// Without it the app builds and runs normally, FirebaseApp simply never
+// initializes, and the push layer reports its transport as unavailable
+// rather than pretending to be connected.
+val googleServicesConfig = file("google-services.json")
+if (googleServicesConfig.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.example.nexa"
     compileSdk = 36
@@ -77,6 +89,10 @@ dependencies {
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.androidx.test.espresso.core)
+
+  // Push transport (Firebase Cloud Messaging)
+  implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.messaging)
 
   // Navigation
   implementation(libs.androidx.navigation3.ui)

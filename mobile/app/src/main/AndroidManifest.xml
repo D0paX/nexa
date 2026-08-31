@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+      Required from API 33 to post notifications. Requested in context from the
+      Notification Center rather than on first launch, so an operator is asked
+      at the moment the permission is about to mean something.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
+        android:name=".NexaApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -9,14 +17,47 @@
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
         android:theme="@style/Theme.Nexa">
+
+        <!--
+          singleTop so a notification tap resumes the running task and delivers
+          the intent to onNewIntent, instead of stacking a second copy of the
+          app behind the one already open.
+        -->
         <activity
             android:name=".MainActivity"
+            android:launchMode="singleTop"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".push.NexaMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- The monochrome status-bar glyph and the accent Android tints it with. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_nexa" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/nexa_notification_accent" />
+        <!--
+          Messages NEXA sends are data-only, so this default channel is a
+          fallback for anything that arrives without one. It is the quiet
+          channel on purpose: an unrecognised message has not earned an
+          interruption.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="nexa_security_notices" />
+
     </application>
 
 </manifest>
