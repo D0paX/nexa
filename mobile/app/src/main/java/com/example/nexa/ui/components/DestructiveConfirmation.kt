@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaDanger
-import com.example.nexa.theme.NexaTextPrimary
+import com.example.nexa.theme.NexaTextOnDark
 import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.Typography
 
@@ -29,7 +29,7 @@ fun DestructiveConfirmation(
             Text(
                 text = consequenceText,
                 style = Typography.bodyLarge,
-                color = NexaTextPrimary
+                color = NexaTextOnDark
             )
         }
         

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaAction
+import com.example.nexa.theme.NexaTextOnDark
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTextSecondary
 import com.example.nexa.theme.NexaTokens
@@ -36,12 +37,16 @@ fun NexaBottomNavigationBar(
         shape = RoundedCornerShape(percent = 50),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NexaTokens.SpacingMedium, vertical = NexaTokens.SpacingLarge) // Elevated from bottom
+            .padding(
+                horizontal = NexaTokens.NavigationHorizontalMargin,
+                vertical = NexaTokens.NavigationBottomSpacing
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = NexaTokens.SpacingSmall, horizontal = NexaTokens.SpacingSmall),
+                .height(NexaTokens.NavigationHeight)
+                .padding(horizontal = NexaTokens.NavigationItemSpacing),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -65,8 +70,8 @@ fun NexaBottomNavigationItem(
     
     Box(
         modifier = modifier
-            .height(56.dp)
-            .clip(CircleShape)
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(percent = 50))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -78,10 +83,10 @@ fun NexaBottomNavigationItem(
             // Elevated glass pill for active state
             GlassSurface(
                 variant = GlassVariant.Hero,
-                shape = CircleShape,
+                shape = RoundedCornerShape(percent = 50),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(NexaTokens.NavigationActivePillHeight)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -98,7 +103,7 @@ fun NexaBottomNavigationItem(
                     Text(
                         text = item.label,
                         style = Typography.labelMedium,
-                        color = NexaTextPrimary
+                        color = NexaTextOnDark
                     )
                 }
             }

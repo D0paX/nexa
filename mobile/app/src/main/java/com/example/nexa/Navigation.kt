@@ -7,6 +7,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Scaffold
@@ -51,13 +55,14 @@ fun MainNavigation() {
                         NavItem("Devices", Icons.Outlined.PhoneAndroid, currentKey == Devices) { if (currentKey != Devices) backStack.add(Devices) },
                         NavItem("Alerts", Icons.Outlined.Notifications, currentKey == Alerts) { if (currentKey != Alerts) backStack.add(Alerts) },
                         NavItem("Audit", Icons.Outlined.History, currentKey == Audit) { if (currentKey != Audit) backStack.add(Audit) }
-                    )
+                    ),
+                    modifier = Modifier.padding(bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
                 )
             }
         },
         containerColor = androidx.compose.ui.graphics.Color.Transparent
-    ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
+    ) { _ ->
+        Box(modifier = Modifier.fillMaxSize()) {
             NavDisplay(
                 backStack = backStack,
                 onBack = { backStack.removeLastOrNull() },

@@ -22,15 +22,6 @@ fun OverviewScreen(
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("NEXA", style = Typography.displayLarge, color = NexaTextPrimary) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = NexaTextPrimary
-                )
-            )
-        },
         containerColor = Color.Transparent,
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
@@ -38,11 +29,16 @@ fun OverviewScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = NexaTokens.SpacingMedium),
-            verticalArrangement = Arrangement.spacedBy(NexaTokens.SpacingMedium)
+                .padding(horizontal = NexaTokens.SpacingMedium)
         ) {
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+                Text(
+                    text = "NEXA",
+                    style = Typography.displayLarge,
+                    color = NexaTextPrimary
+                )
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium)) // modest gap
             }
             
             // Primary security state (HERO SURFACE)
@@ -52,7 +48,7 @@ fun OverviewScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth().padding(vertical = NexaTokens.SpacingSmall)
                     ) {
-                        Text(text = "SYSTEM STATE", style = Typography.labelMedium, color = NexaTextSecondary)
+                        Text(text = "SYSTEM STATE", style = Typography.labelMedium, color = NexaTextOnDark.copy(alpha = 0.7f))
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Text(
                             text = "ENFORCING",
@@ -63,10 +59,11 @@ fun OverviewScreen(
                         Text(
                             text = "Nftables backend is active. 3 devices quarantined.",
                             style = Typography.bodyMedium,
-                            color = NexaTextPrimary
+                            color = NexaTextOnDark
                         )
                     }
                 }
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall)) // compact gap
             }
             
             // Important metrics (Bento Row)
@@ -90,17 +87,16 @@ fun OverviewScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingLarge)) // meaningful section gap
             }
 
-            // Recent alerts
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingLarge))
                 Text(
                     text = "Recent Alerts",
                     style = Typography.titleLarge,
                     color = NexaTextPrimary
                 )
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium)) // gap before activity list
             }
 
             items(MockData.recentAlerts) { alert ->
@@ -108,10 +104,10 @@ fun OverviewScreen(
                     alert = alert,
                     onClick = { onItemClick(AlertDetail(alert.id)) }
                 )
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
             }
-            
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
+                Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance))
             }
         }
     }

@@ -2,33 +2,36 @@ package com.example.nexa.theme
 
 import androidx.compose.ui.graphics.Color
 
-// NEXA Atmospheric Background (Deep Slate Blue/Cyan Base)
-val NexaBackground = Color(0xFF07090E)
-val NexaElevatedBackground = Color(0xFF0D111A)
+// NEXA Atmospheric Background (Light Spatial Environment)
+val NexaBackground = Color(0xFFF8F9FA) // Soft off-white foundation
+val NexaElevatedBackground = Color(0xFFFFFFFF)
 
 // Atmospheric Light Tones
-val NexaAtmosphereLight = Color(0xFF152238) // Cool blue light
-val NexaAtmosphereCore = Color(0xFF1C1B29)  // Muted violet core
+val NexaAtmosphereLight = Color(0xFFF1F5F9) // Pale cool neutral
+val NexaAtmosphereCore = Color(0xFFFFFFFF)  // Soft center illumination
 
-// Liquid Glass Surfaces (Tinted Slate/Cyan)
-val NexaGlassSurface = Color(0xFF1A2130).copy(alpha = 0.45f)
-val NexaStrongGlassSurface = Color(0xFF263248).copy(alpha = 0.65f)
-val NexaHeroGlassSurface = Color(0xFF2B3A55).copy(alpha = 0.75f)
-val NexaGlassBorder = Color(0xFF88C0D0).copy(alpha = 0.2f) // Cyan-tinted border for retro-futurism
-val NexaGlassHighlight = Color(0xFF88C0D0).copy(alpha = 0.1f)
+// Liquid Glass Surfaces (Light & Charcoal)
+val NexaGlassSurface = Color(0xFFFFFFFF).copy(alpha = 0.65f) // Standard light frosted glass
+val NexaStrongGlassSurface = Color(0xFFFFFFFF).copy(alpha = 0.90f) // Stronger white glass
+val NexaHeroGlassSurface = Color(0xFF1E293B).copy(alpha = 0.95f) // Charcoal hero anchor
+val NexaDestructiveSurface = Color(0xFF18181B).copy(alpha = 0.95f) // Deep charcoal for high impact
+
+val NexaGlassBorder = Color(0xFFFFFFFF).copy(alpha = 0.6f) // White reflection
+val NexaGlassHighlight = Color(0xFFFFFFFF).copy(alpha = 0.4f)
 
 // Typography Colors
-val NexaTextPrimary = Color(0xFFE2E8F0)
-val NexaTextSecondary = Color(0xFF94A3B8)
-val NexaTextMuted = Color(0xFF64748B)
+val NexaTextPrimary = Color(0xFF0F172A) // Near black / deep charcoal
+val NexaTextSecondary = Color(0xFF475569) // Restrained dark gray
+val NexaTextMuted = Color(0xFF94A3B8)
+val NexaTextOnDark = Color(0xFFF8F9FA) // White text on dark/high-impact surfaces
 
 // Semantic Colors
-val NexaSecure = Color(0xFF10B981) // Success
-val NexaInformation = Color(0xFF3B82F6) // Information
-val NexaWarning = Color(0xFFF59E0B) // Warning
-val NexaDanger = Color(0xFFEF4444) // Danger
-val NexaCritical = Color(0xFFB91C1C) // Critical
+val NexaSecure = Color(0xFF059669) // Success (adjusted for light bg contrast)
+val NexaInformation = Color(0xFF2563EB) // Information
+val NexaWarning = Color(0xFFD97706) // Warning
+val NexaDanger = Color(0xFFDC2626) // Danger
+val NexaCritical = Color(0xFF991B1B) // Critical
 val NexaNeutral = Color(0xFF64748B) // Neutral
-val NexaUnknown = Color(0xFF8B5CF6) // Unknown
-val NexaDisabled = Color(0xFF334155) // Disabled
-val NexaAction = Color(0xFF38BDF8) // Primary Action (Restrained Retro-Futurism accent)
+val NexaUnknown = Color(0xFF7C3AED) // Unknown
+val NexaDisabled = Color(0xFF94A3B8) // Disabled
+val NexaAction = Color(0xFFE11D48) // Primary Action (NEXA Red brand accent)

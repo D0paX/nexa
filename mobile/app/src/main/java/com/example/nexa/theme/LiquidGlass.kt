@@ -28,15 +28,15 @@ fun Modifier.liquidGlass(
         GlassVariant.Standard -> NexaGlassSurface
         GlassVariant.Strong -> NexaStrongGlassSurface
         GlassVariant.Hero -> NexaHeroGlassSurface
-        GlassVariant.Destructive -> NexaDanger.copy(alpha = 0.15f)
-        GlassVariant.Interactive -> NexaGlassSurface.copy(alpha = 0.55f)
+        GlassVariant.Destructive -> NexaDestructiveSurface
+        GlassVariant.Interactive -> NexaGlassSurface.copy(alpha = 0.85f)
     }
 
     // Inner subtle glow/gradient to simulate glass volume
     val innerGlowBrush = Brush.verticalGradient(
         colors = listOf(
             surfaceColor,
-            surfaceColor.copy(alpha = surfaceColor.alpha * 0.5f)
+            surfaceColor.copy(alpha = surfaceColor.alpha * 0.9f)
         )
     )
 
@@ -48,8 +48,8 @@ fun Modifier.liquidGlass(
     }
 
     val borderColor = when (variant) {
-        GlassVariant.Destructive -> NexaDanger.copy(alpha = 0.3f)
-        GlassVariant.Hero -> NexaGlassBorder.copy(alpha = 0.2f)
+        GlassVariant.Destructive -> NexaAction.copy(alpha = 0.5f) // Red border for destructive
+        GlassVariant.Hero -> Color.White.copy(alpha = 0.1f) // Subtle reflection on dark hero
         GlassVariant.Interactive -> NexaAction.copy(alpha = 0.3f)
         else -> NexaGlassBorder
     }
@@ -59,12 +59,14 @@ fun Modifier.liquidGlass(
         colors = listOf(borderColor, borderColor.copy(alpha = 0.05f))
     )
 
+    val shadowColor = Color(0xFF0F172A) // Near-black for soft shadow
+
     this
         .shadow(
             elevation = elevation,
             shape = shape,
-            spotColor = NexaGlassHighlight,
-            ambientColor = NexaGlassHighlight
+            spotColor = shadowColor.copy(alpha = 0.1f),
+            ambientColor = shadowColor.copy(alpha = 0.05f)
         )
         .background(innerGlowBrush, shape)
         .border(width = 1.dp, brush = borderBrush, shape = shape)

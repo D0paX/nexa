@@ -22,4 +22,12 @@ object NexaTokens {
     val ElevationStrong = 16.dp
     val ElevationHero = 24.dp
     val ElevationDestructive = 12.dp
+
+    // Navigation
+    val NavigationHeight = 64.dp
+    val NavigationHorizontalMargin = 24.dp
+    val NavigationBottomSpacing = 24.dp
+    val NavigationContentClearance = 120.dp
+    val NavigationItemSpacing = 4.dp
+    val NavigationActivePillHeight = 40.dp
 }

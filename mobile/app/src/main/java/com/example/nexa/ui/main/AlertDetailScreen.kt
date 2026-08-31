@@ -75,7 +75,7 @@ fun AlertDetailScreen(
             item {
                 GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
-                        Text(text = alert.description, style = Typography.headlineMedium, color = NexaTextPrimary)
+                        Text(text = alert.description, style = Typography.headlineMedium, color = NexaTextOnDark)
                     }
                 }
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
@@ -138,6 +138,7 @@ fun AlertDetailScreen(
                     text = "ACKNOWLEDGE",
                     onClick = { /* Acknowledge */ }
                 )
+                Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance))
             }
         }
     }

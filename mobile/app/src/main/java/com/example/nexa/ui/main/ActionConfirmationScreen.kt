@@ -61,7 +61,7 @@ fun ActionConfirmationScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                         Text("SIMULATION ONLY", style = Typography.headlineMedium.copy(color = NexaInformation))
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-                        Text("NO FIREWALL MUTATION WILL OCCUR", style = Typography.labelMedium, color = NexaTextSecondary)
+                        Text("NO FIREWALL MUTATION WILL OCCUR", style = Typography.labelMedium, color = NexaTextOnDark.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -107,7 +107,7 @@ fun ActionConfirmationScreen(
             }
             
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
+                Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance))
             }
         }
     }

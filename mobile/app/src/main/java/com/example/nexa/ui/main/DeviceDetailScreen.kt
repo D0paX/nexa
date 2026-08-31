@@ -71,8 +71,8 @@ fun DeviceDetailScreen(
                             StatusBadge(text = "VERIFIED", color = NexaSecure)
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-                        Text("Corp Laptop - Engineering", style = Typography.headlineMedium, color = NexaTextPrimary)
-                        Text("Owner: jsmith@example.com", style = Typography.bodyLarge, color = NexaTextSecondary)
+                        Text("Corp Laptop - Engineering", style = Typography.headlineMedium, color = NexaTextOnDark)
+                        Text("Owner: jsmith@example.com", style = Typography.bodyLarge, color = NexaTextOnDark.copy(alpha = 0.8f))
                     }
                 }
             }
@@ -125,7 +125,7 @@ fun DeviceDetailScreen(
             }
             
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
+                Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance))
             }
         }
     }
