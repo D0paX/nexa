@@ -1,17 +1,20 @@
 package com.example.nexa.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaAction
@@ -20,7 +23,7 @@ import com.example.nexa.theme.NexaTextSecondary
 import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.Typography
 
-data class NavItem(val label: String, val isSelected: Boolean, val onClick: () -> Unit)
+data class NavItem(val label: String, val icon: ImageVector, val isSelected: Boolean, val onClick: () -> Unit)
 
 @Composable
 fun NexaBottomNavigationBar(
@@ -30,9 +33,10 @@ fun NexaBottomNavigationBar(
     // Spatial Floating Control Layer
     GlassSurface(
         variant = GlassVariant.Standard,
+        shape = RoundedCornerShape(percent = 50),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NexaTokens.SpacingMedium, vertical = NexaTokens.SpacingMedium)
+            .padding(horizontal = NexaTokens.SpacingMedium, vertical = NexaTokens.SpacingLarge) // Elevated from bottom
     ) {
         Row(
             modifier = Modifier
@@ -42,9 +46,10 @@ fun NexaBottomNavigationBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
+                val weight by animateFloatAsState(targetValue = if (item.isSelected) 2f else 1f, label = "weight")
                 NexaBottomNavigationItem(
                     item = item,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(weight)
                 )
             }
         }
@@ -56,33 +61,66 @@ fun NexaBottomNavigationItem(
     item: NavItem,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    
     Box(
         modifier = modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(NexaTokens.CornerRadiusMedium))
-            .clickable(onClick = item.onClick),
+            .height(56.dp)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = item.onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (item.isSelected) {
             // Elevated glass pill for active state
             GlassSurface(
                 variant = GlassVariant.Hero,
-                modifier = Modifier.fillMaxSize()
+                shape = CircleShape,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
             ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label,
+                        tint = NexaAction,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                     Text(
-                        text = item.label.uppercase(),
+                        text = item.label,
                         style = Typography.labelMedium,
-                        color = NexaAction
+                        color = NexaTextPrimary
                     )
                 }
             }
         } else {
-            Text(
-                text = item.label.uppercase(),
-                style = Typography.labelMedium,
-                color = NexaTextSecondary
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.label,
+                    tint = NexaTextSecondary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = item.label,
+                    style = Typography.labelMedium,
+                    color = NexaTextSecondary
+                )
+            }
         }
     }
 }
