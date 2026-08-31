@@ -2,7 +2,9 @@ package com.example.nexa.ui.overview
 
 import com.example.nexa.theme.NexaStatus
 import com.example.nexa.ui.common.ActivityEntry
+import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
 
 /**
  * The operator-facing state of the NEXA Security Command Center.
@@ -47,11 +49,8 @@ enum class SecurityPosture {
 // ENFORCEMENT
 // ============================================================
 
-/** Phase 4 execution mode, surfaced so simulation is never mistaken for enforcement. */
-enum class ExecutionMode { Enforce, AuditOnly }
-
-/** Phase 4 enforcement circuit breaker. */
-enum class CircuitBreakerState { Closed, Open, HalfOpen }
+// Execution mode and circuit breaker are shared Phase 4 vocabulary —
+// see com.example.nexa.ui.common.
 
 /**
  * What enforcement is actually doing right now.

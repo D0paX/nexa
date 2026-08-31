@@ -16,8 +16,14 @@ import com.example.nexa.ActionConfirmation
 import com.example.nexa.AlertDetail
 import com.example.nexa.IdentityDetail
 import com.example.nexa.theme.*
+import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
 import com.example.nexa.ui.common.icon
+import com.example.nexa.ui.enforcement.ActionPreparation
+import com.example.nexa.ui.enforcement.ActionTarget
+import com.example.nexa.ui.enforcement.AuthorizationState
+import com.example.nexa.ui.enforcement.EnforcementAction
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.status
 import com.example.nexa.ui.components.*
@@ -352,19 +358,11 @@ private fun DeviceDetailContent(
                     DeviceActionControl(
                         action = action,
                         onInvoke = {
-                            // The client only requests: snapshot, authorization and
-                            // execution all remain behind the Phase 4 flow.
-                            onNavigate(
-                                ActionConfirmation(
-                                    action = action.actionCode,
-                                    targetMac = device.mac,
-                                    actionLabel = action.label,
-                                    // Scope and identity travel with the target so the
-                                    // action is never reconstructed from an address alone.
-                                    scope = device.scope,
-                                    identityId = device.identityId
-                                )
-                            )
+                            // The context is assembled once, here, and handed on by
+                            // handle. The client only requests: snapshot,
+                            // authorization and execution stay behind Phase 4.
+                            val contextId = prepareDeviceAction(action, data)
+                            if (contextId != null) onNavigate(ActionConfirmation(contextId))
                         }
                     )
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
@@ -482,6 +480,50 @@ private fun InlineNotice(
         Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
         Text(text = text, style = NexaType.Metadata, color = NexaTextSecondary)
     }
+}
+
+/**
+ * Assembles the enforcement context for a device action.
+ *
+ * Everything the confirmation screen shows is resolved here from the device's
+ * own state — nothing is defaulted, and no address is treated as identity.
+ */
+private fun prepareDeviceAction(
+    action: DeviceAction,
+    data: DeviceDetailData
+): String? {
+    val enforcementAction = when (action.kind) {
+        DeviceActionKind.Quarantine -> EnforcementAction.QuarantineDevice
+        DeviceActionKind.Release -> EnforcementAction.ReleaseQuarantine
+        DeviceActionKind.RequireReverification -> EnforcementAction.RequireReverification
+    }
+    val device = data.device
+
+    return ActionPreparation.prepare(
+        action = enforcementAction,
+        target = ActionTarget(
+            deviceId = device.id,
+            label = device.label,
+            mac = device.mac,
+            ip = device.ip,
+            scope = device.scope,
+            presence = device.presence,
+            identityId = device.identityId,
+            trust = device.trust,
+            observationFreshness = device.freshness,
+            lastObservedLabel = device.lastSeenLabel,
+            bindingId = data.enforcement.bindingLabel,
+            ownershipScope = data.enforcement.ownershipScope
+        ),
+        authorization = AuthorizationState.ApprovalRequired,
+        executionMode = ExecutionMode.AuditOnly,
+        currentEnforcement = device.enforcement,
+        circuitBreaker = if (device.enforcement == DeviceEnforcement.Paused) {
+            CircuitBreakerState.Open
+        } else {
+            CircuitBreakerState.Closed
+        }
+    )
 }
 
 private fun statusForSeverityColor(severity: String) = when (severity) {

@@ -16,8 +16,15 @@ import com.example.nexa.ActionConfirmation
 import com.example.nexa.AlertDetail
 import com.example.nexa.DeviceDetail
 import com.example.nexa.theme.*
+import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.devices.DeviceEnforcement
+import com.example.nexa.ui.enforcement.ActionPreparation
+import com.example.nexa.ui.enforcement.ActionTarget
+import com.example.nexa.ui.enforcement.AuthorizationState
+import com.example.nexa.ui.enforcement.EnforcementAction
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.status
@@ -260,19 +267,12 @@ private fun IdentityDetailContent(
                                 IdentityActionKind.ViewDevice ->
                                     identity.device?.let { onNavigate(DeviceDetail(it.mac)) }
 
-                                IdentityActionKind.RequireReverification ->
+                                IdentityActionKind.RequireReverification -> {
                                     // A trust operation, routed through the same
-                                    // confirmation flow as any other action, carrying
-                                    // identity and scope rather than an address alone.
-                                    onNavigate(
-                                        ActionConfirmation(
-                                            action = action.actionCode,
-                                            targetMac = identity.device?.mac ?: "",
-                                            actionLabel = action.label,
-                                            scope = identity.device?.scope ?: "",
-                                            identityId = identity.identityId
-                                        )
-                                    )
+                                    // confirmation flow as every other action.
+                                    val contextId = prepareReverification(identity)
+                                    if (contextId != null) onNavigate(ActionConfirmation(contextId))
+                                }
                             }
                         }
                     )
@@ -486,6 +486,36 @@ private fun IdentityActionControl(action: IdentityAction, onInvoke: () -> Unit) 
             Text(action.disabledReason, style = NexaType.Metadata, color = NexaTextMuted)
         }
     }
+}
+
+/**
+ * Assembles the context for a reverification request.
+ *
+ * Requires a resolvable device association: an identity with no observed
+ * device has no target for the pipeline to act against, and the UI does not
+ * invent one.
+ */
+private fun prepareReverification(identity: IdentitySummary): String? {
+    val device = identity.device ?: return null
+    return ActionPreparation.prepare(
+        action = EnforcementAction.RequireReverification,
+        target = ActionTarget(
+            deviceId = device.deviceId,
+            label = device.label,
+            mac = device.mac,
+            ip = device.ip,
+            scope = device.scope,
+            presence = device.presence,
+            identityId = identity.identityId,
+            trust = identity.trust,
+            observationFreshness = device.recordFreshness,
+            lastObservedLabel = device.lastObservedLabel
+        ),
+        authorization = AuthorizationState.ApprovalRequired,
+        executionMode = ExecutionMode.AuditOnly,
+        currentEnforcement = DeviceEnforcement.Normal,
+        circuitBreaker = CircuitBreakerState.Closed
+    )
 }
 
 @Composable

@@ -21,7 +21,9 @@ import com.example.nexa.Devices
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.ActivityKind
+import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label

@@ -121,12 +121,9 @@ fun MainNavigation() {
                     }
                     entry<ActionConfirmation> { actionConfirmation ->
                         ActionConfirmationScreen(
-                            action = actionConfirmation.action,
-                            targetMac = actionConfirmation.targetMac,
-                            actionLabel = actionConfirmation.actionLabel,
-                            scope = actionConfirmation.scope,
-                            identityId = actionConfirmation.identityId,
+                            actionContextId = actionConfirmation.actionContextId,
                             onBack = { backStack.removeLastOrNull() },
+                            onDone = { backStack.removeLastOrNull() },
                             modifier = Modifier.safeDrawingPadding()
                         )
                     }

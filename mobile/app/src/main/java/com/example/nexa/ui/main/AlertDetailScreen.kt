@@ -17,8 +17,16 @@ import com.example.nexa.DeviceDetail
 import com.example.nexa.IdentityDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.alerts.*
+import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.common.icon
+import com.example.nexa.ui.devices.DeviceEnforcement
+import com.example.nexa.ui.enforcement.ActionPreparation
+import com.example.nexa.ui.enforcement.ActionTarget
+import com.example.nexa.ui.enforcement.AuthorizationState
+import com.example.nexa.ui.enforcement.EnforcementAction
 import com.example.nexa.ui.common.label as trustLabel
 import com.example.nexa.ui.common.status as trustStatus
 import com.example.nexa.ui.components.*
@@ -322,17 +330,49 @@ private fun handleAction(
         AlertActionKind.ViewDevice -> device?.let { onNavigate(DeviceDetail(it.mac)) }
         AlertActionKind.ViewIdentity ->
             alert.target.identityRef?.let { onNavigate(IdentityDetail(it.identityId)) }
-        AlertActionKind.QuarantineTarget, AlertActionKind.RequireReverification ->
-            onNavigate(
-                ActionConfirmation(
-                    action = action.actionCode.orEmpty(),
-                    targetMac = device?.mac.orEmpty(),
-                    actionLabel = action.label,
-                    scope = device?.scope.orEmpty(),
-                    identityId = alert.target.identityRef?.identityId
-                )
-            )
+        AlertActionKind.QuarantineTarget, AlertActionKind.RequireReverification -> {
+            // Alerts do not own enforcement logic: they prepare the same
+            // context and hand it to the same pipeline as everywhere else.
+            val contextId = prepareAlertAction(action, alert)
+            if (contextId != null) onNavigate(ActionConfirmation(contextId))
+        }
     }
+}
+
+/**
+ * Assembles the enforcement context for a response action on an alert.
+ *
+ * Returns null when the alert has no resolvable device target — a response
+ * cannot be prepared against something NEXA cannot identify.
+ */
+private fun prepareAlertAction(action: AlertAction, alert: AlertListItem): String? {
+    val device = alert.target.deviceRef ?: return null
+    val identity = alert.target.identityRef
+    val enforcementAction = when (action.kind) {
+        AlertActionKind.QuarantineTarget -> EnforcementAction.QuarantineDevice
+        AlertActionKind.RequireReverification -> EnforcementAction.RequireReverification
+        else -> return null
+    }
+
+    return ActionPreparation.prepare(
+        action = enforcementAction,
+        target = ActionTarget(
+            deviceId = device.deviceId,
+            label = device.label,
+            mac = device.mac,
+            ip = device.ip,
+            scope = device.scope,
+            presence = device.presence,
+            identityId = identity?.identityId,
+            trust = identity?.trust ?: TrustState.Unverified,
+            observationFreshness = device.recordFreshness,
+            lastObservedLabel = device.lastObservedLabel
+        ),
+        authorization = AuthorizationState.ApprovalRequired,
+        executionMode = ExecutionMode.AuditOnly,
+        currentEnforcement = DeviceEnforcement.Normal,
+        circuitBreaker = CircuitBreakerState.Closed
+    )
 }
 
 /** Identifier, severity and title — the incident at a glance. */

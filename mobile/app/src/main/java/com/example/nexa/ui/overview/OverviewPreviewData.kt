@@ -3,7 +3,9 @@ package com.example.nexa.ui.overview
 import com.example.nexa.theme.NexaStatus
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.ActivityKind
+import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.ExecutionMode
 
 /**
  * PREVIEW DATA — NOT LIVE SYSTEM STATE.
