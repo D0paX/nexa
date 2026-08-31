@@ -73,7 +73,11 @@ fun AlertDetailScreen(
             }
 
             item {
-                Text(text = alert.description, style = Typography.headlineMedium, color = NexaTextPrimary)
+                GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
+                        Text(text = alert.description, style = Typography.headlineMedium, color = NexaTextPrimary)
+                    }
+                }
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                 
                 // Alert Lifecycle state vs Notification state

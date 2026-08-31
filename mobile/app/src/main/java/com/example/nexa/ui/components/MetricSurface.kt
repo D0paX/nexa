@@ -19,12 +19,13 @@ fun MetricSurface(
     value: String,
     modifier: Modifier = Modifier,
     valueColor: Color = NexaTextPrimary,
+    glassVariant: GlassVariant? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val variant = if (onClick != null) GlassVariant.Interactive else GlassVariant.Standard
+    val resolvedVariant = glassVariant ?: if (onClick != null) GlassVariant.Interactive else GlassVariant.Standard
 
     GlassSurface(
-        variant = variant,
+        variant = resolvedVariant,
         onClick = onClick,
         modifier = modifier
     ) {

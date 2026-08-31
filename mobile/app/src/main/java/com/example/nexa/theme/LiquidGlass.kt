@@ -27,13 +27,22 @@ fun Modifier.liquidGlass(
     val surfaceColor = when (variant) {
         GlassVariant.Standard -> NexaGlassSurface
         GlassVariant.Strong -> NexaStrongGlassSurface
-        GlassVariant.Hero -> NexaStrongGlassSurface.copy(alpha = 0.8f)
-        GlassVariant.Destructive -> NexaDanger.copy(alpha = 0.1f)
-        GlassVariant.Interactive -> NexaGlassSurface.copy(alpha = 0.5f)
+        GlassVariant.Hero -> NexaHeroGlassSurface
+        GlassVariant.Destructive -> NexaDanger.copy(alpha = 0.15f)
+        GlassVariant.Interactive -> NexaGlassSurface.copy(alpha = 0.55f)
     }
+
+    // Inner subtle glow/gradient to simulate glass volume
+    val innerGlowBrush = Brush.verticalGradient(
+        colors = listOf(
+            surfaceColor,
+            surfaceColor.copy(alpha = surfaceColor.alpha * 0.5f)
+        )
+    )
 
     val elevation = when (variant) {
         GlassVariant.Hero -> NexaTokens.ElevationHero
+        GlassVariant.Strong -> NexaTokens.ElevationStrong
         GlassVariant.Destructive -> NexaTokens.ElevationDestructive
         else -> NexaTokens.ElevationStandard
     }
@@ -46,8 +55,8 @@ fun Modifier.liquidGlass(
     }
     
     // Vertical gradient for the border to simulate top-down lighting reflection
-    val borderBrush = Brush.verticalGradient(
-        colors = listOf(borderColor, borderColor.copy(alpha = 0.0f))
+    val borderBrush = Brush.linearGradient(
+        colors = listOf(borderColor, borderColor.copy(alpha = 0.05f))
     )
 
     this
@@ -55,8 +64,8 @@ fun Modifier.liquidGlass(
             elevation = elevation,
             shape = shape,
             spotColor = NexaGlassHighlight,
-            ambientColor = NexaBackground
+            ambientColor = NexaGlassHighlight
         )
-        .background(surfaceColor, shape)
-        .border(width = 0.5.dp, brush = borderBrush, shape = shape)
+        .background(innerGlowBrush, shape)
+        .border(width = 1.dp, brush = borderBrush, shape = shape)
 }

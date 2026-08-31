@@ -18,7 +18,8 @@ object NexaTokens {
     val CornerRadiusLarge = 24.dp
     
     // Elevation
-    val ElevationStandard = 4.dp
-    val ElevationHero = 12.dp
-    val ElevationDestructive = 8.dp
+    val ElevationStandard = 8.dp
+    val ElevationStrong = 16.dp
+    val ElevationHero = 24.dp
+    val ElevationDestructive = 12.dp
 }

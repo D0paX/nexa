@@ -63,16 +63,16 @@ fun DeviceDetailScreen(
 
             // TrustedDeviceIdentity (Stronger Surface)
             item {
-                GlassSurface(variant = GlassVariant.Strong, modifier = Modifier.fillMaxWidth()) {
-                    Column {
+                GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Trusted Identity", style = Typography.labelLarge, color = NexaSecure)
+                            Text("TRUSTED IDENTITY", style = Typography.labelMedium, color = NexaSecure)
                             Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                             StatusBadge(text = "VERIFIED", color = NexaSecure)
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-                        Text("Corp Laptop - Engineering", style = Typography.bodyLarge, color = NexaTextPrimary)
-                        Text("Owner: jsmith@example.com", style = Typography.bodyMedium, color = NexaTextSecondary)
+                        Text("Corp Laptop - Engineering", style = Typography.headlineMedium, color = NexaTextPrimary)
+                        Text("Owner: jsmith@example.com", style = Typography.bodyLarge, color = NexaTextSecondary)
                     }
                 }
             }

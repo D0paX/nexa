@@ -73,20 +73,20 @@ fun ActionConfirmationScreen(
 
             // Target Context
             item {
-                GlassSurface(variant = GlassVariant.Standard, modifier = Modifier.fillMaxWidth()) {
-                    Column {
+                GlassSurface(variant = GlassVariant.Strong, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("MAC", style = Typography.bodyMedium, color = NexaTextSecondary)
+                            Text("TARGET MAC", style = Typography.labelMedium, color = NexaTextSecondary)
                             TechnicalValue(targetMac)
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("IP", style = Typography.bodyMedium, color = NexaTextSecondary)
+                            Text("CURRENT IP", style = Typography.labelMedium, color = NexaTextSecondary)
                             TechnicalValue("192.168.1.105")
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Trust State", style = Typography.bodyMedium, color = NexaTextSecondary)
+                            Text("TRUST STATE", style = Typography.labelMedium, color = NexaTextSecondary)
                             StatusBadge(text = "VERIFIED", color = NexaSecure)
                         }
                     }

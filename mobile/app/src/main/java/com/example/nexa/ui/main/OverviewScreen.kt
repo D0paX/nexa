@@ -48,17 +48,23 @@ fun OverviewScreen(
             // Primary security state (HERO SURFACE)
             item {
                 GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "System State", style = Typography.titleMedium, color = NexaTextSecondary)
-                            StatusBadge(text = MockData.systemStatus, color = NexaSecure)
-                        }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = NexaTokens.SpacingSmall)
+                    ) {
+                        Text(text = "SYSTEM STATE", style = Typography.labelMedium, color = NexaTextSecondary)
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                        Text(
+                            text = "ENFORCING",
+                            style = Typography.displayLarge,
+                            color = NexaSecure
+                        )
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-                        Text(text = "Nftables backend is active. 3 devices quarantined.", style = Typography.bodyLarge, color = NexaTextPrimary)
+                        Text(
+                            text = "Nftables backend is active. 3 devices quarantined.",
+                            style = Typography.bodyMedium,
+                            color = NexaTextPrimary
+                        )
                     }
                 }
             }
@@ -70,15 +76,17 @@ fun OverviewScreen(
                     horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingMedium)
                 ) {
                     MetricSurface(
-                        title = "Active Devices",
+                        title = "ACTIVE DEVICES",
                         value = MockData.activeDevices.toString(),
+                        glassVariant = GlassVariant.Interactive,
                         onClick = { onItemClick(DeviceDetail("00:1A:2B:3C:4D:5E")) },
                         modifier = Modifier.weight(1f)
                     )
                     MetricSurface(
-                        title = "Active Alerts",
+                        title = "ACTIVE ALERTS",
                         value = MockData.activeAlerts.toString(),
                         valueColor = NexaWarning,
+                        glassVariant = GlassVariant.Strong,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -117,8 +125,13 @@ fun AlertItem(alert: AlertItemData, onClick: () -> Unit) {
         else -> NexaInformation
     }
 
+    val variant = when(alert.severity) {
+        "CRITICAL" -> GlassVariant.Strong
+        else -> GlassVariant.Standard
+    }
+
     GlassSurface(
-        variant = GlassVariant.Interactive,
+        variant = variant,
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(bottom = NexaTokens.SpacingSmall)
     ) {
@@ -128,13 +141,17 @@ fun AlertItem(alert: AlertItemData, onClick: () -> Unit) {
             Surface(
                 color = severityColor,
                 shape = androidx.compose.foundation.shape.CircleShape,
-                modifier = Modifier.size(10.dp)
+                modifier = Modifier.size(if (alert.severity == "CRITICAL") 12.dp else 8.dp)
             ) {}
             Spacer(modifier = Modifier.width(NexaTokens.SpacingMedium))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = alert.description, style = Typography.bodyLarge, color = NexaTextPrimary)
+                Text(
+                    text = alert.description,
+                    style = if (alert.severity == "CRITICAL") Typography.titleMedium else Typography.bodyLarge,
+                    color = if (alert.severity == "CRITICAL") NexaTextPrimary else NexaTextSecondary
+                )
                 Spacer(modifier = Modifier.height(2.dp))
-                TechnicalValue(text = alert.targetMac, color = NexaTextSecondary)
+                TechnicalValue(text = alert.targetMac, color = NexaAction)
             }
             Text(text = alert.timeAgo, style = Typography.labelMedium, color = NexaTextMuted)
         }

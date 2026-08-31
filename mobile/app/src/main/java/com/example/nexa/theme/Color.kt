@@ -2,15 +2,20 @@ package com.example.nexa.theme
 
 import androidx.compose.ui.graphics.Color
 
-// NEXA Dark Atmospheric Background
-val NexaBackground = Color(0xFF090A0C)
-val NexaElevatedBackground = Color(0xFF101216)
+// NEXA Atmospheric Background (Deep Slate Blue/Cyan Base)
+val NexaBackground = Color(0xFF07090E)
+val NexaElevatedBackground = Color(0xFF0D111A)
 
-// Liquid Glass Surfaces
-val NexaGlassSurface = Color(0xFF1A1D24).copy(alpha = 0.4f)
-val NexaStrongGlassSurface = Color(0xFF232730).copy(alpha = 0.6f)
-val NexaGlassBorder = Color(0xFFFFFFFF).copy(alpha = 0.1f)
-val NexaGlassHighlight = Color(0xFFFFFFFF).copy(alpha = 0.05f)
+// Atmospheric Light Tones
+val NexaAtmosphereLight = Color(0xFF152238) // Cool blue light
+val NexaAtmosphereCore = Color(0xFF1C1B29)  // Muted violet core
+
+// Liquid Glass Surfaces (Tinted Slate/Cyan)
+val NexaGlassSurface = Color(0xFF1A2130).copy(alpha = 0.45f)
+val NexaStrongGlassSurface = Color(0xFF263248).copy(alpha = 0.65f)
+val NexaHeroGlassSurface = Color(0xFF2B3A55).copy(alpha = 0.75f)
+val NexaGlassBorder = Color(0xFF88C0D0).copy(alpha = 0.2f) // Cyan-tinted border for retro-futurism
+val NexaGlassHighlight = Color(0xFF88C0D0).copy(alpha = 0.1f)
 
 // Typography Colors
 val NexaTextPrimary = Color(0xFFE2E8F0)

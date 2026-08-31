@@ -14,13 +14,14 @@ fun NexaAtmosphere(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
-    // Subtle radial gradient from center-top to simulate depth
+    // Spatial tonal gradient from center to simulate depth and light field
     val atmosphereBrush = Brush.radialGradient(
         colors = listOf(
-            Color(0xFF151820), // Slightly lighter tonal center
-            NexaBackground     // Complete darkness at edges
+            NexaAtmosphereLight, // Cool blue light
+            NexaAtmosphereCore,  // Muted violet core
+            NexaBackground       // Deep slate cyan edges
         ),
-        radius = 1500f
+        radius = 2000f
     )
 
     Box(
