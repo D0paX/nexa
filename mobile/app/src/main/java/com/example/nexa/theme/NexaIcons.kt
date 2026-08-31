@@ -9,12 +9,17 @@ import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.HistoryToggleOff
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.PauseCircleOutline
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -50,6 +55,11 @@ object NexaIcons {
     val Enforcing: ImageVector = Icons.Outlined.Shield
     val Offline: ImageVector = Icons.Outlined.CloudOff
     val Simulated: ImageVector = Icons.Outlined.Science
+    val Paused: ImageVector = Icons.Outlined.PauseCircleOutline
+    val Unknown: ImageVector = Icons.Outlined.HelpOutline
+    val Stale: ImageVector = Icons.Outlined.HistoryToggleOff
+    val Unavailable: ImageVector = Icons.Outlined.SyncProblem
+    val Empty: ImageVector = Icons.Outlined.Inbox
 
     // --- Actions ---
     val Quarantine: ImageVector = Icons.Outlined.Block

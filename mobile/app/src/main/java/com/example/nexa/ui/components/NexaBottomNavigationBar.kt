@@ -4,8 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,13 +15,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaAction
+import com.example.nexa.theme.NexaMotion
+import com.example.nexa.theme.NexaShapes
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTextSecondary
 import com.example.nexa.theme.NexaTokens
-import com.example.nexa.theme.Typography
+import com.example.nexa.theme.NexaType
 
 data class NavItem(val label: String, val icon: ImageVector, val isSelected: Boolean, val onClick: () -> Unit)
 
@@ -35,7 +34,7 @@ fun NexaBottomNavigationBar(
     // Independent floating control plane — quiet, so the selected capsule reads against it
     GlassSurface(
         variant = GlassVariant.Standard,
-        shape = RoundedCornerShape(percent = 50),
+        shape = NexaShapes.Pill,
         contentPadding = PaddingValues(
             horizontal = NexaTokens.SpacingSmall,
             vertical = NexaTokens.NavigationBarVerticalPadding
@@ -56,7 +55,11 @@ fun NexaBottomNavigationBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
-                val weight by animateFloatAsState(targetValue = if (item.isSelected) 2f else 1f, label = "weight")
+                val weight by animateFloatAsState(
+                    targetValue = if (item.isSelected) 2f else 1f,
+                    animationSpec = NexaMotion.standard(),
+                    label = "weight"
+                )
                 NexaBottomNavigationItem(
                     item = item,
                     modifier = Modifier.weight(weight)
@@ -76,7 +79,7 @@ fun NexaBottomNavigationItem(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .clip(RoundedCornerShape(percent = 50))
+            .clip(NexaShapes.Pill)
             .semantics { selected = item.isSelected }
             .clickable(
                 interactionSource = interactionSource,
@@ -91,7 +94,7 @@ fun NexaBottomNavigationItem(
             // Elevated glass capsule: near-opaque surface, NEXA red accent, dark readable label
             GlassSurface(
                 variant = GlassVariant.Selected,
-                shape = RoundedCornerShape(percent = 50),
+                shape = NexaShapes.Pill,
                 contentPadding = PaddingValues(
                     horizontal = NexaTokens.SpacingSmall,
                     vertical = NexaTokens.NavigationActivePillVerticalPadding
@@ -113,7 +116,7 @@ fun NexaBottomNavigationItem(
                     Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                     Text(
                         text = item.label,
-                        style = Typography.labelMedium,
+                        style = NexaType.Metadata,
                         color = NexaTextPrimary
                     )
                 }
@@ -129,10 +132,10 @@ fun NexaBottomNavigationItem(
                     size = NexaTokens.NavigationIconSize,
                     tint = NexaTextSecondary
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
                 Text(
                     text = item.label,
-                    style = Typography.labelMedium,
+                    style = NexaType.Metadata,
                     color = NexaTextSecondary
                 )
             }

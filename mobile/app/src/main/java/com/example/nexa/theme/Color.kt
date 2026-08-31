@@ -101,3 +101,16 @@ val NexaSecureOnDark = Color(0xFF3FBF8F)
 val NexaWarningOnDark = Color(0xFFE0A33C)
 val NexaDangerOnDark = NexaRedBright
 val NexaInformationOnDark = Color(0xFF6FB6E8)
+val NexaNeutralOnDark = Color(0xFF9AA4B0)
+val NexaUnknownOnDark = Color(0xFF9E96C7)
+
+// States that share a tone with a neighbour but never share its meaning.
+// Named separately so they can diverge without a screen-level override.
+val NexaSimulation = NexaInformation
+val NexaSimulationOnDark = NexaInformationOnDark
+val NexaDegraded = NexaWarning
+val NexaDegradedOnDark = NexaWarningOnDark
+val NexaOffline = NexaNeutral
+val NexaOfflineOnDark = NexaNeutralOnDark
+val NexaPaused = NexaNeutral
+val NexaPausedOnDark = NexaNeutralOnDark

@@ -74,3 +74,53 @@ val MonospaceTextStyle = TextStyle(
     fontSize = 14.sp,
     letterSpacing = 0.sp
 )
+
+/**
+ * The NEXA type vocabulary.
+ *
+ * The same metric scale as [Typography], named by the job each style does.
+ * Screens ask for `NexaType.Metadata`, not `Typography.labelMedium` — so a
+ * later decision about how metadata should look has exactly one place to
+ * land, and hierarchy is chosen deliberately rather than by reaching for a
+ * size that happens to fit.
+ */
+object NexaType {
+    /** Brand wordmark, hero state, metric values. */
+    val Display = Typography.displayLarge
+
+    /** The subject of a drill-down screen. */
+    val Headline = Typography.headlineMedium
+
+    /** Top app bar titles. */
+    val ScreenTitle = Typography.titleLarge
+
+    /** Major divisions within a screen. */
+    val SectionTitle = Typography.titleLarge
+
+    /** Quiet labels introducing a group of surfaces. */
+    val GroupLabel = Typography.titleMedium
+
+    /** The title of a list row or card. */
+    val Title = Typography.titleMedium
+
+    /** Primary reading text. */
+    val Body = Typography.bodyLarge
+
+    /** Supporting reading text. */
+    val BodySecondary = Typography.bodyMedium
+
+    /** Timestamps, counts, field labels. */
+    val Metadata = Typography.labelMedium
+
+    /** State words inside badges. */
+    val Status = Typography.labelMedium
+
+    /** Button labels. */
+    val Button = Typography.labelLarge
+
+    /** IPs, MACs, UUIDs, telemetry — precise, never decorative. */
+    val Technical = MonospaceTextStyle
+
+    /** A technical value that is itself the subject. */
+    val TechnicalStrong = MonospaceTextStyle.copy(fontWeight = FontWeight.Medium)
+}

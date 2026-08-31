@@ -23,14 +23,19 @@ enum class GlassVariant {
 /**
  * NEXA Liquid Glass.
  *
- * One material, five densities of light. Every surface is lit from above:
- * a brighter upper face, a faintly tinted lower face, a bright hairline on
- * the lit edge and a grounded hairline beneath it. Depth comes from light
- * and elevation, not from blur or color.
+ * One material, six densities of light, forming the surface hierarchy every
+ * screen builds on:
+ *
+ *     Atmosphere → Standard → Interactive → Strong → Selected → Hero/Destructive
+ *
+ * Every surface is lit from above: a brighter upper face, a faintly tinted
+ * lower face, a bright hairline on the lit edge and a grounded hairline
+ * beneath it. Depth comes from light and elevation — never from blur, and
+ * never at the cost of the text on top of it.
  */
 fun Modifier.liquidGlass(
     variant: GlassVariant = GlassVariant.Standard,
-    shape: Shape = RoundedCornerShape(NexaTokens.CornerRadiusMedium)
+    shape: Shape = NexaShapes.Surface
 ): Modifier = composed {
     // Surface: vertical fall-off from the lit upper face to the tinted lower face.
     val surfaceBrush = when (variant) {
@@ -74,11 +79,11 @@ fun Modifier.liquidGlass(
 
     val elevation = when (variant) {
         GlassVariant.Hero -> NexaTokens.ElevationHero
-        GlassVariant.Destructive -> NexaTokens.ElevationDestructive
-        GlassVariant.Strong -> NexaTokens.ElevationStrong
-        GlassVariant.Selected -> NexaTokens.ElevationStrong
-        GlassVariant.Interactive -> NexaTokens.ElevationInteractive
-        GlassVariant.Standard -> NexaTokens.ElevationStandard
+        GlassVariant.Destructive -> NexaTokens.ElevationModal
+        GlassVariant.Strong -> NexaTokens.ElevationElevated
+        GlassVariant.Selected -> NexaTokens.ElevationElevated
+        GlassVariant.Interactive -> NexaTokens.ElevationRaised
+        GlassVariant.Standard -> NexaTokens.ElevationFloating
     }
 
     // Soft, ink-tinted separation. Dark anchors cast slightly more weight.
@@ -95,7 +100,7 @@ fun Modifier.liquidGlass(
             ambientColor = NexaShadow.copy(alpha = spotAlpha * 0.5f)
         )
         .background(surfaceBrush, shape)
-        .border(width = 1.dp, brush = borderBrush, shape = shape)
+        .border(width = NexaTokens.BorderHairline, brush = borderBrush, shape = shape)
 }
 
 /**

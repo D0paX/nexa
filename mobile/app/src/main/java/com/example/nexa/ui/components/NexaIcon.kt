@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
-import com.example.nexa.theme.NexaInk
+import com.example.nexa.theme.NexaMotion
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTokens
 
@@ -67,7 +67,8 @@ fun NexaIconButton(
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val pressedSurface by animateColorAsState(
-        targetValue = if (isPressed) NexaInk.copy(alpha = 0.08f) else Color.Transparent,
+        targetValue = NexaMotion.pressedSurface(isPressed),
+        animationSpec = NexaMotion.fast(),
         label = "iconButtonPressedSurface"
     )
 

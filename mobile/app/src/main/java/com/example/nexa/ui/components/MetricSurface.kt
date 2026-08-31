@@ -11,7 +11,7 @@ import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTextSecondary
 import com.example.nexa.theme.NexaTokens
-import com.example.nexa.theme.Typography
+import com.example.nexa.theme.NexaType
 
 @Composable
 fun MetricSurface(
@@ -30,11 +30,11 @@ fun MetricSurface(
         modifier = modifier
     ) {
         Column {
-            Text(text = title, style = Typography.labelMedium, color = NexaTextSecondary)
+            Text(text = title, style = NexaType.Metadata, color = NexaTextSecondary)
             Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
             Text(
                 text = value,
-                style = Typography.displayLarge,
+                style = NexaType.Display,
                 color = valueColor
             )
         }

@@ -12,7 +12,7 @@ import com.example.nexa.theme.NexaDanger
 import com.example.nexa.theme.NexaIcons
 import com.example.nexa.theme.NexaTextOnDark
 import com.example.nexa.theme.NexaTokens
-import com.example.nexa.theme.Typography
+import com.example.nexa.theme.NexaType
 
 @Composable
 fun DestructiveConfirmation(
@@ -23,13 +23,13 @@ fun DestructiveConfirmation(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text("Execution Consequence", style = Typography.titleMedium, color = NexaDanger)
+        Text("Execution Consequence", style = NexaType.GroupLabel, color = NexaDanger)
         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-        
+
         GlassSurface(variant = GlassVariant.Destructive) {
             Text(
                 text = consequenceText,
-                style = Typography.bodyLarge,
+                style = NexaType.Body,
                 color = NexaTextOnDark
             )
         }
@@ -39,7 +39,7 @@ fun DestructiveConfirmation(
         NexaButton(
             text = "CONFIRM $actionName",
             onClick = onConfirm,
-            isDestructive = true,
+            variant = NexaButtonVariant.Destructive,
             icon = NexaIcons.Quarantine
         )
 
