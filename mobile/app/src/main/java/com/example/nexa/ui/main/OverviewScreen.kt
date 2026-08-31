@@ -8,6 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.example.nexa.AlertDetail
@@ -35,9 +38,11 @@ fun OverviewScreen(
             item {
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                 Text(
-                    text = "NEXA",
-                    style = Typography.displayLarge,
-                    color = NexaTextPrimary
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(color = NexaTextPrimary)) { append("NEXA") }
+                        withStyle(SpanStyle(color = NexaAction)) { append(".") }
+                    },
+                    style = Typography.displayLarge
                 )
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium)) // modest gap
             }
@@ -49,12 +54,12 @@ fun OverviewScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth().padding(vertical = NexaTokens.SpacingSmall)
                     ) {
-                        Text(text = "SYSTEM STATE", style = Typography.labelMedium, color = NexaTextOnDark.copy(alpha = 0.7f))
+                        Text(text = "SYSTEM STATE", style = Typography.labelMedium, color = NexaTextOnDarkMuted)
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                         Text(
                             text = "ENFORCING",
                             style = Typography.displayLarge,
-                            color = NexaSecure
+                            color = NexaSecureOnDark
                         )
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Text(
@@ -148,7 +153,7 @@ fun AlertItem(alert: AlertItemData, onClick: () -> Unit) {
                     color = if (alert.severity == "CRITICAL") NexaTextPrimary else NexaTextSecondary
                 )
                 Spacer(modifier = Modifier.height(2.dp))
-                TechnicalValue(text = alert.targetMac, color = NexaAction)
+                TechnicalValue(text = alert.targetMac)
             }
             Text(text = alert.timeAgo, style = Typography.labelMedium, color = NexaTextMuted)
         }

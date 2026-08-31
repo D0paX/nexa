@@ -18,11 +18,12 @@ object NexaTokens {
     val CornerRadiusMedium = 16.dp
     val CornerRadiusLarge = 24.dp
     
-    // Elevation
-    val ElevationStandard = 8.dp
-    val ElevationStrong = 16.dp
-    val ElevationHero = 24.dp
-    val ElevationDestructive = 12.dp
+    // Elevation (shadow depth only — soft separation, never heavy drop shadow)
+    val ElevationStandard = 3.dp
+    val ElevationInteractive = 5.dp
+    val ElevationStrong = 6.dp
+    val ElevationHero = 12.dp
+    val ElevationDestructive = 8.dp
 
     // Navigation
     val NavigationHeight = 56.dp

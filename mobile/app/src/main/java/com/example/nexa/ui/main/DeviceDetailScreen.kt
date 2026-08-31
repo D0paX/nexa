@@ -67,13 +67,13 @@ fun DeviceDetailScreen(
                 GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("TRUSTED IDENTITY", style = Typography.labelMedium, color = NexaSecure)
+                            Text("TRUSTED IDENTITY", style = Typography.labelMedium, color = NexaSecureOnDark)
                             Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
-                            StatusBadge(text = "VERIFIED", color = NexaSecure)
+                            StatusBadge(text = "VERIFIED", color = NexaSecureOnDark)
                         }
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Text("Corp Laptop - Engineering", style = Typography.headlineMedium, color = NexaTextOnDark)
-                        Text("Owner: jsmith@example.com", style = Typography.bodyLarge, color = NexaTextOnDark.copy(alpha = 0.8f))
+                        Text("Owner: jsmith@example.com", style = Typography.bodyLarge, color = NexaTextOnDarkMuted)
                     }
                 }
             }

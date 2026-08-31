@@ -9,7 +9,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class GlassVariant {
@@ -17,57 +16,90 @@ enum class GlassVariant {
     Strong,
     Hero,
     Destructive,
-    Interactive
+    Interactive,
+    Selected
 }
 
+/**
+ * NEXA Liquid Glass.
+ *
+ * One material, five densities of light. Every surface is lit from above:
+ * a brighter upper face, a faintly tinted lower face, a bright hairline on
+ * the lit edge and a grounded hairline beneath it. Depth comes from light
+ * and elevation, not from blur or color.
+ */
 fun Modifier.liquidGlass(
     variant: GlassVariant = GlassVariant.Standard,
     shape: Shape = RoundedCornerShape(NexaTokens.CornerRadiusMedium)
 ): Modifier = composed {
-    val surfaceColor = when (variant) {
-        GlassVariant.Standard -> NexaGlassSurface
-        GlassVariant.Strong -> NexaStrongGlassSurface
-        GlassVariant.Hero -> NexaHeroGlassSurface
-        GlassVariant.Destructive -> NexaDestructiveSurface
-        GlassVariant.Interactive -> NexaGlassSurface.copy(alpha = 0.85f)
+    // Surface: vertical fall-off from the lit upper face to the tinted lower face.
+    val surfaceBrush = when (variant) {
+        GlassVariant.Standard -> Brush.verticalGradient(
+            listOf(NexaGlassSurface, NexaGlassSurfaceTint)
+        )
+        GlassVariant.Strong -> Brush.verticalGradient(
+            listOf(NexaStrongGlassSurface, NexaStrongGlassSurfaceTint)
+        )
+        GlassVariant.Interactive -> Brush.verticalGradient(
+            listOf(NexaInteractiveGlassSurface, NexaInteractiveGlassSurfaceTint)
+        )
+        GlassVariant.Selected -> Brush.verticalGradient(
+            listOf(NexaSelectedGlassSurface, NexaSelectedGlassSurfaceTint)
+        )
+        GlassVariant.Hero -> Brush.verticalGradient(
+            listOf(NexaHeroGlassSurface, NexaHeroGlassSurfaceDeep)
+        )
+        GlassVariant.Destructive -> Brush.verticalGradient(
+            listOf(NexaDestructiveSurface, NexaDestructiveSurfaceDeep)
+        )
     }
 
-    // Inner subtle glow/gradient to simulate glass volume
-    val innerGlowBrush = Brush.verticalGradient(
-        colors = listOf(
-            surfaceColor,
-            surfaceColor.copy(alpha = surfaceColor.alpha * 0.9f)
+    // Boundary: bright where the light lands, grounded where it does not.
+    val borderBrush = when (variant) {
+        GlassVariant.Hero -> Brush.verticalGradient(
+            listOf(NexaHeroHighlight, NexaHeroBorder)
         )
-    )
+        // Destructive earns a controlled red edge — the surface states the stakes.
+        GlassVariant.Destructive -> Brush.verticalGradient(
+            listOf(NexaHeroHighlight, NexaDestructiveBorder)
+        )
+        // The only ordinary-scale surface allowed a red boundary: it marks selection.
+        GlassVariant.Selected -> Brush.verticalGradient(
+            listOf(NexaSelectedHighlight, NexaSelectedBorder)
+        )
+        else -> Brush.verticalGradient(
+            listOf(NexaGlassHighlight, NexaGlassBorder)
+        )
+    }
 
     val elevation = when (variant) {
         GlassVariant.Hero -> NexaTokens.ElevationHero
-        GlassVariant.Strong -> NexaTokens.ElevationStrong
         GlassVariant.Destructive -> NexaTokens.ElevationDestructive
-        else -> NexaTokens.ElevationStandard
+        GlassVariant.Strong -> NexaTokens.ElevationStrong
+        GlassVariant.Selected -> NexaTokens.ElevationStrong
+        GlassVariant.Interactive -> NexaTokens.ElevationInteractive
+        GlassVariant.Standard -> NexaTokens.ElevationStandard
     }
 
-    val borderColor = when (variant) {
-        GlassVariant.Destructive -> NexaAction.copy(alpha = 0.5f) // Red border for destructive
-        GlassVariant.Hero -> Color.White.copy(alpha = 0.1f) // Subtle reflection on dark hero
-        GlassVariant.Interactive -> NexaAction.copy(alpha = 0.3f)
-        else -> NexaGlassBorder
+    // Soft, ink-tinted separation. Dark anchors cast slightly more weight.
+    val spotAlpha = when (variant) {
+        GlassVariant.Hero, GlassVariant.Destructive -> 0.20f
+        else -> 0.10f
     }
-    
-    // Vertical gradient for the border to simulate top-down lighting reflection
-    val borderBrush = Brush.linearGradient(
-        colors = listOf(borderColor, borderColor.copy(alpha = 0.05f))
-    )
-
-    val shadowColor = Color(0xFF0F172A) // Near-black for soft shadow
 
     this
         .shadow(
             elevation = elevation,
             shape = shape,
-            spotColor = shadowColor.copy(alpha = 0.1f),
-            ambientColor = shadowColor.copy(alpha = 0.05f)
+            spotColor = NexaShadow.copy(alpha = spotAlpha),
+            ambientColor = NexaShadow.copy(alpha = spotAlpha * 0.5f)
         )
-        .background(innerGlowBrush, shape)
+        .background(surfaceBrush, shape)
         .border(width = 1.dp, brush = borderBrush, shape = shape)
 }
+
+/**
+ * Brand accent wash for surfaces that carry a NEXA signal (active navigation,
+ * destructive weight). Kept low enough that red never becomes the surface.
+ */
+fun accentWash(alpha: Float): Color = NexaRedWash.copy(alpha = alpha)

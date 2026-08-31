@@ -24,7 +24,7 @@ fun NexaButton(
     enabled: Boolean = true
 ) {
     val containerColor = if (isDestructive) NexaDanger else NexaAction
-    val contentColor = NexaBackground
+    val contentColor = NexaTextOnDark
 
     Button(
         onClick = onClick,
@@ -59,7 +59,7 @@ fun NexaOutlinedButton(
             contentColor = color,
             disabledContentColor = NexaTextMuted
         ),
-        border = BorderStroke(1.dp, NexaGlassBorder),
+        border = BorderStroke(1.dp, NexaBorderNeutral),
         shape = RoundedCornerShape(NexaTokens.CornerRadiusSmall),
         modifier = modifier
             .fillMaxWidth()

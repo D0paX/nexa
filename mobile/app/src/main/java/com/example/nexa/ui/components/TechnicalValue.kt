@@ -5,13 +5,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.nexa.theme.MonospaceTextStyle
-import com.example.nexa.theme.NexaTextPrimary
+import com.example.nexa.theme.NexaTextTechnical
 
 @Composable
 fun TechnicalValue(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = NexaTextPrimary
+    color: Color = NexaTextTechnical
 ) {
     Text(
         text = text,

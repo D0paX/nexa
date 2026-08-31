@@ -60,9 +60,9 @@ fun ActionConfirmationScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text("SIMULATION ONLY", style = Typography.headlineMedium.copy(color = NexaInformation))
+                        Text("SIMULATION ONLY", style = Typography.headlineMedium.copy(color = NexaInformationOnDark))
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-                        Text("NO FIREWALL MUTATION WILL OCCUR", style = Typography.labelMedium, color = NexaTextOnDark.copy(alpha = 0.7f))
+                        Text("NO FIREWALL MUTATION WILL OCCUR", style = Typography.labelMedium, color = NexaTextOnDarkMuted)
                     }
                 }
             }

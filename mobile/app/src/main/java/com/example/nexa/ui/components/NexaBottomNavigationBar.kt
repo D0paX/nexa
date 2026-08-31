@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaAction
-import com.example.nexa.theme.NexaTextOnDark
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTextSecondary
 import com.example.nexa.theme.NexaTokens
@@ -31,7 +30,7 @@ fun NexaBottomNavigationBar(
     items: List<NavItem>,
     modifier: Modifier = Modifier
 ) {
-    // Spatial Floating Control Layer
+    // Independent floating control plane — quiet, so the selected capsule reads against it
     GlassSurface(
         variant = GlassVariant.Standard,
         shape = RoundedCornerShape(percent = 50),
@@ -84,9 +83,9 @@ fun NexaBottomNavigationItem(
         contentAlignment = Alignment.Center
     ) {
         if (item.isSelected) {
-            // Elevated glass pill for active state
+            // Elevated glass capsule: near-opaque surface, NEXA red accent, dark readable label
             GlassSurface(
-                variant = GlassVariant.Hero,
+                variant = GlassVariant.Selected,
                 shape = RoundedCornerShape(percent = 50),
                 contentPadding = PaddingValues(
                     horizontal = NexaTokens.SpacingSmall,
@@ -111,7 +110,7 @@ fun NexaBottomNavigationItem(
                     Text(
                         text = item.label,
                         style = Typography.labelMedium,
-                        color = NexaTextOnDark
+                        color = NexaTextPrimary
                     )
                 }
             }
