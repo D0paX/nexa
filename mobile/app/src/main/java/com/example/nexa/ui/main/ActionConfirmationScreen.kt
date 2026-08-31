@@ -13,6 +13,8 @@ fun ActionConfirmationScreen(
     action: String,
     targetMac: String,
     actionLabel: String,
+    scope: String,
+    identityId: String?,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -44,9 +46,21 @@ fun ActionConfirmationScreen(
         item {
             GlassSurface(variant = GlassVariant.Strong, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
-                    TargetRow(label = "TARGET MAC") { TechnicalValue(targetMac) }
-                    Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                     TargetRow(label = "ACTION") { TechnicalValue(action, emphasized = true) }
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                    TargetRow(label = "TARGET MAC") {
+                        TechnicalValue(if (targetMac.isBlank()) "not bound" else targetMac)
+                    }
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                    // Scope travels with the target: the same MAC in another
+                    // NetworkScope is not the same logical target.
+                    TargetRow(label = "NETWORK SCOPE") {
+                        TechnicalValue(if (scope.isBlank()) "unknown" else scope, emphasized = true)
+                    }
+                    if (identityId != null) {
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                        TargetRow(label = "IDENTITY") { TechnicalValue(identityId) }
+                    }
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                     Text(
                         text = "Current address and trust standing are re-resolved from the authoritative target snapshot when this action executes.",
@@ -62,11 +76,14 @@ fun ActionConfirmationScreen(
         }
 
         item {
+            val consequence = consequenceFor(action)
             DestructiveConfirmation(
                 actionName = action,
-                consequenceText = "This action will isolate the target device from all network access except the designated remediation VLAN. Existing connections will be dropped.",
+                consequenceText = consequence.text,
                 onConfirm = { /* Execute */ },
-                onCancel = onBack
+                onCancel = onBack,
+                destructive = consequence.destructive,
+                confirmIcon = consequence.icon
             )
         }
 
@@ -74,6 +91,43 @@ fun ActionConfirmationScreen(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
         }
     }
+}
+
+/**
+ * What an action actually does, per action.
+ *
+ * Each Phase 4 action code states its own consequence. A trust operation is
+ * never described with enforcement's words: reverification does not isolate
+ * anything, and release is not a quarantine. An unrecognized code says so
+ * rather than borrowing the nearest description.
+ */
+private data class ActionConsequence(
+    val text: String,
+    val destructive: Boolean,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+private fun consequenceFor(action: String): ActionConsequence = when (action) {
+    "QUARANTINE_DEVICE" -> ActionConsequence(
+        text = "This action will isolate the target device from all network access except the designated remediation VLAN. Existing connections will be dropped.",
+        destructive = true,
+        icon = NexaIcons.Quarantine
+    )
+    "RELEASE_QUARANTINE" -> ActionConsequence(
+        text = "This action will remove the enforcement binding for the target and restore its normal network access. It does not change the target's trust standing.",
+        destructive = true,
+        icon = NexaIcons.Release
+    )
+    "REQUIRE_REVERIFICATION" -> ActionConsequence(
+        text = "This action requires the target's cryptographic identity to be verified again. It does not quarantine the device, does not revoke trust, and makes no change to firewall state.",
+        destructive = false,
+        icon = NexaIcons.Reverification
+    )
+    else -> ActionConsequence(
+        text = "NEXA cannot describe the consequence of this action. Do not confirm it unless you know what it does.",
+        destructive = true,
+        icon = NexaIcons.Unknown
+    )
 }
 
 /** Field label on the left, its snapshot value on the right. */

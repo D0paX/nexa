@@ -14,9 +14,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import com.example.nexa.ActionConfirmation
 import com.example.nexa.AlertDetail
+import com.example.nexa.IdentityDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.icon
+import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.status
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.devices.*
 
@@ -186,7 +189,13 @@ private fun DeviceDetailContent(
                     }
                 }
             } else {
-                GlassSurface(variant = GlassVariant.Hero, modifier = Modifier.fillMaxWidth()) {
+                GlassSurface(
+                    variant = GlassVariant.Hero,
+                    // Opens the identity as its own subject, rather than treating
+                    // it as a property of the device.
+                    onClick = { onNavigate(IdentityDetail(identity.identityId)) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
@@ -234,6 +243,19 @@ private fun DeviceDetailContent(
                             style = NexaType.Metadata,
                             color = NexaTextOnDarkMuted
                         )
+                        Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Identity detail",
+                                style = NexaType.Metadata,
+                                color = NexaAction
+                            )
+                            NexaIcon(
+                                icon = NexaIcons.Forward,
+                                size = NexaTokens.IconMedium,
+                                tint = NexaAction
+                            )
+                        }
                     }
                 }
             }
@@ -336,7 +358,11 @@ private fun DeviceDetailContent(
                                 ActionConfirmation(
                                     action = action.actionCode,
                                     targetMac = device.mac,
-                                    actionLabel = action.label
+                                    actionLabel = action.label,
+                                    // Scope and identity travel with the target so the
+                                    // action is never reconstructed from an address alone.
+                                    scope = device.scope,
+                                    identityId = device.identityId
                                 )
                             )
                         }

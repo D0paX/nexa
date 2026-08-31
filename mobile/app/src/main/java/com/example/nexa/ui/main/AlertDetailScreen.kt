@@ -104,7 +104,18 @@ fun AlertDetailScreen(
 
             NexaButton(
                 text = "QUARANTINE TARGET",
-                onClick = { onNavigate(ActionConfirmation("QUARANTINE_DEVICE", alert.targetMac, "Quarantine Target")) },
+                onClick = {
+                    onNavigate(
+                        ActionConfirmation(
+                            action = "QUARANTINE_DEVICE",
+                            targetMac = alert.targetMac,
+                            actionLabel = "Quarantine Target",
+                            // The alert carries no scope of its own; the snapshot
+                            // resolves it rather than the UI guessing one.
+                            scope = ""
+                        )
+                    )
+                },
                 variant = NexaButtonVariant.Destructive,
                 icon = NexaIcons.Quarantine
             )

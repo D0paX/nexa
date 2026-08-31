@@ -6,41 +6,60 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.Modifier
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaDanger
 import com.example.nexa.theme.NexaIcons
 import com.example.nexa.theme.NexaTextOnDark
+import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.NexaType
 
+/**
+ * The confirmation an operator reads before an action executes.
+ *
+ * [destructive] is not decoration. An action that changes enforcement state
+ * gets the charcoal anchor, the danger heading and a destructive button; a
+ * trust operation such as reverification does not, because presenting it
+ * with quarantine's weight would tell the operator it does something it
+ * does not do.
+ */
 @Composable
 fun DestructiveConfirmation(
     actionName: String,
     consequenceText: String,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    destructive: Boolean = true,
+    confirmIcon: ImageVector = NexaIcons.Quarantine
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text("Execution Consequence", style = NexaType.GroupLabel, color = NexaDanger)
+        Text(
+            text = if (destructive) "Execution Consequence" else "What this action does",
+            style = NexaType.GroupLabel,
+            color = if (destructive) NexaDanger else NexaTextPrimary
+        )
         Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
 
-        GlassSurface(variant = GlassVariant.Destructive) {
+        GlassSurface(
+            variant = if (destructive) GlassVariant.Destructive else GlassVariant.Strong
+        ) {
             Text(
                 text = consequenceText,
                 style = NexaType.Body,
-                color = NexaTextOnDark
+                color = if (destructive) NexaTextOnDark else NexaTextPrimary
             )
         }
-        
+
         Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
-        
+
         NexaButton(
             text = "CONFIRM $actionName",
             onClick = onConfirm,
-            variant = NexaButtonVariant.Destructive,
-            icon = NexaIcons.Quarantine
+            variant = if (destructive) NexaButtonVariant.Destructive else NexaButtonVariant.Primary,
+            icon = confirmIcon
         )
 
         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))

@@ -20,9 +20,10 @@ import com.example.nexa.ui.components.SectionHeader
 import com.example.nexa.ui.devices.DeviceEnforcement
 import com.example.nexa.ui.devices.DeviceFilters
 import com.example.nexa.ui.devices.DeviceSort
-import com.example.nexa.ui.devices.DeviceTrust
+import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.devices.Presence
 import com.example.nexa.ui.devices.label
+import com.example.nexa.ui.common.label
 
 /**
  * Device filtering and ordering.
@@ -73,7 +74,7 @@ fun DeviceFilterSheet(
             }
 
             FilterGroup(title = "Trust") {
-                DeviceTrust.entries.forEach { value ->
+                TrustState.entries.forEach { value ->
                     NexaFilterChip(
                         label = value.label,
                         selected = value in filters.trust,

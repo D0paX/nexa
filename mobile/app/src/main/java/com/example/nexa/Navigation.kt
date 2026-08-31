@@ -31,6 +31,8 @@ import com.example.nexa.ui.main.ActionConfirmationScreen
 import com.example.nexa.ui.main.AlertDetailScreen
 import com.example.nexa.ui.main.DeviceDetailScreen
 import com.example.nexa.ui.main.DevicesScreen
+import com.example.nexa.ui.main.IdentitiesScreen
+import com.example.nexa.ui.main.IdentityDetailScreen
 import com.example.nexa.ui.main.OverviewScreen
 
 @Composable
@@ -90,6 +92,21 @@ fun MainNavigation() {
                             modifier = Modifier.safeDrawingPadding()
                         )
                     }
+                    entry<Identities> {
+                        IdentitiesScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            onNavigate = { navKey -> backStack.add(navKey) },
+                            modifier = Modifier.safeDrawingPadding()
+                        )
+                    }
+                    entry<IdentityDetail> { identityDetail ->
+                        IdentityDetailScreen(
+                            identityId = identityDetail.identityId,
+                            onBack = { backStack.removeLastOrNull() },
+                            onNavigate = { navKey -> backStack.add(navKey) },
+                            modifier = Modifier.safeDrawingPadding()
+                        )
+                    }
                     entry<AlertDetail> { alertDetail ->
                         AlertDetailScreen(
                             alertId = alertDetail.id,
@@ -103,6 +120,8 @@ fun MainNavigation() {
                             action = actionConfirmation.action,
                             targetMac = actionConfirmation.targetMac,
                             actionLabel = actionConfirmation.actionLabel,
+                            scope = actionConfirmation.scope,
+                            identityId = actionConfirmation.identityId,
                             onBack = { backStack.removeLastOrNull() },
                             modifier = Modifier.safeDrawingPadding()
                         )

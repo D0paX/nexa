@@ -4,6 +4,7 @@ import com.example.nexa.theme.NexaStatus
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.ActivityKind
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.TrustState
 
 /**
  * PREVIEW DATA — NOT LIVE SYSTEM STATE.
@@ -61,7 +62,7 @@ object DevicesPreview {
             ip = "192.168.1.105",
             scope = "VLAN_SECURE",
             presence = Presence.Present,
-            trust = DeviceTrust.Trusted,
+            trust = TrustState.Trusted,
             identityId = "TID-88F1",
             enforcement = DeviceEnforcement.Quarantined,
             alerts = DeviceAlerts(total = 2, critical = 1, warning = 1),
@@ -75,7 +76,7 @@ object DevicesPreview {
             ip = "192.168.1.140",
             scope = "VLAN_SECURE",
             presence = Presence.Present,
-            trust = DeviceTrust.Unverified,
+            trust = TrustState.Unverified,
             identityId = null,
             enforcement = DeviceEnforcement.Normal,
             alerts = DeviceAlerts(total = 1, critical = 0, warning = 1),
@@ -89,7 +90,7 @@ object DevicesPreview {
             ip = "10.20.4.11",
             scope = "VLAN_BUILD",
             presence = Presence.Present,
-            trust = DeviceTrust.Trusted,
+            trust = TrustState.Trusted,
             identityId = "TID-2B0C",
             enforcement = DeviceEnforcement.Failed,
             alerts = DeviceAlerts(total = 0, critical = 0, warning = 0),
@@ -103,7 +104,7 @@ object DevicesPreview {
             ip = "192.168.9.30",
             scope = "VLAN_GUEST",
             presence = Presence.Absent,
-            trust = DeviceTrust.Revoked,
+            trust = TrustState.Revoked,
             identityId = "TID-51AA",
             enforcement = DeviceEnforcement.Normal,
             alerts = DeviceAlerts(total = 0, critical = 0, warning = 0),
@@ -117,7 +118,7 @@ object DevicesPreview {
             ip = null,
             scope = "VLAN_LAB",
             presence = Presence.Unknown,
-            trust = DeviceTrust.Unknown,
+            trust = TrustState.Unknown,
             identityId = null,
             enforcement = DeviceEnforcement.Unknown,
             alerts = DeviceAlerts(total = 0, critical = 0, warning = 0),
@@ -131,7 +132,7 @@ object DevicesPreview {
             ip = "10.20.4.52",
             scope = "VLAN_BUILD",
             presence = Presence.Present,
-            trust = DeviceTrust.Pending,
+            trust = TrustState.Pending,
             identityId = "TID-77C4",
             enforcement = DeviceEnforcement.Reconciling,
             alerts = DeviceAlerts(total = 0, critical = 0, warning = 0),
@@ -145,7 +146,7 @@ object DevicesPreview {
             ip = "192.168.1.77",
             scope = "VLAN_SECURE",
             presence = Presence.Present,
-            trust = DeviceTrust.Trusted,
+            trust = TrustState.Trusted,
             identityId = "TID-9E12",
             enforcement = DeviceEnforcement.Normal,
             alerts = DeviceAlerts(total = 0, critical = 0, warning = 0),
@@ -159,7 +160,7 @@ object DevicesPreview {
             ip = "10.44.2.8",
             scope = "VLAN_GUEST",
             presence = Presence.Present,
-            trust = DeviceTrust.Unverified,
+            trust = TrustState.Unverified,
             identityId = null,
             enforcement = DeviceEnforcement.Paused,
             alerts = DeviceAlerts(total = 0, critical = 0, warning = 0),
@@ -195,14 +196,14 @@ object DevicesPreview {
                     else -> null
                 },
                 verifiedLabel = when (device.trust) {
-                    DeviceTrust.Trusted -> "Verified 41m ago"
-                    DeviceTrust.Pending -> "Verification in progress"
-                    DeviceTrust.Revoked -> "Revoked 2h ago"
+                    TrustState.Trusted -> "Verified 41m ago"
+                    TrustState.Pending -> "Verification in progress"
+                    TrustState.Revoked -> "Revoked 2h ago"
                     else -> "Not verified"
                 },
                 reverificationLabel = when (device.trust) {
-                    DeviceTrust.Trusted -> "Next reverification in 19m"
-                    DeviceTrust.Pending -> "Awaiting reverification"
+                    TrustState.Trusted -> "Next reverification in 19m"
+                    TrustState.Pending -> "Awaiting reverification"
                     else -> null
                 }
             )

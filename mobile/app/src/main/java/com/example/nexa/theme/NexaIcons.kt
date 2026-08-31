@@ -11,6 +11,8 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.GppBad
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.HistoryToggleOff
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.VerifiedUser
+import androidx.compose.material.icons.outlined.VpnKey
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -56,6 +59,16 @@ object NexaIcons {
     val Critical: ImageVector = Icons.Outlined.ErrorOutline
     val Warning: ImageVector = Icons.Outlined.WarningAmber
     val Information: ImageVector = Icons.Outlined.Info
+
+    // --- Identity & trust (Phase 2) ---
+    /** A cryptographic identity as a subject — not the device that carries it. */
+    val Identity: ImageVector = Icons.Outlined.Fingerprint
+
+    /** A credential in an identity's lifecycle. Never used for secret material. */
+    val Credential: ImageVector = Icons.Outlined.VpnKey
+
+    /** Trust withdrawn — distinct in shape from a mere warning. */
+    val Revoked: ImageVector = Icons.Outlined.GppBad
 
     // --- Status ---
     val Secure: ImageVector = Icons.Outlined.VerifiedUser

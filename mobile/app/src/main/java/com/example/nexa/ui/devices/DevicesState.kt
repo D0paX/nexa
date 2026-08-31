@@ -2,6 +2,7 @@ package com.example.nexa.ui.devices
 
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.TrustState
 
 /**
  * The operator-facing model of the device inventory.
@@ -10,7 +11,7 @@ import com.example.nexa.ui.common.DataFreshness
  * collapsed into one "status":
  *
  *   [Presence]         — Phase 1 network observation. Says nothing about trust.
- *   [DeviceTrust]      — Phase 2 cryptographic identity. Says nothing about authorization.
+ *   [TrustState]      — Phase 2 cryptographic identity. Says nothing about authorization.
  *   [DeviceEnforcement]— Phase 4 execution state. Says nothing about what the firewall
  *                        does in every context.
  *
@@ -25,23 +26,8 @@ import com.example.nexa.ui.common.DataFreshness
 /** Phase 1: has NEXA observed this device on the network recently? */
 enum class Presence { Present, Absent, Unknown }
 
-/** Phase 2: does a cryptographic identity exist, and what is its standing? */
-enum class DeviceTrust {
-    /** A trusted identity exists and is currently valid. */
-    Trusted,
-
-    /** An identity exists but verification has not completed. */
-    Pending,
-
-    /** An identity existed and has been revoked. */
-    Revoked,
-
-    /** Observed on the network with no trusted identity at all. */
-    Unverified,
-
-    /** Trust standing cannot currently be determined. */
-    Unknown
-}
+// Trust standing (Phase 2) uses the shared TrustState vocabulary — see
+// com.example.nexa.ui.common.TrustState.
 
 /** Phase 4: what enforcement is doing about this device. */
 enum class DeviceEnforcement {
@@ -72,7 +58,7 @@ data class DeviceListItem(
     val ip: String?,
     val scope: String,
     val presence: Presence,
-    val trust: DeviceTrust,
+    val trust: TrustState,
     val identityId: String?,
     val enforcement: DeviceEnforcement,
     val alerts: DeviceAlerts,
@@ -86,7 +72,7 @@ data class DeviceListItem(
 
 data class DeviceFilters(
     val presence: Set<Presence> = emptySet(),
-    val trust: Set<DeviceTrust> = emptySet(),
+    val trust: Set<TrustState> = emptySet(),
     val enforcement: Set<DeviceEnforcement> = emptySet(),
     val scopes: Set<String> = emptySet(),
     val onlyWithAlerts: Boolean = false
@@ -141,11 +127,11 @@ fun attentionRank(device: DeviceListItem): Int = when {
     device.alerts.critical > 0 -> 0
     device.enforcement == DeviceEnforcement.Failed -> 1
     device.enforcement == DeviceEnforcement.Reconciling -> 2
-    device.trust == DeviceTrust.Revoked -> 3
+    device.trust == TrustState.Revoked -> 3
     device.alerts.warning > 0 -> 4
     device.freshness is DataFreshness.Unknown -> 5
     device.enforcement == DeviceEnforcement.Quarantined -> 6
-    device.trust == DeviceTrust.Unverified -> 7
+    device.trust == TrustState.Unverified -> 7
     device.freshness is DataFreshness.Stale -> 8
     else -> 9
 }
@@ -243,7 +229,7 @@ fun availableActions(device: DeviceListItem): List<DeviceAction> {
     }
 
     // Reverification is a Phase 2 concept: it requires an identity to exist.
-    if (device.trust == DeviceTrust.Trusted || device.trust == DeviceTrust.Pending) {
+    if (device.trust == TrustState.Trusted || device.trust == TrustState.Pending) {
         actions += DeviceAction(
             kind = DeviceActionKind.RequireReverification,
             label = "Require Reverification",
@@ -300,7 +286,7 @@ data class DeviceRecordContext(
 /** Phase 2 cryptographic identity. Absent when the device is merely observed. */
 data class TrustedIdentityContext(
     val identityId: String,
-    val trust: DeviceTrust,
+    val trust: TrustState,
     val owner: String?,
     val verifiedLabel: String,
     val reverificationLabel: String?

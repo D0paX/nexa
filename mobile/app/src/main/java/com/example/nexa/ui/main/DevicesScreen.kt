@@ -17,10 +17,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import com.example.nexa.DeviceDetail
+import com.example.nexa.Identities
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.devices.*
 
@@ -110,7 +112,16 @@ private fun DevicesContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Devices", style = NexaType.Display, color = NexaTextPrimary)
-                FreshnessLabel(state.freshness)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FreshnessLabel(state.freshness)
+                    // Entry to the cryptographic identity inventory — a different
+                    // question from the network one this screen answers.
+                    NexaIconButton(
+                        icon = NexaIcons.Identity,
+                        onClick = { onItemClick(Identities) },
+                        contentDescription = "Cryptographic identities"
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             Text(
@@ -163,8 +174,8 @@ private fun DevicesContent(
                 )
                 NexaFilterChip(
                     label = "Unverified",
-                    selected = DeviceTrust.Unverified in state.filters.trust,
-                    onClick = { onFiltersChange(state.filters.toggleTrust(DeviceTrust.Unverified)) }
+                    selected = TrustState.Unverified in state.filters.trust,
+                    onClick = { onFiltersChange(state.filters.toggleTrust(TrustState.Unverified)) }
                 )
                 if (state.filters.isActive) {
                     NexaFilterChip(label = "Clear", selected = false, onClick = onClearFilters)
@@ -323,5 +334,5 @@ private fun deviceCountLabel(state: DevicesUiState.Content): String {
 private fun DeviceFilters.toggleEnforcement(value: DeviceEnforcement) =
     copy(enforcement = if (value in enforcement) enforcement - value else enforcement + value)
 
-private fun DeviceFilters.toggleTrust(value: DeviceTrust) =
+private fun DeviceFilters.toggleTrust(value: TrustState) =
     copy(trust = if (value in trust) trust - value else trust + value)

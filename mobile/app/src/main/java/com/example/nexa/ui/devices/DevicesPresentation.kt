@@ -4,6 +4,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.nexa.theme.NexaIcons
 import com.example.nexa.theme.NexaStatus
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.status
 
 /**
  * How device state is presented.
@@ -34,23 +37,7 @@ val Presence.icon: ImageVector
         Presence.Unknown -> NexaIcons.Unknown
     }
 
-val DeviceTrust.status: NexaStatus
-    get() = when (this) {
-        DeviceTrust.Trusted -> NexaStatus.Verified
-        DeviceTrust.Pending -> NexaStatus.Information
-        DeviceTrust.Revoked -> NexaStatus.Danger
-        DeviceTrust.Unverified -> NexaStatus.Warning
-        DeviceTrust.Unknown -> NexaStatus.Unknown
-    }
-
-val DeviceTrust.label: String
-    get() = when (this) {
-        DeviceTrust.Trusted -> "Trusted"
-        DeviceTrust.Pending -> "Pending"
-        DeviceTrust.Revoked -> "Revoked"
-        DeviceTrust.Unverified -> "Unverified"
-        DeviceTrust.Unknown -> "Trust unknown"
-    }
+// Trust presentation is shared vocabulary — see com.example.nexa.ui.common.
 
 val DeviceEnforcement.status: NexaStatus
     get() = when (this) {
@@ -83,12 +70,12 @@ fun attentionBadge(device: DeviceListItem): NexaStatus? = when {
     device.alerts.critical > 0 -> NexaStatus.Critical
     device.enforcement == DeviceEnforcement.Failed -> NexaStatus.Critical
     device.enforcement == DeviceEnforcement.Reconciling -> NexaStatus.Degraded
-    device.trust == DeviceTrust.Revoked -> NexaStatus.Danger
+    device.trust == TrustState.Revoked -> NexaStatus.Danger
     device.alerts.warning > 0 -> NexaStatus.Warning
     device.freshness is DataFreshness.Unknown -> NexaStatus.Unknown
     device.enforcement == DeviceEnforcement.Quarantined -> NexaStatus.Danger
     device.enforcement == DeviceEnforcement.Paused -> NexaStatus.Paused
-    device.trust == DeviceTrust.Unverified -> NexaStatus.Warning
+    device.trust == TrustState.Unverified -> NexaStatus.Warning
     device.freshness is DataFreshness.Stale -> NexaStatus.Warning
     else -> null
 }
@@ -98,12 +85,12 @@ fun attentionLabel(device: DeviceListItem): String? = when {
     device.alerts.critical > 0 -> "CRITICAL"
     device.enforcement == DeviceEnforcement.Failed -> "ENF FAILED"
     device.enforcement == DeviceEnforcement.Reconciling -> "RECONCILING"
-    device.trust == DeviceTrust.Revoked -> "REVOKED"
+    device.trust == TrustState.Revoked -> "REVOKED"
     device.alerts.warning > 0 -> "WARNING"
     device.freshness is DataFreshness.Unknown -> "UNKNOWN"
     device.enforcement == DeviceEnforcement.Quarantined -> "QUARANTINED"
     device.enforcement == DeviceEnforcement.Paused -> "PAUSED"
-    device.trust == DeviceTrust.Unverified -> "UNVERIFIED"
+    device.trust == TrustState.Unverified -> "UNVERIFIED"
     device.freshness is DataFreshness.Stale -> "STALE"
     else -> null
 }

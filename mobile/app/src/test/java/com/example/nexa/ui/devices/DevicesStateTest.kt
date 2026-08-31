@@ -1,6 +1,7 @@
 package com.example.nexa.ui.devices
 
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.TrustState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -24,7 +25,7 @@ class DevicesStateTest {
         ip: String? = "10.0.0.1",
         scope: String = "VLAN_A",
         presence: Presence = Presence.Present,
-        trust: DeviceTrust = DeviceTrust.Trusted,
+        trust: TrustState = TrustState.Trusted,
         identityId: String? = "TID-1",
         enforcement: DeviceEnforcement = DeviceEnforcement.Normal,
         alerts: DeviceAlerts = DeviceAlerts(0, 0, 0),
@@ -88,14 +89,14 @@ class DevicesStateTest {
     @Test
     fun `filters within a facet are an OR and across facets an AND`() {
         val list = listOf(
-            device(id = "a", presence = Presence.Present, trust = DeviceTrust.Trusted),
-            device(id = "b", presence = Presence.Absent, trust = DeviceTrust.Trusted),
-            device(id = "c", presence = Presence.Present, trust = DeviceTrust.Unverified)
+            device(id = "a", presence = Presence.Present, trust = TrustState.Trusted),
+            device(id = "b", presence = Presence.Absent, trust = TrustState.Trusted),
+            device(id = "c", presence = Presence.Present, trust = TrustState.Unverified)
         )
         val result = list.applyFilters(
             DeviceFilters(
                 presence = setOf(Presence.Present),
-                trust = setOf(DeviceTrust.Trusted)
+                trust = setOf(TrustState.Trusted)
             )
         )
         assertEquals(listOf("a"), result.map { it.id })
@@ -131,7 +132,7 @@ class DevicesStateTest {
     fun `active filter count reflects every selected facet`() {
         val filters = DeviceFilters(
             presence = setOf(Presence.Present),
-            trust = setOf(DeviceTrust.Trusted, DeviceTrust.Pending),
+            trust = setOf(TrustState.Trusted, TrustState.Pending),
             onlyWithAlerts = true
         )
         assertTrue(filters.isActive)
@@ -185,18 +186,18 @@ class DevicesStateTest {
     /** Being on the network is not evidence of identity. */
     @Test
     fun `a present device can be unverified`() {
-        val d = device(presence = Presence.Present, trust = DeviceTrust.Unverified, identityId = null)
+        val d = device(presence = Presence.Present, trust = TrustState.Unverified, identityId = null)
         assertEquals(Presence.Present, d.presence)
-        assertEquals(DeviceTrust.Unverified, d.trust)
+        assertEquals(TrustState.Unverified, d.trust)
         assertNull(d.identityId)
     }
 
     /** And having an identity is not evidence of being present. */
     @Test
     fun `an absent device can still be trusted`() {
-        val d = device(presence = Presence.Absent, trust = DeviceTrust.Trusted)
+        val d = device(presence = Presence.Absent, trust = TrustState.Trusted)
         assertEquals(Presence.Absent, d.presence)
-        assertEquals(DeviceTrust.Trusted, d.trust)
+        assertEquals(TrustState.Trusted, d.trust)
     }
 
     // ------------------------------------------------------------
@@ -244,19 +245,19 @@ class DevicesStateTest {
     @Test
     fun `reverification is offered only when a trusted identity exists`() {
         assertTrue(
-            availableActions(device(trust = DeviceTrust.Trusted))
+            availableActions(device(trust = TrustState.Trusted))
                 .any { it.kind == DeviceActionKind.RequireReverification }
         )
         assertTrue(
-            availableActions(device(trust = DeviceTrust.Pending))
+            availableActions(device(trust = TrustState.Pending))
                 .any { it.kind == DeviceActionKind.RequireReverification }
         )
         assertFalse(
-            availableActions(device(trust = DeviceTrust.Unverified, identityId = null))
+            availableActions(device(trust = TrustState.Unverified, identityId = null))
                 .any { it.kind == DeviceActionKind.RequireReverification }
         )
         assertFalse(
-            availableActions(device(trust = DeviceTrust.Revoked))
+            availableActions(device(trust = TrustState.Revoked))
                 .any { it.kind == DeviceActionKind.RequireReverification }
         )
     }
@@ -297,7 +298,7 @@ class DevicesStateTest {
 
     @Test
     fun `subtitle keeps presence trust and scope as separate facts`() {
-        val subtitle = deviceSubtitle(device(presence = Presence.Present, trust = DeviceTrust.Unverified, scope = "VLAN_GUEST"))
+        val subtitle = deviceSubtitle(device(presence = Presence.Present, trust = TrustState.Unverified, scope = "VLAN_GUEST"))
         assertEquals("Present · Unverified · VLAN_GUEST", subtitle)
     }
 
@@ -308,10 +309,10 @@ class DevicesStateTest {
     @Test
     fun `preview inventory exercises the states the UI must distinguish`() {
         val inv = DevicesPreview.inventory
-        assertTrue(inv.any { it.trust == DeviceTrust.Trusted })
-        assertTrue(inv.any { it.trust == DeviceTrust.Unverified })
-        assertTrue(inv.any { it.trust == DeviceTrust.Revoked })
-        assertTrue(inv.any { it.trust == DeviceTrust.Pending })
+        assertTrue(inv.any { it.trust == TrustState.Trusted })
+        assertTrue(inv.any { it.trust == TrustState.Unverified })
+        assertTrue(inv.any { it.trust == TrustState.Revoked })
+        assertTrue(inv.any { it.trust == TrustState.Pending })
         assertTrue(inv.any { it.enforcement == DeviceEnforcement.Quarantined })
         assertTrue(inv.any { it.enforcement == DeviceEnforcement.Failed })
         assertTrue(inv.any { it.enforcement == DeviceEnforcement.Paused })
@@ -351,6 +352,6 @@ class DevicesStateTest {
     fun `an observed device with no identity has no trusted identity context`() {
         val state = DevicesPreview.detailFor("00:5E:4D:3C:2B:1A") as DeviceDetailUiState.Content
         assertNull(state.data.identity)
-        assertEquals(DeviceTrust.Unverified, state.data.device.trust)
+        assertEquals(TrustState.Unverified, state.data.device.trust)
     }
 }
