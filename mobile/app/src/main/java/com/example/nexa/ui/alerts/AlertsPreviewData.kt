@@ -6,6 +6,8 @@ import com.example.nexa.ui.common.ActivityKind
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.devices.Presence
+import com.example.nexa.ui.common.DeliveryAttempt
+import com.example.nexa.ui.common.DeliveryState
 
 /**
  * PREVIEW DATA — NOT LIVE SYSTEM STATE.
@@ -235,9 +237,9 @@ object AlertsPreview {
                 state = DeliveryState.Failed,
                 lastAttemptLabel = "Last attempt 17m ago",
                 attempts = listOf(
-                    DeliveryAttempt("Push (FCM)", DeliveryState.Failed, "17m ago", "Device token rejected."),
-                    DeliveryAttempt("Push (FCM)", DeliveryState.Failed, "19m ago", "Device token rejected."),
-                    DeliveryAttempt("Push (FCM)", DeliveryState.Sent, "21m ago")
+                    DeliveryAttempt(3, "Push (FCM)", DeliveryState.Failed, "17m ago", "Device token rejected."),
+                    DeliveryAttempt(2, "Push (FCM)", DeliveryState.Failed, "19m ago", "Device token rejected."),
+                    DeliveryAttempt(1, "Push (FCM)", DeliveryState.Sent, "21m ago")
                 ),
                 detail = "Delivery failed after 3 attempts. This does not change the state of the alert."
             )
@@ -245,15 +247,15 @@ object AlertsPreview {
                 state = DeliveryState.Retrying,
                 lastAttemptLabel = "Last attempt 6m ago",
                 attempts = listOf(
-                    DeliveryAttempt("Push (FCM)", DeliveryState.Retrying, "6m ago", "Retry scheduled."),
-                    DeliveryAttempt("Push (FCM)", DeliveryState.Failed, "12m ago", "Transport timeout.")
+                    DeliveryAttempt(2, "Push (FCM)", DeliveryState.Retrying, "6m ago", "Retry scheduled."),
+                    DeliveryAttempt(1, "Push (FCM)", DeliveryState.Failed, "12m ago", "Transport timeout.")
                 )
             )
             DeliveryState.Exhausted -> DeliverySummary(
                 state = DeliveryState.Exhausted,
                 lastAttemptLabel = "Last attempt 5h ago",
                 attempts = listOf(
-                    DeliveryAttempt("Push (FCM)", DeliveryState.Exhausted, "5h ago", "No further attempts will be made.")
+                    DeliveryAttempt(1, "Push (FCM)", DeliveryState.Exhausted, "5h ago", "No further attempts will be made.")
                 ),
                 detail = "The incident was resolved regardless of the notification outcome."
             )
@@ -265,7 +267,7 @@ object AlertsPreview {
             else -> DeliverySummary(
                 state = alert.delivery,
                 lastAttemptLabel = alert.createdLabel,
-                attempts = listOf(DeliveryAttempt("Push (FCM)", alert.delivery, alert.createdLabel))
+                attempts = listOf(DeliveryAttempt(1, "Push (FCM)", alert.delivery, alert.createdLabel))
             )
         }
 

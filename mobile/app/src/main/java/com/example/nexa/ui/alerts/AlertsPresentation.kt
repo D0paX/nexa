@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.nexa.theme.GlassVariant
 import com.example.nexa.theme.NexaIcons
 import com.example.nexa.theme.NexaStatus
+import com.example.nexa.ui.common.DeliveryState
+import com.example.nexa.ui.common.label
 
 /**
  * How alert state is presented.
@@ -87,39 +89,10 @@ val AlertLifecycle.explanation: String
     }
 
 // --- Notification delivery: a separate axis ---
-
-val DeliveryState.status: NexaStatus
-    get() = when (this) {
-        DeliveryState.Delivered -> NexaStatus.Secure
-        DeliveryState.Sent -> NexaStatus.Information
-        DeliveryState.Pending -> NexaStatus.Information
-        DeliveryState.Retrying -> NexaStatus.Warning
-        DeliveryState.Failed -> NexaStatus.Danger
-        DeliveryState.Exhausted -> NexaStatus.Danger
-        DeliveryState.Unavailable -> NexaStatus.Unknown
-    }
-
-val DeliveryState.label: String
-    get() = when (this) {
-        DeliveryState.Delivered -> "Delivered"
-        DeliveryState.Sent -> "Sent"
-        DeliveryState.Pending -> "Pending"
-        DeliveryState.Retrying -> "Retrying"
-        DeliveryState.Failed -> "Failed"
-        DeliveryState.Exhausted -> "Exhausted"
-        DeliveryState.Unavailable -> "Unavailable"
-    }
-
-val DeliveryState.icon: ImageVector
-    get() = when (this) {
-        DeliveryState.Delivered -> NexaIcons.Delivered
-        DeliveryState.Sent -> NexaIcons.NotificationDelivery
-        DeliveryState.Pending -> NexaIcons.Pending
-        DeliveryState.Retrying -> NexaIcons.Reverification
-        DeliveryState.Failed -> NexaIcons.Critical
-        DeliveryState.Exhausted -> NexaIcons.Critical
-        DeliveryState.Unavailable -> NexaIcons.Unknown
-    }
+//
+// The state's label, tone and icon are shared vocabulary and live in
+// com.example.nexa.ui.common.Delivery. Only the alert-context wording is
+// decided here.
 
 /**
  * Delivery wording, phrased so it can never be read as the alert's own

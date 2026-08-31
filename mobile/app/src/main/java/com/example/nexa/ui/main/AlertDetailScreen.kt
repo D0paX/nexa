@@ -32,6 +32,10 @@ import com.example.nexa.ui.common.status as trustStatus
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.devices.label as presenceLabel
 import com.example.nexa.ui.devices.status as presenceStatus
+import com.example.nexa.ui.common.DeliveryAttempt
+import com.example.nexa.ui.common.DeliveryState
+import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.status
 
 /**
  * One incident, in full.

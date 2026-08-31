@@ -2,6 +2,8 @@ package com.example.nexa.ui.alerts
 
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.DeliveryAttempt
+import com.example.nexa.ui.common.DeliveryState
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.devices.Presence
 
@@ -49,29 +51,11 @@ enum class AlertLifecycle {
 
 // ============================================================
 // NOTIFICATION DELIVERY — a separate lifecycle entirely
+//
+// DeliveryState and DeliveryAttempt now live in com.example.nexa.ui.common,
+// shared with the notification center. One vocabulary, so "failed" cannot
+// come to mean two things in two places.
 // ============================================================
-
-enum class DeliveryState {
-    Pending,
-    Sent,
-    Delivered,
-    Retrying,
-    Failed,
-    Exhausted,
-
-    /** Delivery state could not be read. Not the same as "not delivered". */
-    Unavailable;
-
-    val isFailure: Boolean get() = this == Failed || this == Exhausted
-}
-
-/** One notification attempt. Alerts may have several. */
-data class DeliveryAttempt(
-    val channel: String,
-    val state: DeliveryState,
-    val timeLabel: String,
-    val detail: String? = null
-)
 
 /**
  * The notification picture for one alert.

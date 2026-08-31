@@ -1,5 +1,6 @@
 package com.example.nexa.ui.main
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -12,11 +13,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import com.example.nexa.AlertDetail
+import com.example.nexa.NotificationCenter
 import com.example.nexa.theme.*
 import com.example.nexa.ui.alerts.*
 import com.example.nexa.ui.common.DataFreshness
@@ -113,7 +116,18 @@ private fun AlertsContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Alerts", style = NexaType.Display, color = NexaTextPrimary)
-                AlertsFreshness(state.freshness)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AlertsFreshness(state.freshness)
+                    // The entry point to delivery intelligence. It lives here
+                    // rather than in a root tab of its own: delivery is a
+                    // property of the messages incidents produce, not a
+                    // security surface with equal standing.
+                    NexaIconButton(
+                        icon = NexaIcons.NotificationDelivery,
+                        onClick = { onItemClick(NotificationCenter) },
+                        contentDescription = "Notification delivery"
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             Text(
@@ -125,11 +139,31 @@ private fun AlertsContent(
             // never folded into the incident counts above.
             if (state.summary.deliveryFailures > 0) {
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
-                Text(
-                    text = "${state.summary.deliveryFailures} notification delivery failure(s) — alerts themselves are unaffected",
-                    style = NexaType.Metadata,
-                    color = NexaWarning
-                )
+                // Also the way in: an operator who has just read that messages
+                // failed is exactly the operator who wants the delivery record.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .heightIn(min = NexaTokens.MinTouchTarget)
+                        .clickable(
+                            role = Role.Button,
+                            onClickLabel = "Open notification delivery",
+                            onClick = { onItemClick(NotificationCenter) }
+                        )
+                ) {
+                    Text(
+                        text = "${state.summary.deliveryFailures} notification delivery failure(s) — alerts themselves are unaffected",
+                        style = NexaType.Metadata,
+                        color = NexaWarning,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(NexaTokens.SpacingXSmall))
+                    NexaIcon(
+                        icon = NexaIcons.Forward,
+                        size = NexaTokens.IconSmall,
+                        tint = NexaWarning
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }

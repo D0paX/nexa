@@ -29,6 +29,8 @@ import com.example.nexa.ui.main.DeviceDetailScreen
 import com.example.nexa.ui.main.DevicesScreen
 import com.example.nexa.ui.main.IdentitiesScreen
 import com.example.nexa.ui.main.IdentityDetailScreen
+import com.example.nexa.ui.main.NotificationCenterScreen
+import com.example.nexa.ui.main.NotificationDetailScreen
 import com.example.nexa.ui.main.OverviewScreen
 import com.example.nexa.ui.navigation.NavigationDirectionResolver
 import com.example.nexa.ui.navigation.navigationTransform
@@ -131,6 +133,21 @@ fun MainNavigation() {
                     entry<IdentityDetail> { identityDetail ->
                         IdentityDetailScreen(
                             identityId = identityDetail.identityId,
+                            onBack = { backStack.removeLastOrNull() },
+                            onNavigate = { navKey -> backStack.add(navKey) },
+                            modifier = Modifier.safeDrawingPadding()
+                        )
+                    }
+                    entry<NotificationCenter> {
+                        NotificationCenterScreen(
+                            onBack = { backStack.removeLastOrNull() },
+                            onNavigate = { navKey -> backStack.add(navKey) },
+                            modifier = Modifier.safeDrawingPadding()
+                        )
+                    }
+                    entry<NotificationDetail> { notificationDetail ->
+                        NotificationDetailScreen(
+                            deliveryId = notificationDetail.deliveryId,
                             onBack = { backStack.removeLastOrNull() },
                             onNavigate = { navKey -> backStack.add(navKey) },
                             modifier = Modifier.safeDrawingPadding()

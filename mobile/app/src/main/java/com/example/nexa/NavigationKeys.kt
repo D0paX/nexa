@@ -26,6 +26,24 @@ import kotlinx.serialization.Serializable
 @Serializable data object Identities : NavKey
 
 /**
+ * Notification delivery.
+ *
+ * Reached from Alerts rather than from a root tab of its own. Delivery is a
+ * property of the messages an incident produces, so it belongs one level in
+ * from the incidents — and a fifth permanent tab would give transport the
+ * same standing as the security surfaces, which it does not have.
+ */
+@Serializable data object NotificationCenter : NavKey
+
+/**
+ * One delivery record, addressed by the backend's delivery identifier.
+ *
+ * The id is the routing key, never a display label, so the route stays valid
+ * as records age out and is the seam a future deep link resolves against.
+ */
+@Serializable data class NotificationDetail(val deliveryId: String) : NavKey
+
+/**
  * One cryptographic identity.
  *
  * Keyed by the Phase 2 identity identifier rather than by a device address:

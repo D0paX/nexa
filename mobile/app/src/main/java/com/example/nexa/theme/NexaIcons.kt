@@ -31,13 +31,16 @@ import androidx.compose.material.icons.outlined.PauseCircleOutline
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.PublishedWithChanges
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Rule
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.SmsFailed
 import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.Unsubscribe
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.SyncProblem
@@ -112,6 +115,15 @@ object NexaIcons {
     // --- Notification delivery (Phase 3) — never used for alert state ---
     val NotificationDelivery: ImageVector = Icons.Outlined.Send
     val Delivered: ImageVector = Icons.Outlined.DoneAll
+
+    /** A delivery attempt being repeated. Not a Phase 2 reverification. */
+    val Retry: ImageVector = Icons.Outlined.Replay
+
+    /** A message that did not arrive. Not a critical security event. */
+    val DeliveryFailed: ImageVector = Icons.Outlined.SmsFailed
+
+    /** Retries spent: no further attempt will be made. */
+    val DeliveryExhausted: ImageVector = Icons.Outlined.Unsubscribe
 
     // --- Inventory controls ---
     val Search: ImageVector = Icons.Outlined.Search

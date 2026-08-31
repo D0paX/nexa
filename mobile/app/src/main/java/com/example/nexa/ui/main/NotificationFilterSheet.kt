@@ -15,84 +15,84 @@ import androidx.compose.ui.Modifier
 import com.example.nexa.theme.NexaTextMuted
 import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.NexaType
-import com.example.nexa.ui.alerts.AlertFilters
-import com.example.nexa.ui.alerts.AlertLifecycle
-import com.example.nexa.ui.alerts.AlertSeverity
-import com.example.nexa.ui.alerts.AlertSort
-import com.example.nexa.ui.alerts.label
+import com.example.nexa.ui.common.DeliveryState
+import com.example.nexa.ui.common.label
 import com.example.nexa.ui.components.NexaBottomSheet
 import com.example.nexa.ui.components.NexaFilterChip
 import com.example.nexa.ui.components.NexaOutlinedButton
 import com.example.nexa.ui.components.SectionHeader
 import com.example.nexa.ui.components.SectionLevel
-import com.example.nexa.ui.common.DeliveryState
-import com.example.nexa.ui.common.label
+import com.example.nexa.ui.notifications.NotificationFilters
+import com.example.nexa.ui.notifications.NotificationSort
+import com.example.nexa.ui.notifications.NotificationSourceType
+import com.example.nexa.ui.notifications.NotificationTimeRange
+import com.example.nexa.ui.notifications.label
 
 /**
- * Alert filtering and ordering.
+ * Delivery filtering and ordering.
  *
- * Severity, alert lifecycle and notification delivery are three separate
- * filter groups, labelled as such — the sheet is the clearest place to show
- * that they are independent axes rather than one status.
+ * There is no channel group. Phase 3 declares a single delivery channel, and
+ * a control that could only ever select everything would tell an operator the
+ * system has destinations it does not have.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlertFilterSheet(
-    filters: AlertFilters,
-    sort: AlertSort,
+fun NotificationFilterSheet(
+    filters: NotificationFilters,
+    sort: NotificationSort,
     scopes: List<String>,
-    onFiltersChange: (AlertFilters) -> Unit,
-    onSortChange: (AlertSort) -> Unit,
+    onFiltersChange: (NotificationFilters) -> Unit,
+    onSortChange: (NotificationSort) -> Unit,
     onClear: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    NexaBottomSheet(onDismissRequest = onDismiss, title = "Filter alerts") {
+    NexaBottomSheet(onDismissRequest = onDismiss, title = "Filter delivery records") {
         Column(modifier = Modifier.fillMaxWidth()) {
 
-            Group(title = "Sort by") {
-                AlertSort.entries.forEach { option ->
+            Group(title = "Order") {
+                NotificationSort.entries.forEach { option ->
                     NexaFilterChip(
-                        label = option.sortLabel,
+                        label = option.label,
                         selected = sort == option,
                         onClick = { onSortChange(option) }
                     )
                 }
             }
 
-            Group(title = "Severity") {
-                AlertSeverity.entries.forEach { value ->
+            Group(title = "Time range") {
+                NotificationTimeRange.entries.forEach { option ->
                     NexaFilterChip(
-                        label = value.label,
-                        selected = value in filters.severity,
-                        onClick = {
-                            onFiltersChange(filters.copy(severity = filters.severity.toggle(value)))
-                        }
-                    )
-                }
-            }
-
-            Group(title = "Alert state") {
-                AlertLifecycle.entries.forEach { value ->
-                    NexaFilterChip(
-                        label = value.label,
-                        selected = value in filters.lifecycle,
-                        onClick = {
-                            onFiltersChange(filters.copy(lifecycle = filters.lifecycle.toggle(value)))
-                        }
+                        label = option.label,
+                        selected = filters.timeRange == option,
+                        onClick = { onFiltersChange(filters.copy(timeRange = option)) }
                     )
                 }
             }
 
             Group(
-                title = "Notification delivery",
-                note = "Delivery is separate from the alert's own state."
+                title = "Delivery state",
+                note = "The state of the message, not of the incident it was about."
             ) {
                 DeliveryState.entries.forEach { value ->
                     NexaFilterChip(
                         label = value.label,
-                        selected = value in filters.delivery,
+                        selected = value in filters.states,
                         onClick = {
-                            onFiltersChange(filters.copy(delivery = filters.delivery.toggle(value)))
+                            onFiltersChange(filters.copy(states = filters.states.toggle(value)))
+                        }
+                    )
+                }
+            }
+
+            Group(title = "Source") {
+                NotificationSourceType.entries.forEach { value ->
+                    NexaFilterChip(
+                        label = value.label,
+                        selected = value in filters.sourceTypes,
+                        onClick = {
+                            onFiltersChange(
+                                filters.copy(sourceTypes = filters.sourceTypes.toggle(value))
+                            )
                         }
                     )
                 }
@@ -141,12 +141,5 @@ private fun Group(title: String, note: String? = null, content: @Composable () -
     }
     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
 }
-
-private val AlertSort.sortLabel: String
-    get() = when (this) {
-        AlertSort.Attention -> "Needs attention"
-        AlertSort.Newest -> "Newest"
-        AlertSort.Severity -> "Severity"
-    }
 
 private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value
