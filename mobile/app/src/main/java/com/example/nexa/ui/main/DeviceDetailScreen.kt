@@ -43,6 +43,7 @@ fun DeviceDetailScreen(
             )
         },
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0.dp),
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
         LazyColumn(
@@ -125,7 +126,7 @@ fun DeviceDetailScreen(
             }
             
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
             }
         }
     }

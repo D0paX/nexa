@@ -7,6 +7,7 @@ object NexaTokens {
     val MinTouchTarget = 48.dp
     
     // Spacing
+    val SpacingXSmall = 4.dp
     val SpacingSmall = 8.dp
     val SpacingMedium = 16.dp
     val SpacingLarge = 24.dp
@@ -24,10 +25,13 @@ object NexaTokens {
     val ElevationDestructive = 12.dp
 
     // Navigation
-    val NavigationHeight = 64.dp
-    val NavigationHorizontalMargin = 24.dp
-    val NavigationBottomSpacing = 24.dp
-    val NavigationContentClearance = 120.dp
+    val NavigationHeight = 56.dp
+    val NavigationHorizontalMargin = 20.dp
+    val NavigationBottomSpacing = 16.dp
+    val NavigationContentClearance = 100.dp
     val NavigationItemSpacing = 4.dp
-    val NavigationActivePillHeight = 40.dp
+    val NavigationBarVerticalPadding = 6.dp
+    val NavigationActivePillHeight = 44.dp
+    val NavigationActivePillVerticalPadding = 4.dp
+    val NavigationIconSize = 20.dp
 }

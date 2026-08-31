@@ -42,6 +42,7 @@ fun ActionConfirmationScreen(
             )
         },
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0.dp),
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
         LazyColumn(
@@ -107,7 +108,7 @@ fun ActionConfirmationScreen(
             }
             
             item {
-                Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance))
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge))
             }
         }
     }

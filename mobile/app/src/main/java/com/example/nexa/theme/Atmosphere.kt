@@ -17,7 +17,7 @@ fun NexaAtmosphere(
     // Spatial tonal gradient from center to simulate depth and light field
     val atmosphereBrush = Brush.radialGradient(
         colors = listOf(
-            NexaAtmosphereLight, // Cool blue light
+            NexaAtmosphereShade, // Cool blue light
             NexaAtmosphereCore,  // Muted violet core
             NexaBackground       // Deep slate cyan edges
         ),

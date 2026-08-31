@@ -23,6 +23,7 @@ fun OverviewScreen(
 ) {
     Scaffold(
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0.dp),
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
         LazyColumn(
@@ -129,7 +130,7 @@ fun AlertItem(alert: AlertItemData, onClick: () -> Unit) {
     GlassSurface(
         variant = variant,
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(bottom = NexaTokens.SpacingSmall)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically

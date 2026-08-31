@@ -3,6 +3,7 @@ package com.example.nexa.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -18,12 +19,13 @@ fun GlassSurface(
     variant: GlassVariant = GlassVariant.Standard,
     shape: Shape = RoundedCornerShape(NexaTokens.CornerRadiusMedium),
     onClick: (() -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(NexaTokens.SpacingMedium),
     content: @Composable BoxScope.() -> Unit
 ) {
     val glassModifier = modifier
         .liquidGlass(variant = variant, shape = shape)
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-        .padding(NexaTokens.SpacingMedium)
+        .padding(contentPadding)
 
     Box(
         modifier = glassModifier,

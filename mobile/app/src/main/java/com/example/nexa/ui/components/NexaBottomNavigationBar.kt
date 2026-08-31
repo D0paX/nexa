@@ -35,6 +35,10 @@ fun NexaBottomNavigationBar(
     GlassSurface(
         variant = GlassVariant.Standard,
         shape = RoundedCornerShape(percent = 50),
+        contentPadding = PaddingValues(
+            horizontal = NexaTokens.SpacingSmall,
+            vertical = NexaTokens.NavigationBarVerticalPadding
+        ),
         modifier = modifier
             .fillMaxWidth()
             .padding(
@@ -84,6 +88,10 @@ fun NexaBottomNavigationItem(
             GlassSurface(
                 variant = GlassVariant.Hero,
                 shape = RoundedCornerShape(percent = 50),
+                contentPadding = PaddingValues(
+                    horizontal = NexaTokens.SpacingSmall,
+                    vertical = NexaTokens.NavigationActivePillVerticalPadding
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(NexaTokens.NavigationActivePillHeight)
@@ -97,7 +105,7 @@ fun NexaBottomNavigationItem(
                         imageVector = item.icon,
                         contentDescription = item.label,
                         tint = NexaAction,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(NexaTokens.NavigationIconSize)
                     )
                     Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                     Text(
@@ -117,7 +125,7 @@ fun NexaBottomNavigationItem(
                     imageVector = item.icon,
                     contentDescription = item.label,
                     tint = NexaTextSecondary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(NexaTokens.NavigationIconSize)
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
