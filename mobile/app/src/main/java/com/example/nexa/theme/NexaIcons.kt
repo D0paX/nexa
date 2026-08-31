@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.HistoryToggleOff
@@ -22,7 +23,9 @@ import androidx.compose.material.icons.outlined.PauseCircleOutline
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -73,6 +76,11 @@ object NexaIcons {
     val Reverification: ImageVector = Icons.Outlined.Autorenew
     val Pending: ImageVector = Icons.Outlined.Schedule
     val Refresh: ImageVector = Icons.Outlined.Refresh
+
+    // --- Inventory controls ---
+    val Search: ImageVector = Icons.Outlined.Search
+    val Filter: ImageVector = Icons.Outlined.FilterList
+    val Sort: ImageVector = Icons.Outlined.SwapVert
 
     /** Severity is never carried by color alone — every level has a shape. */
     fun forSeverity(severity: String): ImageVector = when (severity) {

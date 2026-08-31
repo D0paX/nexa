@@ -1,6 +1,11 @@
 package com.example.nexa.ui.overview
 
 import com.example.nexa.theme.NexaStatus
+import com.example.nexa.ui.common.ActivityEntry
+import com.example.nexa.ui.common.ActivityKind
+import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.isTrustworthy
+import com.example.nexa.ui.common.label
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -1,6 +1,8 @@
 package com.example.nexa.ui.overview
 
 import com.example.nexa.theme.NexaStatus
+import com.example.nexa.ui.common.ActivityEntry
+import com.example.nexa.ui.common.DataFreshness
 
 /**
  * The operator-facing state of the NEXA Security Command Center.
@@ -39,18 +41,6 @@ enum class SecurityPosture {
 
     /** NEXA cannot currently establish the state of the system. */
     Unknown
-}
-
-/** How current the displayed picture is. */
-sealed interface DataFreshness {
-    /** Confirmed just now. */
-    data object Live : DataFreshness
-
-    /** Real, but old enough that it should not be trusted for a decision. */
-    data class Stale(val lastUpdatedLabel: String) : DataFreshness
-
-    /** NEXA does not know how current this is. */
-    data object Unknown : DataFreshness
 }
 
 // ============================================================
@@ -126,36 +116,6 @@ data class AttentionItem(
     val status: NexaStatus,
     val target: AttentionTarget,
     val priority: Int
-)
-
-// ============================================================
-// ACTIVITY
-// ============================================================
-
-/** The kinds of security history the command center reports. */
-enum class ActivityKind {
-    AlertRaised,
-    AlertAcknowledged,
-    DeviceAppeared,
-    TrustChanged,
-    ReverificationRequired,
-    EnforcementStarted,
-    EnforcementCompleted,
-    ReleaseCompleted,
-    ActionFailed
-}
-
-/**
- * A single security event in recent history: what happened, to whom, when,
- * and what state it ended in.
- */
-data class ActivityEntry(
-    val id: String,
-    val kind: ActivityKind,
-    val title: String,
-    val target: String,
-    val timeAgo: String,
-    val status: NexaStatus
 )
 
 // ============================================================

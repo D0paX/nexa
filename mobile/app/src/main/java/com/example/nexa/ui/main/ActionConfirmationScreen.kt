@@ -33,15 +33,26 @@ fun ActionConfirmationScreen(
             SectionHeader(text = "Target Identity", level = SectionLevel.Group)
         }
 
-        // Target snapshot
+        // Target snapshot.
+        //
+        // Only the identity actually handed to this screen is shown. Address
+        // and trust standing are deliberately NOT asserted here: they are
+        // resolved by the Phase 4 TargetSnapshot at execution time, and
+        // displaying a remembered value would risk stating something about
+        // the target that is no longer true — exactly the stale-IP class of
+        // error the enforcement layer exists to prevent.
         item {
             GlassSurface(variant = GlassVariant.Strong, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(vertical = NexaTokens.SpacingSmall)) {
                     TargetRow(label = "TARGET MAC") { TechnicalValue(targetMac) }
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-                    TargetRow(label = "CURRENT IP") { TechnicalValue("192.168.1.105") }
-                    Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-                    TargetRow(label = "TRUST STATE") { StatusBadge(status = NexaStatus.Verified) }
+                    TargetRow(label = "ACTION") { TechnicalValue(action, emphasized = true) }
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+                    Text(
+                        text = "Current address and trust standing are re-resolved from the authoritative target snapshot when this action executes.",
+                        style = NexaType.Metadata,
+                        color = NexaTextMuted
+                    )
                 }
             }
         }

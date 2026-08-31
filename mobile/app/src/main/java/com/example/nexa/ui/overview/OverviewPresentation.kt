@@ -3,6 +3,7 @@ package com.example.nexa.ui.overview
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.nexa.theme.NexaIcons
 import com.example.nexa.theme.NexaStatus
+import com.example.nexa.ui.common.DataFreshness
 
 /**
  * How command-center state is presented.
@@ -45,27 +46,5 @@ val SecurityPosture.icon: ImageVector
         SecurityPosture.Unknown -> NexaIcons.Unknown
     }
 
-/** The shape a piece of security history takes. */
-val ActivityKind.icon: ImageVector
-    get() = when (this) {
-        ActivityKind.AlertRaised -> NexaIcons.Critical
-        ActivityKind.AlertAcknowledged -> NexaIcons.Acknowledge
-        ActivityKind.DeviceAppeared -> NexaIcons.Devices
-        ActivityKind.TrustChanged -> NexaIcons.Secure
-        ActivityKind.ReverificationRequired -> NexaIcons.Reverification
-        ActivityKind.EnforcementStarted -> NexaIcons.Pending
-        ActivityKind.EnforcementCompleted -> NexaIcons.Quarantine
-        ActivityKind.ReleaseCompleted -> NexaIcons.Release
-        ActivityKind.ActionFailed -> NexaIcons.Critical
-    }
-
-/** Freshness stated plainly — never implying more certainty than NEXA has. */
-val DataFreshness.label: String
-    get() = when (this) {
-        is DataFreshness.Live -> "Updated just now"
-        is DataFreshness.Stale -> lastUpdatedLabel
-        is DataFreshness.Unknown -> "Current state unavailable"
-    }
-
-val DataFreshness.isTrustworthy: Boolean
-    get() = this is DataFreshness.Live
+// Activity icons and freshness wording are shared vocabulary — see
+// com.example.nexa.ui.common.

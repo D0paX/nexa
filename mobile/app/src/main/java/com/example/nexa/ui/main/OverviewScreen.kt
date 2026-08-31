@@ -19,6 +19,12 @@ import com.example.nexa.Alerts
 import com.example.nexa.DeviceDetail
 import com.example.nexa.Devices
 import com.example.nexa.theme.*
+import com.example.nexa.ui.common.ActivityEntry
+import com.example.nexa.ui.common.ActivityKind
+import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.icon
+import com.example.nexa.ui.common.isTrustworthy
+import com.example.nexa.ui.common.label
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.overview.*
 
