@@ -29,6 +29,7 @@ import com.example.nexa.ui.components.NavItem
 import com.example.nexa.ui.components.NexaBottomNavigationBar
 import com.example.nexa.ui.main.ActionConfirmationScreen
 import com.example.nexa.ui.main.AlertDetailScreen
+import com.example.nexa.ui.main.AlertsScreen
 import com.example.nexa.ui.main.DeviceDetailScreen
 import com.example.nexa.ui.main.DevicesScreen
 import com.example.nexa.ui.main.IdentitiesScreen
@@ -79,7 +80,10 @@ fun MainNavigation() {
                         )
                     }
                     entry<Alerts> {
-                        EmptyState("Alerts", "Placeholder for Alerts view.", modifier = Modifier.safeDrawingPadding(), icon = NexaIcons.Alerts)
+                        AlertsScreen(
+                            onItemClick = { navKey -> backStack.add(navKey) },
+                            modifier = Modifier.safeDrawingPadding()
+                        )
                     }
                     entry<Audit> {
                         EmptyState("Audit", "Placeholder for Audit log.", modifier = Modifier.safeDrawingPadding(), icon = NexaIcons.Audit)

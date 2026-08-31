@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Fingerprint
@@ -21,12 +22,15 @@ import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.PauseCircleOutline
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material.icons.outlined.VerifiedUser
@@ -89,6 +93,17 @@ object NexaIcons {
     val Reverification: ImageVector = Icons.Outlined.Autorenew
     val Pending: ImageVector = Icons.Outlined.Schedule
     val Refresh: ImageVector = Icons.Outlined.Refresh
+
+    // --- Alert lifecycle (Phase 3) ---
+    /** An incident closed. Distinct from Acknowledge, which only means "seen". */
+    val Resolve: ImageVector = Icons.Outlined.TaskAlt
+
+    /** An alert set aside without being resolved. */
+    val Ignore: ImageVector = Icons.Outlined.NotificationsOff
+
+    // --- Notification delivery (Phase 3) — never used for alert state ---
+    val NotificationDelivery: ImageVector = Icons.Outlined.Send
+    val Delivered: ImageVector = Icons.Outlined.DoneAll
 
     // --- Inventory controls ---
     val Search: ImageVector = Icons.Outlined.Search

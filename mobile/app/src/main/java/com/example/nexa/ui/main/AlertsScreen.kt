@@ -1,0 +1,366 @@
+package com.example.nexa.ui.main
+
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
+import com.example.nexa.AlertDetail
+import com.example.nexa.theme.*
+import com.example.nexa.ui.alerts.*
+import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.isTrustworthy
+import com.example.nexa.ui.common.label
+import com.example.nexa.ui.components.*
+
+/**
+ * The incident load.
+ *
+ * Built to answer "what needs my attention?" rather than to list
+ * notifications. Open incidents and closed history are separate views, and
+ * an alert's own state is always shown apart from what happened to its
+ * notification.
+ */
+@Composable
+fun AlertsScreen(
+    onItemClick: (NavKey) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AlertsViewModel = viewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    when (val current = state) {
+        is AlertsUiState.Loading ->
+            LoadingState(message = "Reading alert state...", modifier = modifier)
+
+        is AlertsUiState.Offline ->
+            OfflineState(
+                message = "No connection. Alerts shown elsewhere were last confirmed earlier and may not reflect the current incident load.",
+                modifier = modifier,
+                action = { RetryAlertsButton(viewModel::refresh) }
+            )
+
+        is AlertsUiState.Unavailable ->
+            UnavailableState(
+                title = "Alert state unavailable",
+                message = "NEXA cannot reach the alert service. The current incident load is unknown — this is not a report that there are no alerts.",
+                modifier = modifier,
+                action = { RetryAlertsButton(viewModel::refresh) }
+            )
+
+        is AlertsUiState.Error ->
+            ErrorState(
+                title = "Could not load alerts",
+                message = current.message,
+                modifier = modifier,
+                action = { RetryAlertsButton(viewModel::refresh) }
+            )
+
+        is AlertsUiState.Content ->
+            AlertsContent(
+                state = current,
+                onQueryChange = viewModel::onQueryChange,
+                onFiltersChange = viewModel::onFiltersChange,
+                onSortChange = viewModel::onSortChange,
+                onViewChange = viewModel::onViewChange,
+                onClearFilters = viewModel::clearFilters,
+                onItemClick = onItemClick,
+                modifier = modifier
+            )
+    }
+}
+
+@Composable
+private fun RetryAlertsButton(onRetry: () -> Unit) {
+    NexaOutlinedButton(
+        text = "Retry",
+        onClick = onRetry,
+        icon = NexaIcons.Refresh,
+        modifier = Modifier.widthIn(max = 240.dp)
+    )
+}
+
+@Composable
+private fun AlertsContent(
+    state: AlertsUiState.Content,
+    onQueryChange: (String) -> Unit,
+    onFiltersChange: (AlertFilters) -> Unit,
+    onSortChange: (AlertSort) -> Unit,
+    onViewChange: (AlertScopeView) -> Unit,
+    onClearFilters: () -> Unit,
+    onItemClick: (NavKey) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showFilters by remember { mutableStateOf(false) }
+
+    NexaScreen(modifier = modifier) {
+        item {
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Alerts", style = NexaType.Display, color = NexaTextPrimary)
+                AlertsFreshness(state.freshness)
+            }
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+            Text(
+                text = summaryLine(state),
+                style = NexaType.Metadata,
+                color = NexaTextSecondary
+            )
+            // Notification delivery is reported as its own operational fact,
+            // never folded into the incident counts above.
+            if (state.summary.deliveryFailures > 0) {
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
+                Text(
+                    text = "${state.summary.deliveryFailures} notification delivery failure(s) — alerts themselves are unaffected",
+                    style = NexaType.Metadata,
+                    color = NexaWarning
+                )
+            }
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+        }
+
+        if (state.degraded) {
+            item {
+                GlassSurface(modifier = Modifier.fillMaxWidth()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        NexaIcon(icon = NexaIcons.Warning, size = NexaTokens.IconMedium, tint = NexaWarning)
+                        Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
+                        Column {
+                            Text("Alert subsystem degraded", style = NexaType.Title, color = NexaTextPrimary)
+                            Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
+                            Text(
+                                text = "Some alerts may be missing from this list. Do not treat it as the complete incident load.",
+                                style = NexaType.BodySecondary,
+                                color = NexaTextSecondary
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+            }
+        }
+
+        // Open vs history: the operator always knows which they are reading.
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingSmall),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AlertScopeView.entries.forEach { view ->
+                    NexaFilterChip(
+                        label = view.viewLabel,
+                        selected = state.view == view,
+                        onClick = { onViewChange(view) }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+        }
+
+        item {
+            NexaSearchField(
+                query = state.query,
+                onQueryChange = onQueryChange,
+                placeholder = "Search alert, device, MAC, scope",
+                label = "Search alerts"
+            )
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
+        }
+
+        item {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingSmall),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                NexaFilterChip(
+                    label = if (state.filters.isActive) "Filters (${state.filters.activeCount})" else "Filters",
+                    selected = state.filters.isActive,
+                    onClick = { showFilters = true }
+                )
+                NexaFilterChip(
+                    label = "Critical",
+                    selected = AlertSeverity.Critical in state.filters.severity,
+                    onClick = { onFiltersChange(state.filters.toggleSeverity(AlertSeverity.Critical)) }
+                )
+                NexaFilterChip(
+                    label = "Unacknowledged",
+                    selected = AlertLifecycle.New in state.filters.lifecycle,
+                    onClick = { onFiltersChange(state.filters.toggleLifecycle(AlertLifecycle.New)) }
+                )
+                NexaFilterChip(
+                    label = "Delivery failed",
+                    selected = state.filters.onlyDeliveryFailures,
+                    onClick = {
+                        onFiltersChange(state.filters.copy(onlyDeliveryFailures = !state.filters.onlyDeliveryFailures))
+                    }
+                )
+                if (state.filters.isActive) {
+                    NexaFilterChip(label = "Clear", selected = false, onClick = onClearFilters)
+                }
+            }
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+        }
+
+        if (state.visible.isEmpty()) {
+            item { AlertsEmpty(state) }
+        } else {
+            items(state.visible, key = { it.id }) { alert ->
+                AlertRow(alert = alert, onClick = { onItemClick(AlertDetail(alert.id)) })
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(NexaTokens.NavigationContentClearance)) }
+    }
+
+    if (showFilters) {
+        AlertFilterSheet(
+            filters = state.filters,
+            sort = state.sort,
+            scopes = state.all.mapNotNull { it.target.deviceRef?.scope }.distinct().sorted(),
+            onFiltersChange = onFiltersChange,
+            onSortChange = onSortChange,
+            onClear = onClearFilters,
+            onDismiss = { showFilters = false }
+        )
+    }
+}
+
+/**
+ * One alert.
+ *
+ * The trailing badge is always the alert's own lifecycle. A notification
+ * problem appears as a separate, explicitly-worded marker so the two states
+ * can never be read as one.
+ */
+@Composable
+private fun AlertRow(alert: AlertListItem, onClick: () -> Unit) {
+    val deliveryWarning = rowDeliveryWarning(alert)
+
+    NexaListRow(
+        title = alert.title,
+        onClick = onClick,
+        variant = surfaceFor(alert),
+        leadingIcon = alert.severity.icon,
+        leadingTint = alert.severity.status.style.onLight,
+        leadingContentDescription = "${alert.severity.label} severity",
+        titleStyle = if (alert.severity == AlertSeverity.Critical) NexaType.Title else NexaType.Body,
+        titleColor = if (alert.lifecycle.isOpen) NexaTextPrimary else NexaTextSecondary,
+        secondary = alertSubtitle(alert),
+        technical = alert.id,
+        trailing = {
+            Column(horizontalAlignment = Alignment.End) {
+                StatusBadge(
+                    status = alert.lifecycle.status,
+                    label = alert.lifecycle.label.uppercase()
+                )
+                if (deliveryWarning != null) {
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+                    Text(
+                        text = deliveryWarning,
+                        style = NexaType.Metadata,
+                        color = NexaWarning
+                    )
+                }
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+                Text(text = alert.createdLabel, style = NexaType.Metadata, color = NexaTextMuted)
+            }
+        }
+    )
+}
+
+/**
+ * The empty state.
+ *
+ * Says only what the alert service actually reported. An empty incident
+ * load is not evidence that the system is secure, so it never claims that.
+ */
+@Composable
+private fun AlertsEmpty(state: AlertsUiState.Content) {
+    val filtered = state.query.isNotEmpty() || state.filters.isActive
+    GlassSurface(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Text(
+                text = when {
+                    filtered -> "No matching alerts"
+                    state.view == AlertScopeView.History -> "No closed alerts"
+                    else -> "No active alerts"
+                },
+                style = NexaType.Title,
+                color = NexaTextPrimary
+            )
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+            Text(
+                text = when {
+                    filtered -> "No alert matches the current search or filters."
+                    state.view == AlertScopeView.History -> "No alerts have been resolved or ignored."
+                    else -> "Nothing currently requires attention. This reports the alert load only — it is not an assessment of overall system posture."
+                },
+                style = NexaType.BodySecondary,
+                color = NexaTextSecondary
+            )
+        }
+    }
+}
+
+@Composable
+private fun AlertsFreshness(freshness: DataFreshness) {
+    val stale = !freshness.isTrustworthy
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (stale) {
+            NexaIcon(icon = NexaIcons.Stale, size = NexaTokens.IconSmall, tint = NexaWarning)
+            Spacer(modifier = Modifier.width(NexaTokens.SpacingXSmall))
+        }
+        Text(
+            text = freshness.label,
+            style = NexaType.Metadata,
+            color = if (stale) NexaWarning else NexaTextMuted
+        )
+    }
+}
+
+private val AlertScopeView.viewLabel: String
+    get() = when (this) {
+        AlertScopeView.Open -> "Open"
+        AlertScopeView.History -> "History"
+        AlertScopeView.All -> "All"
+    }
+
+private fun summaryLine(state: AlertsUiState.Content): String {
+    val shown = state.visible.size
+    val s = state.summary
+    val base = when (state.view) {
+        AlertScopeView.Open -> "$shown open"
+        AlertScopeView.History -> "$shown closed"
+        AlertScopeView.All -> "$shown alerts"
+    }
+    return if (state.view == AlertScopeView.Open && s.open > 0) {
+        "$base · ${s.critical} critical · ${s.unacknowledged} unacknowledged"
+    } else {
+        base
+    }
+}
+
+private fun AlertFilters.toggleSeverity(value: AlertSeverity) =
+    copy(severity = if (value in severity) severity - value else severity + value)
+
+private fun AlertFilters.toggleLifecycle(value: AlertLifecycle) =
+    copy(lifecycle = if (value in lifecycle) lifecycle - value else lifecycle + value)
