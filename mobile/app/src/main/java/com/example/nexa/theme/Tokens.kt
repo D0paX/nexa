@@ -5,6 +5,9 @@ import androidx.compose.ui.unit.dp
 object NexaTokens {
     // Touch targets
     val MinTouchTarget = 48.dp
+
+    // Iconography
+    val BackIconSize = 24.dp
     
     // Spacing
     val SpacingXSmall = 4.dp

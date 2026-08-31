@@ -1,6 +1,5 @@
 package com.example.nexa.ui.main
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -29,16 +28,7 @@ fun AlertDetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text(alert.id, style = Typography.titleLarge, color = NexaTextPrimary) },
-                navigationIcon = {
-                    Text(
-                        "←",
-                        style = Typography.titleLarge,
-                        color = NexaAction,
-                        modifier = Modifier
-                            .padding(NexaTokens.SpacingMedium)
-                            .clickable(onClick = onBack)
-                    )
-                },
+                navigationIcon = { NexaBackButton(onClick = onBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
                     titleContentColor = NexaTextPrimary

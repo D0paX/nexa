@@ -1,6 +1,5 @@
 package com.example.nexa.ui.main
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -25,15 +24,9 @@ fun ActionConfirmationScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Confirm Action", style = Typography.titleLarge, color = NexaTextPrimary) },
+                // Same control, announced for what it does here: abandoning the action.
                 navigationIcon = {
-                    Text(
-                        "Cancel",
-                        style = Typography.titleMedium,
-                        color = NexaTextSecondary,
-                        modifier = Modifier
-                            .padding(NexaTokens.SpacingMedium)
-                            .clickable(onClick = onBack)
-                    )
+                    NexaBackButton(onClick = onBack, contentDescription = "Cancel action")
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
