@@ -5,6 +5,9 @@ import android.app.Application
 import android.os.Bundle
 import com.example.nexa.push.PushNotifier
 import com.example.nexa.push.PushTokenManager
+import com.example.nexa.ui.realtime.PreviewRealtimeScenario
+import com.example.nexa.ui.realtime.PreviewRealtimeTransport
+import com.example.nexa.ui.realtime.RealtimeConnectionManager
 
 /**
  * Process startup.
@@ -24,7 +27,18 @@ class NexaApplication : Application() {
         // this settles on "transport unavailable" and the app carries on:
         // push is a delivery convenience, not a dependency of the product.
         PushTokenManager.refresh()
+
+        // The realtime transport. No NEXA backend publishes a stream yet, so
+        // this is the deterministic preview one; a real transport replaces it
+        // here and nothing above this line changes.
+        RealtimeConnectionManager.configure(
+            transport = previewTransport,
+            scopes = PreviewRealtimeScenario.scopes
+        )
     }
+
+    /** Kept so the debug trigger can drive the same instance the app uses. */
+    val previewTransport = PreviewRealtimeTransport()
 
     /**
      * Whether an operator is currently looking at NEXA.
@@ -45,11 +59,15 @@ class NexaApplication : Application() {
         override fun onActivityStarted(activity: Activity) {
             startedActivities += 1
             isInForeground = startedActivities > 0
+            // A console in front of an operator keeps a live stream; one that
+            // is not does not hold a socket open for nothing.
+            RealtimeConnectionManager.onForeground()
         }
 
         override fun onActivityStopped(activity: Activity) {
             startedActivities = (startedActivities - 1).coerceAtLeast(0)
             isInForeground = startedActivities > 0
+            if (!isInForeground) RealtimeConnectionManager.onBackground()
         }
 
         override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit

@@ -2,6 +2,9 @@ package com.example.nexa.ui.alerts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.realtime.RealtimeState
+import com.example.nexa.ui.realtime.RealtimeStore
+import com.example.nexa.ui.realtime.withRealtime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +24,27 @@ class AlertsViewModel : ViewModel() {
     private val _state = MutableStateFlow<AlertsUiState>(AlertsUiState.Loading)
     val state: StateFlow<AlertsUiState> = _state.asStateFlow()
 
+    private var realtime: RealtimeState = RealtimeState()
+
     init {
         load()
+        observeRealtime()
+    }
+
+    /**
+     * Live alert lifecycle changes.
+     *
+     * Only lifecycle. Delivery arrives on its own events and is applied to
+     * the delivery record, never here — a notification failing has never been
+     * a change to an incident.
+     */
+    private fun observeRealtime() {
+        viewModelScope.launch {
+            RealtimeStore.state.collect { live ->
+                realtime = live
+                update { it }
+            }
+        }
     }
 
     fun load() {
@@ -30,6 +52,9 @@ class AlertsViewModel : ViewModel() {
             _state.value = AlertsUiState.Loading
             delay(LOAD_DELAY_MS)
             _state.value = AlertsPreview.scenario
+            // Re-project so events that arrived before this screen existed
+            // are applied to the snapshot it just loaded.
+            update { it }
         }
     }
 
@@ -66,9 +91,11 @@ class AlertsViewModel : ViewModel() {
     private fun update(transform: (AlertsUiState.Content) -> AlertsUiState.Content) {
         val current = _state.value as? AlertsUiState.Content ?: return
         val updated = transform(current)
+        val live = updated.all.withRealtime(realtime)
         _state.value = updated.copy(
-            visible = updated.all.resolve(updated.query, updated.filters, updated.sort, updated.view),
-            summary = summarize(updated.all)
+            all = live,
+            visible = live.resolve(updated.query, updated.filters, updated.sort, updated.view),
+            summary = summarize(live)
         )
     }
 

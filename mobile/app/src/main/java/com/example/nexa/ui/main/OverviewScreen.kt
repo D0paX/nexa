@@ -110,7 +110,16 @@ private fun OverviewContent(
                     },
                     style = NexaType.Display
                 )
-                FreshnessLabel(freshness = data.freshness)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingSmall)
+                ) {
+                    // The event feed's own state, kept visibly apart from the
+                    // security posture below it. A feed being down is not a
+                    // finding about the network.
+                    RealtimeIndicator()
+                    FreshnessLabel(freshness = data.freshness)
+                }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }

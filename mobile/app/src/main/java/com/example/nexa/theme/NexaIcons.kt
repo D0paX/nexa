@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Rule
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SmsFailed
@@ -154,6 +155,13 @@ object NexaIcons {
 
     /** The Phase 4 enforcement circuit breaker. */
     val CircuitBreaker: ImageVector = Icons.Outlined.PowerSettingsNew
+
+    // --- Realtime (Phase 5.19) ---
+    /** A live event stream. Says nothing about security posture. */
+    val Live: ImageVector = Icons.Outlined.Sensors
+
+    /** The stream is re-establishing itself. */
+    val Reconnecting: ImageVector = Icons.Outlined.SyncProblem
 
     /** Severity is never carried by color alone — every level has a shape. */
     fun forSeverity(severity: String): ImageVector = when (severity) {

@@ -10,6 +10,9 @@ import com.example.nexa.push.PushInbox
 import com.example.nexa.push.PushNotifier
 import com.example.nexa.push.PushParseResult
 import com.example.nexa.push.PushPayloadParser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Injects a fixture payload so the push path can be exercised without a
@@ -35,6 +38,10 @@ class NexaPushTestReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!context.isDebuggable()) {
             Log.w(TAG, "Refusing test push: build is not debuggable")
+            return
+        }
+        if (intent.action == ACTION_TEST_REALTIME) {
+            playRealtimeScenario(context)
             return
         }
         if (intent.action != ACTION_TEST_PUSH) return
@@ -68,12 +75,28 @@ class NexaPushTestReceiver : BroadcastReceiver() {
         }
     }
 
+    /**
+     * Plays the deterministic realtime scenario through the real transport.
+     *
+     * Same path a server stream would take: frames go through the parser, the
+     * sequencer and the reducer. A trigger that injected state directly would
+     * exercise a path that never runs in production.
+     */
+    private fun playRealtimeScenario(context: Context) {
+        val app = context.applicationContext as? NexaApplication ?: return
+        CoroutineScope(Dispatchers.Default).launch {
+            Log.i(TAG, "Playing preview realtime scenario")
+            app.previewTransport.playScenario()
+        }
+    }
+
     private fun Context.isDebuggable(): Boolean =
         (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     private companion object {
         const val TAG = "NexaPushTest"
         const val ACTION_TEST_PUSH = "com.example.nexa.debug.TEST_PUSH"
+        const val ACTION_TEST_REALTIME = "com.example.nexa.debug.TEST_REALTIME"
         const val EXTRA_FIXTURE = "fixture"
         const val DEFAULT_FIXTURE = "critical_alert"
     }

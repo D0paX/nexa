@@ -3,6 +3,9 @@ package com.example.nexa.ui.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexa.push.PushInbox
+import com.example.nexa.ui.realtime.RealtimeState
+import com.example.nexa.ui.realtime.RealtimeStore
+import com.example.nexa.ui.realtime.withRealtime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,9 +34,28 @@ class NotificationCenterViewModel : ViewModel() {
 
     private var pageLimit = NOTIFICATION_PAGE_SIZE
 
+    private var realtime: RealtimeState = RealtimeState()
+
     init {
         load()
         observeIncomingPush()
+        observeRealtime()
+    }
+
+    /**
+     * Live delivery changes.
+     *
+     * Push and realtime both report delivery, and they converge here rather
+     * than competing: both end up as delivery state on the same record, keyed
+     * by the same delivery id, resolved by the same read model.
+     */
+    private fun observeRealtime() {
+        viewModelScope.launch {
+            RealtimeStore.state.collect { live ->
+                realtime = live
+                update { it }
+            }
+        }
     }
 
     fun load() {
@@ -124,8 +146,10 @@ class NotificationCenterViewModel : ViewModel() {
     private fun project(
         content: NotificationCenterUiState.Content
     ): NotificationCenterUiState.Content {
-        val visible = content.all.resolve(content.query, content.filters, content.sort)
+        val live = content.all.withRealtime(realtime)
+        val visible = live.resolve(content.query, content.filters, content.sort)
         return content.copy(
+            all = live,
             visible = visible,
             page = visible.take(pageLimit),
             summary = summarize(visible),

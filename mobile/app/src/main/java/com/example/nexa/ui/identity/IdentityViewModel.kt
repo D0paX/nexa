@@ -2,6 +2,9 @@ package com.example.nexa.ui.identity
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.realtime.RealtimeState
+import com.example.nexa.ui.realtime.RealtimeStore
+import com.example.nexa.ui.realtime.withRealtime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,8 +22,11 @@ class IdentitiesViewModel : ViewModel() {
     private val _state = MutableStateFlow<IdentitiesUiState>(IdentitiesUiState.Loading)
     val state: StateFlow<IdentitiesUiState> = _state.asStateFlow()
 
+    private var realtime: RealtimeState = RealtimeState()
+
     init {
         load()
+        observeRealtime()
     }
 
     fun load() {
@@ -28,6 +34,24 @@ class IdentitiesViewModel : ViewModel() {
             _state.value = IdentitiesUiState.Loading
             delay(LOAD_DELAY_MS)
             _state.value = IdentityPreview.scenario
+            // Re-project so trust changes already reported are applied.
+            updateContent { it }
+        }
+    }
+
+    /**
+     * Live trust changes.
+     *
+     * Trust standing only. What an operator may do with an identity is
+     * decided by the authorization engine at request time, and no amount of
+     * trust arriving on a stream changes it.
+     */
+    private fun observeRealtime() {
+        viewModelScope.launch {
+            RealtimeStore.state.collect { live ->
+                realtime = live
+                updateContent { it }
+            }
         }
     }
 
@@ -42,7 +66,11 @@ class IdentitiesViewModel : ViewModel() {
     private fun updateContent(transform: (IdentitiesUiState.Content) -> IdentitiesUiState.Content) {
         val current = _state.value as? IdentitiesUiState.Content ?: return
         val updated = transform(current)
-        _state.value = updated.copy(visible = updated.all.resolve(updated.query, updated.filters))
+        val live = updated.all.withRealtime(realtime)
+        _state.value = updated.copy(
+            all = live,
+            visible = live.resolve(updated.query, updated.filters)
+        )
     }
 
     private companion object {
