@@ -69,6 +69,16 @@ object NexaMotion {
      */
     const val EmergenceScale = 0.98f
 
+    /**
+     * How far an interactive surface compresses while it is held.
+     *
+     * The same two percent [EmergenceScale] uses, so acknowledgement and
+     * arrival speak with one voice. It replaces the platform's bounded ripple
+     * for surfaces whose touch target is larger than their paint, where a
+     * rectangle the size of the target is a shape nothing on screen has.
+     */
+    const val PressedScale = 0.98f
+
     /** The press response shared by every interactive NEXA surface. */
     fun pressedSurface(isPressed: Boolean): Color =
         if (isPressed) NexaInk.copy(alpha = 0.08f) else Color.Transparent

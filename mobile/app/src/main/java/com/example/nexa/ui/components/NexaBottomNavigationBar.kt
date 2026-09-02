@@ -77,7 +77,11 @@ fun NexaBottomNavigationItem(
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    
+    // The press is answered by the item itself compressing, not by a surface
+    // drawn behind it. The touch target below stays its full height and paints
+    // nothing at all.
+    val pressScale = rememberPressScale(interactionSource)
+
     Box(
         modifier = modifier
             .fillMaxHeight()
@@ -113,6 +117,7 @@ fun NexaBottomNavigationItem(
                     vertical = NexaTokens.NavigationActivePillVerticalPadding
                 ),
                 modifier = Modifier
+                    .pressResponse(pressScale)
                     .fillMaxWidth()
                     .height(NexaTokens.NavigationActivePillHeight)
             ) {
@@ -138,7 +143,9 @@ fun NexaBottomNavigationItem(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .pressResponse(pressScale)
+                    .fillMaxSize()
             ) {
                 NexaIcon(
                     icon = item.icon,

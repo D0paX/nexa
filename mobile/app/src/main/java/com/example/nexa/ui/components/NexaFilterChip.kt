@@ -3,6 +3,7 @@ package com.example.nexa.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -55,6 +57,9 @@ fun NexaFilterChip(
     // paint would put every filter control below the minimum, and filters are
     // exactly the controls someone uses one-handed while looking at something
     // else.
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressScale = rememberPressScale(interactionSource)
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -69,12 +74,22 @@ fun NexaFilterChip(
                 contentDescription = spokenLabel ?: label
                 stateDescription = if (selected) "Selected" else "Not selected"
             }
-            .clickable(role = Role.Checkbox, onClick = onClick)
+            // No indication here. The target is 48dp and the pill is 36dp, so
+            // a bounded ripple would paint a rectangle a third taller than the
+            // chip, with corners the chip does not have. The press is answered
+            // on the pill below instead.
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Checkbox,
+                onClick = onClick
+            )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingXSmall),
             modifier = Modifier
+                .pressResponse(pressScale)
                 .defaultMinSize(minHeight = 36.dp)
                 .background(
                     color = if (selected) NexaAction.copy(alpha = 0.10f) else androidx.compose.ui.graphics.Color.Transparent,

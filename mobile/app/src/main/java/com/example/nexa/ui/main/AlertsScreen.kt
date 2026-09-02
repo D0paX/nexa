@@ -1,6 +1,7 @@
 package com.example.nexa.ui.main
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
@@ -176,15 +177,23 @@ private fun AlertsContent(
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
                 // Also the way in: an operator who has just read that messages
                 // failed is exactly the operator who wants the delivery record.
+                val interactionSource = remember { MutableInteractionSource() }
+                val pressScale = rememberPressScale(interactionSource)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .heightIn(min = NexaTokens.MinTouchTarget)
+                        // The target is taller than the line of text it wraps,
+                        // so a bounded ripple would draw a rectangle around
+                        // empty space. The line answers the press itself.
                         .clickable(
+                            interactionSource = interactionSource,
+                            indication = null,
                             role = Role.Button,
                             onClickLabel = "Open notification delivery",
                             onClick = { onItemClick(NotificationCenter) }
                         )
+                        .pressResponse(pressScale)
                 ) {
                     Text(
                         text = "${state.summary.deliveryFailures} notification delivery failure(s) — alerts themselves are unaffected",
