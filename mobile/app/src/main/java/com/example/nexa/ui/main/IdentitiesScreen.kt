@@ -52,7 +52,7 @@ fun IdentitiesScreen(
 
     when (val current = state) {
         is IdentitiesUiState.Loading ->
-            LoadingState(message = "Reading identity state...", modifier = modifier)
+            NexaListLoading(message = "Reading identity state...", modifier = modifier)
 
         is IdentitiesUiState.Offline ->
             OfflineState(
@@ -87,6 +87,7 @@ fun IdentitiesScreen(
                 onSortChange = viewModel::onSortChange,
                 onClearFilters = viewModel::clearFilters,
                 onClearQuery = viewModel::clearQuery,
+                onRefresh = viewModel::refresh,
                 onNavigate = onNavigate,
                 modifier = modifier
             )
@@ -112,6 +113,7 @@ private fun IdentitiesContent(
     onSortChange: (IdentitySort) -> Unit,
     onClearFilters: () -> Unit,
     onClearQuery: () -> Unit,
+    onRefresh: () -> Unit,
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -133,7 +135,22 @@ private fun IdentitiesContent(
                     style = NexaType.Metadata,
                     color = NexaTextSecondary
                 )
-                FreshnessTag(state.freshness)
+                // One status line, not two. While a check is running it is the more
+                // useful thing to say, and the freshness it replaces is about to be
+                // restated anyway.
+                if (state.refreshing) {
+                    RefreshingIndicator()
+                } else {
+                    FreshnessTag(state.freshness)
+                }
+                // The control that acts on the label beside it. Disabled while a
+                // check is already running, so a second tap cannot start a second.
+                NexaIconButton(
+                    icon = NexaIcons.Refresh,
+                    onClick = onRefresh,
+                    enabled = !state.refreshing,
+                    contentDescription = "Refresh identity state"
+                )
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }

@@ -49,7 +49,7 @@ fun AuditScreen(
 
     when (val current = state) {
         is AuditUiState.Loading ->
-            LoadingState(message = "Reading security history...", modifier = modifier)
+            NexaListLoading(message = "Reading security history...", modifier = modifier)
 
         is AuditUiState.Offline ->
             OfflineState(
@@ -83,6 +83,7 @@ fun AuditScreen(
                 onQuickFilter = viewModel::onQuickFilter,
                 onClearFilters = viewModel::clearFilters,
                 onClearQuery = viewModel::clearQuery,
+                onRefresh = viewModel::refresh,
                 onLoadMore = viewModel::loadMore,
                 onItemClick = onItemClick,
                 modifier = modifier
@@ -109,6 +110,7 @@ private fun AuditContent(
     onQuickFilter: (AuditQuickFilter) -> Unit,
     onClearFilters: () -> Unit,
     onClearQuery: () -> Unit,
+    onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
@@ -126,7 +128,22 @@ private fun AuditContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Audit", style = NexaType.Display, color = NexaTextPrimary)
-                AuditFreshness(state.freshness)
+                // One status line, not two. While a check is running it is the more
+                // useful thing to say, and the freshness it replaces is about to be
+                // restated anyway.
+                if (state.refreshing) {
+                    RefreshingIndicator()
+                } else {
+                    AuditFreshness(state.freshness)
+                }
+                // The control that acts on the label beside it. Disabled while a
+                // check is already running, so a second tap cannot start a second.
+                NexaIconButton(
+                    icon = NexaIcons.Refresh,
+                    onClick = onRefresh,
+                    enabled = !state.refreshing,
+                    contentDescription = "Refresh security history"
+                )
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             Text(

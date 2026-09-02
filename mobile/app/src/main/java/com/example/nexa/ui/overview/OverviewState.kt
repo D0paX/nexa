@@ -143,7 +143,11 @@ data class OverviewData(
 sealed interface OverviewUiState {
     data object Loading : OverviewUiState
 
-    data class Content(val data: OverviewData) : OverviewUiState
+    data class Content(
+        val data: OverviewData,
+        /** A revalidation is running over this picture. Not an availability state. */
+        val refreshing: Boolean = false
+    ) : OverviewUiState
 
     /** The device has no connection and no usable cached picture. */
     data object Offline : OverviewUiState

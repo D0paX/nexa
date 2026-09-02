@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.DegradedScenario
+import com.example.nexa.ui.common.NexaPresentation
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -29,6 +30,9 @@ class DevicesViewModel : ViewModel() {
     /** The overlay last applied, so a re-projection keeps live values. */
     private var realtime: RealtimeState = RealtimeState()
 
+    /** What the operator had set up, kept across a reload. */
+    private var presentation: NexaPresentation<DeviceFilters, DeviceSort>? = null
+
     init {
         load()
         observeRealtime()
@@ -53,7 +57,7 @@ class DevicesViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = DevicesUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = degradedOrDefault()
+            _state.value = restorePresentation(degradedOrDefault())
             // Re-project so anything the stream already reported is applied
             // to the newly loaded snapshot. Without this a screen opened
             // after an event would show the snapshot as though nothing had
@@ -62,7 +66,51 @@ class DevicesViewModel : ViewModel() {
         }
     }
 
-    fun refresh() = load()
+    /**
+     * Revalidates without taking the screen away.
+     *
+     * When there is content to keep, it stays visible and is marked as being
+     * checked. Only a screen with nothing on it falls back to a full load —
+     * there, a spinner is the honest treatment because there is genuinely
+     * nothing else to show.
+     */
+    fun refresh() {
+        val current = _state.value as? DevicesUiState.Content ?: run {
+            load()
+            return
+        }
+        viewModelScope.launch {
+            _state.value = current.copy(refreshing = true)
+            delay(LOAD_DELAY_MS)
+            _state.value = restorePresentation(degradedOrDefault())
+            updateContent { it }
+        }
+    }
+
+    /**
+     * Puts the operator's search, filters and sort back onto a freshly loaded
+     * snapshot.
+     *
+     * A retry after a failure is the moment this matters most: someone was
+     * looking for a particular device when the inventory stopped answering,
+     * and having the retry succeed by handing them an unfiltered list is
+     * quietly undoing their work.
+     *
+     * Presentation only. Nothing security-relevant survives a reload — not a
+     * target, not an authorization, not an action's eligibility. Restoring a
+     * query restores a question; restoring anything else would restore an
+     * answer nobody re-checked.
+     */
+    private fun restorePresentation(loaded: DevicesUiState): DevicesUiState {
+        val content = loaded as? DevicesUiState.Content ?: return loaded
+        val kept = presentation ?: return content
+        return content.copy(
+            query = kept.query,
+            filters = kept.filters,
+            sort = kept.sort,
+            refreshing = false
+        )
+    }
 
     fun onQueryChange(query: String) = updateContent { it.copy(query = query) }
 
@@ -104,6 +152,7 @@ class DevicesViewModel : ViewModel() {
     private fun updateContent(transform: (DevicesUiState.Content) -> DevicesUiState.Content) {
         val current = _state.value as? DevicesUiState.Content ?: return
         val updated = transform(current)
+        presentation = NexaPresentation(updated.query, updated.filters, updated.sort)
         // The snapshot with the live overlay applied on top. Applied at
         // projection time rather than written into `all`, so a later snapshot
         // replaces the base cleanly instead of inheriting old changes.

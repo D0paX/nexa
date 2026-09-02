@@ -3,6 +3,7 @@ package com.example.nexa.ui.audit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexa.ui.common.DegradedScenario
+import com.example.nexa.ui.common.NexaPresentation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,11 +36,47 @@ class AuditViewModel : ViewModel() {
             _state.value = AuditUiState.Loading
             delay(LOAD_DELAY_MS)
             pageLimit = AUDIT_PAGE_SIZE
-            _state.value = degradedOrDefault()
+            _state.value = restorePresentation(degradedOrDefault())
         }
     }
 
-    fun refresh() = load()
+    /**
+     * Revalidates without taking the screen away.
+     *
+     * When there is content to keep, it stays visible and is marked as being
+     * checked. Only a screen with nothing on it falls back to a full load.
+     */
+    fun refresh() {
+        val current = _state.value as? AuditUiState.Content ?: run {
+            load()
+            return
+        }
+        viewModelScope.launch {
+            _state.value = current.copy(refreshing = true)
+            delay(LOAD_DELAY_MS)
+            _state.value = restorePresentation(degradedOrDefault())
+            update(resetPage = true) { it }
+        }
+    }
+
+    /**
+     * Puts the operator's search, filters and sort back onto a freshly loaded
+     * snapshot. Presentation only — nothing security-relevant survives a
+     * reload.
+     */
+    private fun restorePresentation(loaded: AuditUiState): AuditUiState {
+        val content = loaded as? AuditUiState.Content ?: return loaded
+        val kept = presentation ?: return content
+        return content.copy(
+            query = kept.query,
+            filters = kept.filters,
+            sort = kept.sort,
+            refreshing = false
+        )
+    }
+
+    /** What the operator had set up, kept across a reload. */
+    private var presentation: NexaPresentation<AuditFilters, AuditSort>? = null
 
     fun onQueryChange(query: String) = update(resetPage = true) { it.copy(query = query) }
 
@@ -109,7 +146,9 @@ class AuditViewModel : ViewModel() {
     ) {
         val current = _state.value as? AuditUiState.Content ?: return
         if (resetPage) pageLimit = AUDIT_PAGE_SIZE
-        _state.value = project(transform(current))
+        val updated = transform(current)
+        presentation = NexaPresentation(updated.query, updated.filters, updated.sort)
+        _state.value = project(updated)
     }
 
     /** Re-derives everything downstream of [AuditUiState.Content.all]. */

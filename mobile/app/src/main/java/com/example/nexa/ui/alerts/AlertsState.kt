@@ -432,6 +432,16 @@ sealed interface AlertsUiState {
         val view: AlertScopeView,
         val freshness: DataFreshness,
         val degraded: Boolean,
+        /**
+         * A revalidation is running over this content.
+         *
+         * Not an availability state: the data on screen is exactly as
+         * trustworthy as it was a moment ago, and NEXA is checking it again.
+         * Replacing the list with a spinner would take away the only
+         * information the operator currently has in order to tell them that
+         * better information is coming.
+         */
+        val refreshing: Boolean = false,
         /** Cached alert state, no connection. Distinct from merely stale. */
         val offline: Boolean = false
     ) : AlertsUiState

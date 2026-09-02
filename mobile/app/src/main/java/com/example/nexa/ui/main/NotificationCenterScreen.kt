@@ -50,7 +50,7 @@ fun NotificationCenterScreen(
 
     when (val current = state) {
         is NotificationCenterUiState.Loading ->
-            LoadingState(message = "Reading delivery records...", modifier = modifier)
+            NexaListLoading(message = "Reading delivery records...", modifier = modifier)
 
         is NotificationCenterUiState.Offline ->
             OfflineState(
@@ -85,6 +85,7 @@ fun NotificationCenterScreen(
                 onQuickFilter = viewModel::onQuickFilter,
                 onClearFilters = viewModel::clearFilters,
                 onClearQuery = viewModel::clearQuery,
+                onRefresh = viewModel::refresh,
                 onLoadMore = viewModel::loadMore,
                 onNavigate = onNavigate,
                 modifier = modifier
@@ -112,6 +113,7 @@ private fun NotificationCenterContent(
     onQuickFilter: (NotificationQuickFilter) -> Unit,
     onClearFilters: () -> Unit,
     onClearQuery: () -> Unit,
+    onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier
@@ -143,7 +145,23 @@ private fun NotificationCenterContent(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-            DeliveryFreshness(state.freshness)
+            // One status line, not two, with the control that acts on it
+            // beside it. Disabled while a check is already running.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (state.refreshing) {
+                    RefreshingIndicator()
+                } else {
+                    DeliveryFreshness(state.freshness)
+                }
+                Spacer(modifier = Modifier.width(NexaTokens.SpacingXSmall))
+                NexaIconButton(
+                    icon = NexaIcons.Refresh,
+                    onClick = onRefresh,
+                    enabled = !state.refreshing,
+                    iconSize = NexaTokens.IconMedium,
+                    contentDescription = "Refresh delivery records"
+                )
+            }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
             PushStatusCard()
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))

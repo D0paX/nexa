@@ -49,7 +49,7 @@ fun DevicesScreen(
 
     when (val current = state) {
         is DevicesUiState.Loading ->
-            LoadingState(message = "Reading device inventory...", modifier = modifier)
+            NexaListLoading(message = "Reading device inventory...", modifier = modifier)
 
         is DevicesUiState.Offline ->
             OfflineState(
@@ -82,6 +82,7 @@ fun DevicesScreen(
                 onSortChange = viewModel::onSortChange,
                 onClearFilters = viewModel::clearFilters,
                 onClearQuery = viewModel::clearQuery,
+                onRefresh = viewModel::refresh,
                 onItemClick = onItemClick,
                 modifier = modifier
             )
@@ -106,6 +107,7 @@ private fun DevicesContent(
     onSortChange: (DeviceSort) -> Unit,
     onClearFilters: () -> Unit,
     onClearQuery: () -> Unit,
+    onRefresh: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -121,7 +123,23 @@ private fun DevicesContent(
             ) {
                 Text(text = "Devices", style = NexaType.Display, color = NexaTextPrimary)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    FreshnessLabel(state.freshness)
+                    // One status line, not two. While a check is running it is the
+                    // more useful thing to say, and the freshness it would replace is
+                    // about to be restated anyway.
+                    if (state.refreshing) {
+                        RefreshingIndicator()
+                    } else {
+                        FreshnessLabel(state.freshness)
+                    }
+                    // The control that acts on the label beside it. Disabled
+                    // while a check is already running, so a second tap cannot
+                    // start a second one.
+                    NexaIconButton(
+                        icon = NexaIcons.Refresh,
+                        onClick = onRefresh,
+                        enabled = !state.refreshing,
+                        contentDescription = "Refresh device inventory"
+                    )
                     // Entry to the cryptographic identity inventory — a different
                     // question from the network one this screen answers.
                     NexaIconButton(

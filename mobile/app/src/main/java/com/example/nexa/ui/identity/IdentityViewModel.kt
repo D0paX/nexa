@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.DegradedScenario
+import com.example.nexa.ui.common.NexaPresentation
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -26,6 +27,9 @@ class IdentitiesViewModel : ViewModel() {
 
     private var realtime: RealtimeState = RealtimeState()
 
+    /** What the operator had set up, kept across a reload. */
+    private var presentation: NexaPresentation<IdentityFilters, IdentitySort>? = null
+
     init {
         load()
         observeRealtime()
@@ -35,7 +39,7 @@ class IdentitiesViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = IdentitiesUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = degradedOrDefault()
+            _state.value = restorePresentation(degradedOrDefault())
             // Re-project so trust changes already reported are applied.
             updateContent { it }
         }
@@ -57,7 +61,45 @@ class IdentitiesViewModel : ViewModel() {
         }
     }
 
-    fun refresh() = load()
+    /**
+     * Revalidates without taking the screen away.
+     *
+     * When there is content to keep, it stays visible and is marked as being
+     * checked. Only a screen with nothing on it falls back to a full load.
+     */
+    fun refresh() {
+        val current = _state.value as? IdentitiesUiState.Content ?: run {
+            load()
+            return
+        }
+        viewModelScope.launch {
+            _state.value = current.copy(refreshing = true)
+            delay(LOAD_DELAY_MS)
+            _state.value = restorePresentation(degradedOrDefault())
+            updateContent { it }
+        }
+    }
+
+    /**
+     * Puts the operator's search, filters and sort back onto a freshly loaded
+     * snapshot.
+     *
+     * A retry after a failure is the moment this matters most: someone was
+     * narrowing a list when the source stopped answering, and having the
+     * retry succeed by handing them an unfiltered one undoes their work.
+     *
+     * Presentation only. Nothing security-relevant survives a reload.
+     */
+    private fun restorePresentation(loaded: IdentitiesUiState): IdentitiesUiState {
+        val content = loaded as? IdentitiesUiState.Content ?: return loaded
+        val kept = presentation ?: return content
+        return content.copy(
+            query = kept.query,
+            filters = kept.filters,
+            sort = kept.sort,
+            refreshing = false
+        )
+    }
 
     fun onQueryChange(query: String) = updateContent { it.copy(query = query) }
 
@@ -92,6 +134,7 @@ class IdentitiesViewModel : ViewModel() {
     private fun updateContent(transform: (IdentitiesUiState.Content) -> IdentitiesUiState.Content) {
         val current = _state.value as? IdentitiesUiState.Content ?: return
         val updated = transform(current)
+        presentation = NexaPresentation(updated.query, updated.filters, updated.sort)
         val live = updated.all.withRealtime(realtime)
         _state.value = updated.copy(
             all = live,

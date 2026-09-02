@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import com.example.nexa.theme.NexaMotion
+import com.example.nexa.theme.NexaTextMuted
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTokens
 
@@ -61,7 +62,15 @@ fun NexaIconButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
     iconSize: Dp = NexaTokens.IconLarge,
-    tint: Color = NexaTextPrimary
+    tint: Color = NexaTextPrimary,
+    /**
+     * Whether the control can be used.
+     *
+     * A disabled control keeps its place and its label rather than
+     * disappearing — a button that vanishes while something is happening
+     * leaves an operator wondering what they did.
+     */
+    enabled: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -81,6 +90,7 @@ fun NexaIconButton(
                 interactionSource = interactionSource,
                 indication = null,
                 role = Role.Button,
+                enabled = enabled,
                 onClickLabel = contentDescription,
                 onClick = onClick
             ),
@@ -90,7 +100,7 @@ fun NexaIconButton(
             icon = icon,
             contentDescription = contentDescription,
             size = iconSize,
-            tint = tint
+            tint = if (enabled) tint else NexaTextMuted
         )
     }
 }

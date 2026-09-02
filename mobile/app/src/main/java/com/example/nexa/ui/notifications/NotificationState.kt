@@ -513,7 +513,15 @@ sealed interface NotificationCenterUiState {
         val sort: NotificationSort,
         val freshness: DataFreshness,
         val coverage: NotificationCoverage,
-        val hasMore: Boolean
+        val hasMore: Boolean,
+        /**
+         * A revalidation is running over this content.
+         *
+         * Not an availability state: the records on screen are exactly as
+         * trustworthy as they were a moment ago, and NEXA is checking them
+         * again.
+         */
+        val refreshing: Boolean = false
     ) : NotificationCenterUiState
 
     data object Offline : NotificationCenterUiState

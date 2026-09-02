@@ -49,7 +49,12 @@ fun OverviewScreen(
 
     when (val current = state) {
         is OverviewUiState.Loading ->
-            LoadingState(message = "Reading system state...", modifier = modifier)
+            NexaListLoading(
+                message = "Reading system state...",
+                modifier = modifier,
+                rows = 3,
+                heroFirst = true
+            )
 
         is OverviewUiState.Offline ->
             OfflineState(
@@ -75,6 +80,8 @@ fun OverviewScreen(
         is OverviewUiState.Content ->
             OverviewContent(
                 data = current.data,
+                refreshing = current.refreshing,
+                onRefresh = viewModel::refresh,
                 onItemClick = onItemClick,
                 modifier = modifier
             )
@@ -94,6 +101,8 @@ private fun RetryAction(onRetry: () -> Unit) {
 @Composable
 private fun OverviewContent(
     data: OverviewData,
+    refreshing: Boolean,
+    onRefresh: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -120,7 +129,22 @@ private fun OverviewContent(
                     // security posture below it. A feed being down is not a
                     // finding about the network.
                     RealtimeIndicator()
-                    FreshnessLabel(freshness = data.freshness)
+                    // One status line, not two. While a check is running it is the more
+                    // useful thing to say, and the freshness it replaces is about to be
+                    // restated anyway.
+                    if (refreshing) {
+                        RefreshingIndicator()
+                    } else {
+                        FreshnessLabel(freshness = data.freshness)
+                    }
+                    // The control that acts on the label beside it. Disabled while a
+                    // check is already running, so a second tap cannot start a second.
+                    NexaIconButton(
+                        icon = NexaIcons.Refresh,
+                        onClick = onRefresh,
+                        enabled = !refreshing,
+                        contentDescription = "Refresh system state"
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))

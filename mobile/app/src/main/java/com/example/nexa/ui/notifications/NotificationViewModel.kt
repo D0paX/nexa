@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexa.push.PushInbox
 import com.example.nexa.ui.common.DegradedScenario
+import com.example.nexa.ui.common.NexaPresentation
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -64,7 +65,7 @@ class NotificationCenterViewModel : ViewModel() {
             _state.value = NotificationCenterUiState.Loading
             delay(LOAD_DELAY_MS)
             pageLimit = NOTIFICATION_PAGE_SIZE
-            val loaded = degradedOrDefault()
+            val loaded = restorePresentation(degradedOrDefault())
             if (loaded !is NotificationCenterUiState.Content) {
                 _state.value = loaded
                 return@launch
@@ -91,7 +92,43 @@ class NotificationCenterViewModel : ViewModel() {
         }
     }
 
-    fun refresh() = load()
+    /**
+     * Revalidates without taking the screen away.
+     *
+     * When there is content to keep, it stays visible and is marked as being
+     * checked. Only a screen with nothing on it falls back to a full load.
+     */
+    fun refresh() {
+        val current = _state.value as? NotificationCenterUiState.Content ?: run {
+            load()
+            return
+        }
+        viewModelScope.launch {
+            _state.value = current.copy(refreshing = true)
+            delay(LOAD_DELAY_MS)
+            _state.value = restorePresentation(degradedOrDefault())
+            update { it }
+        }
+    }
+
+    /**
+     * Puts the operator's search, filters and sort back onto a freshly loaded
+     * snapshot. Presentation only — nothing security-relevant survives a
+     * reload.
+     */
+    private fun restorePresentation(loaded: NotificationCenterUiState): NotificationCenterUiState {
+        val content = loaded as? NotificationCenterUiState.Content ?: return loaded
+        val kept = presentation ?: return content
+        return content.copy(
+            query = kept.query,
+            filters = kept.filters,
+            sort = kept.sort,
+            refreshing = false
+        )
+    }
+
+    /** What the operator had set up, kept across a reload. */
+    private var presentation: NexaPresentation<NotificationFilters, NotificationSort>? = null
 
     fun onQueryChange(query: String) = update(resetPage = true) { it.copy(query = query) }
 
@@ -173,7 +210,9 @@ class NotificationCenterViewModel : ViewModel() {
     ) {
         val current = _state.value as? NotificationCenterUiState.Content ?: return
         if (resetPage) pageLimit = NOTIFICATION_PAGE_SIZE
-        _state.value = project(transform(current))
+        val updated = transform(current)
+        presentation = NexaPresentation(updated.query, updated.filters, updated.sort)
+        _state.value = project(updated)
     }
 
     /** Re-derives everything downstream of [NotificationCenterUiState.Content.all]. */

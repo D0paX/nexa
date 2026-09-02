@@ -107,8 +107,28 @@ class OverviewViewModel : ViewModel() {
         }
     }
 
-    /** Re-reads system state; used by the retry affordance on failure states. */
-    fun refresh() = load()
+    /**
+     * Re-reads system state.
+     *
+     * When a picture is already on screen it stays there, marked as being
+     * checked. Blanking the command centre to a spinner while it revalidates
+     * would remove the posture an operator is watching, which is exactly the
+     * thing they opened the screen for.
+     */
+    fun refresh() {
+        val current = _state.value as? OverviewUiState.Content ?: run {
+            load()
+            return
+        }
+        viewModelScope.launch {
+            _state.value = current.copy(refreshing = true)
+            delay(LOAD_DELAY_MS)
+            val loaded = degradedOrDefault()
+            snapshot = loaded as? OverviewUiState.Content
+            _state.value = loaded
+            project()
+        }
+    }
 
     private companion object {
         const val LOAD_DELAY_MS = 550L

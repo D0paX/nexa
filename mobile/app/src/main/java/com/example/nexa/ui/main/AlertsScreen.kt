@@ -50,7 +50,7 @@ fun AlertsScreen(
 
     when (val current = state) {
         is AlertsUiState.Loading ->
-            LoadingState(message = "Reading alert state...", modifier = modifier)
+            NexaListLoading(message = "Reading alert state...", modifier = modifier)
 
         is AlertsUiState.Offline ->
             OfflineState(
@@ -84,6 +84,7 @@ fun AlertsScreen(
                 onViewChange = viewModel::onViewChange,
                 onClearFilters = viewModel::clearFilters,
                 onClearQuery = viewModel::clearQuery,
+                onRefresh = viewModel::refresh,
                 onItemClick = onItemClick,
                 modifier = modifier
             )
@@ -109,6 +110,7 @@ private fun AlertsContent(
     onViewChange: (AlertScopeView) -> Unit,
     onClearFilters: () -> Unit,
     onClearQuery: () -> Unit,
+    onRefresh: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -124,7 +126,22 @@ private fun AlertsContent(
             ) {
                 Text(text = "Alerts", style = NexaType.Display, color = NexaTextPrimary)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    AlertsFreshness(state.freshness)
+                    // One status line, not two. While a check is running it is the more
+                    // useful thing to say, and the freshness it replaces is about to be
+                    // restated anyway.
+                    if (state.refreshing) {
+                        RefreshingIndicator()
+                    } else {
+                        AlertsFreshness(state.freshness)
+                    }
+                    // The control that acts on the label beside it. Disabled while a
+                    // check is already running, so a second tap cannot start a second.
+                    NexaIconButton(
+                        icon = NexaIcons.Refresh,
+                        onClick = onRefresh,
+                        enabled = !state.refreshing,
+                        contentDescription = "Refresh alert state"
+                    )
                     // The entry point to delivery intelligence. It lives here
                     // rather than in a root tab of its own: delivery is a
                     // property of the messages incidents produce, not a
