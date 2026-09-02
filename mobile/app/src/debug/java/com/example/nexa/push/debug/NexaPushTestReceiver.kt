@@ -11,6 +11,8 @@ import com.example.nexa.push.PushNotifier
 import com.example.nexa.push.PushParseResult
 import com.example.nexa.push.PushPayloadParser
 import com.example.nexa.ui.common.DegradedScenario
+import com.example.nexa.ui.realtime.PreviewRealtimeScenario
+import com.example.nexa.ui.realtime.RealtimeStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,6 +92,16 @@ class NexaPushTestReceiver : BroadcastReceiver() {
     private fun playRealtimeScenario(context: Context) {
         val app = context.applicationContext as? NexaApplication ?: return
         CoroutineScope(Dispatchers.Default).launch {
+            // Re-anchor first. The scripted frames carry fixed sequences, and
+            // a sequence the client has already applied is a replay it will
+            // rightly refuse — so after anything else has published (an action
+            // lifecycle, say) the scenario would silently do nothing. Asking
+            // for a fresh snapshot is what a real client does when it needs a
+            // new baseline, and it makes the scenario replayable on demand.
+            RealtimeStore.anchor(
+                sequence = PreviewRealtimeScenario.SNAPSHOT_SEQUENCE,
+                scopes = PreviewRealtimeScenario.scopes
+            )
             Log.i(TAG, "Playing preview realtime scenario")
             app.previewTransport.playScenario()
         }

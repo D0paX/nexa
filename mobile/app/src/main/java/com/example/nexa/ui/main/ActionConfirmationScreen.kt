@@ -331,8 +331,28 @@ private fun ConfirmationContent(
                         NexaIcon(icon = NexaIcons.Warning, size = NexaTokens.IconMedium, tint = NexaWarning)
                         Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                         Column {
-                            Text("This action cannot be requested", style = NexaType.Title, color = NexaTextPrimary)
+                            // An action refused *after* the operator committed
+                            // is a different event from one that was never
+                            // offered, and saying so is what stops the screen
+                            // reading as though the tap did nothing.
+                            Text(
+                                text = if (state.blockedAfterConfirm) {
+                                    "Blocked — the target changed"
+                                } else {
+                                    "This action cannot be requested"
+                                },
+                                style = NexaType.Title,
+                                color = NexaTextPrimary
+                            )
                             Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
+                            if (state.blockedAfterConfirm) {
+                                Text(
+                                    text = "NEXA re-checked this action when you confirmed it. Nothing was submitted.",
+                                    style = NexaType.BodySecondary,
+                                    color = NexaTextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+                            }
                             Text(disabledReason, style = NexaType.BodySecondary, color = NexaTextSecondary)
                         }
                     }
@@ -400,7 +420,11 @@ private fun InFlightContent(state: ActionUiState.InFlight, modifier: Modifier = 
                     Text(state.state.label, style = NexaType.Display, color = NexaTextOnDark)
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
                     Text(
-                        text = resultExplanation(state.state, state.context.executionMode),
+                        text = state.detail ?: resultExplanation(
+                            state.state,
+                            state.context.executionMode,
+                            state.context.action
+                        ),
                         style = NexaType.BodySecondary,
                         color = NexaTextOnDarkMuted
                     )
@@ -479,7 +503,17 @@ private fun ResultContent(
         }
 
         // Execution success is not reconciliation. They are reported apart.
-        item { SectionHeader(text = "Enforcement state", level = SectionLevel.Group) }
+        //
+        // The heading names the domain the result belongs to. A reverification
+        // result filed under "Enforcement state" would tell an operator that
+        // a trust operation had something to say about the firewall.
+        val trustOperation = state.context.action == EnforcementAction.RequireReverification
+        item {
+            SectionHeader(
+                text = if (trustOperation) "Verification state" else "Enforcement state",
+                level = SectionLevel.Group
+            )
+        }
         item {
             GlassSurface(modifier = Modifier.fillMaxWidth()) {
                 Column {
@@ -507,7 +541,11 @@ private fun ResultContent(
                     ) {
                         Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
                         Text(
-                            text = "Execution completed, but the resulting enforcement state has not been confirmed. Do not treat this target as enforced until reconciliation completes.",
+                            text = if (trustOperation) {
+                                "The identity verified again, but the recorded verification state has not been confirmed. Network enforcement is unchanged either way."
+                            } else {
+                                "Execution completed, but the resulting enforcement state has not been confirmed. Do not treat this target as enforced until reconciliation completes."
+                            },
                             style = NexaType.Metadata,
                             color = NexaWarning
                         )
@@ -522,7 +560,11 @@ private fun ResultContent(
                             )
                             Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
                             Text(
-                                text = "This ran in AUDIT_ONLY. No firewall mutation occurred and the target's enforcement state is unchanged.",
+                                text = if (trustOperation) {
+                                    "This ran in AUDIT_ONLY. The identity was not actually re-checked, no trust standing changed, and no firewall mutation occurred."
+                                } else {
+                                    "This ran in AUDIT_ONLY. No firewall mutation occurred and the target's enforcement state is unchanged."
+                                },
                                 style = NexaType.Metadata,
                                 color = NexaSimulation
                             )
@@ -542,7 +584,11 @@ private fun ResultContent(
                             Text("Rollback failed", style = NexaType.Title, color = NexaCritical)
                             Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
                             Text(
-                                text = "The action did not complete and the target did not return to its prior state. This was not cancelled. Inspect the target before taking further action.",
+                                text = if (trustOperation) {
+                                    "Reverification did not complete and the recorded verification state did not return to what it was. This was not cancelled. Inspect the identity before relying on its standing."
+                                } else {
+                                    "The action did not complete and the target did not return to its prior state. This was not cancelled. Inspect the target before taking further action."
+                                },
                                 style = NexaType.BodySecondary,
                                 color = NexaTextSecondary
                             )

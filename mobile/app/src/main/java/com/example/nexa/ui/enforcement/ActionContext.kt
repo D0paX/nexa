@@ -403,7 +403,17 @@ sealed interface ActionUiState {
     data class AwaitingConfirmation(
         val context: ActionContext,
         val availability: ActionAvailability,
-        val consequence: ActionConsequence
+        val consequence: ActionConsequence,
+        /**
+         * Whether the operator confirmed and the request was refused on
+         * re-evaluation.
+         *
+         * Distinct from an action that was never offered. The screen looked
+         * ready, the operator committed, and the prerequisites had moved in
+         * between — that is worth saying out loud rather than silently
+         * returning them to a screen that now has a greyed-out button.
+         */
+        val blockedAfterConfirm: Boolean = false
     ) : ActionUiState
 
     /** Submitted and progressing through the Phase 4 lifecycle. */

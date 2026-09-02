@@ -178,7 +178,18 @@ fun resultHeadline(state: ExecutionState, mode: ExecutionMode): String {
  * kernel change — every one of them states that no firewall mutation
  * occurred.
  */
-fun resultExplanation(state: ExecutionState, mode: ExecutionMode): String {
+fun resultExplanation(
+    state: ExecutionState,
+    mode: ExecutionMode,
+    action: EnforcementAction? = null
+): String {
+    // Reverification is a trust operation, so it gets trust-domain wording.
+    // Reusing enforcement's would tell an operator that a firewall change was
+    // attempted when none ever was — the exact confusion this checkpoint
+    // exists to remove.
+    if (action == EnforcementAction.RequireReverification) {
+        return reverificationExplanation(state, mode)
+    }
     if (mode != ExecutionMode.AuditOnly) return state.explanation
     return when (state) {
         ExecutionState.Succeeded ->
@@ -206,6 +217,100 @@ fun resultExplanation(state: ExecutionState, mode: ExecutionMode): String {
             "The simulation returned. NEXA is evaluating the simulated outcome — no firewall mutation occurred, so there is no system state to reconcile."
         ExecutionState.RollbackRequested ->
             "The simulation failed and a simulated rollback has been requested. No firewall mutation occurred."
+    }
+}
+
+/**
+ * What a reverification run means, at each stage.
+ *
+ * Deliberately separate from the enforcement wording above. Reverification
+ * asks the identity to prove it is still there; it does not touch firewall
+ * state in either mode, and every string here says so rather than borrowing
+ * sentences written about quarantine.
+ *
+ * Note what none of these claim. A successful reverification establishes that
+ * the identity verified again — not that it is authorized, and not that the
+ * device is safe. Trust and authorization stay separate here as everywhere.
+ */
+fun reverificationExplanation(state: ExecutionState, mode: ExecutionMode): String {
+    val simulated = mode == ExecutionMode.AuditOnly
+    return when (state) {
+        ExecutionState.Requested ->
+            if (simulated) {
+                "The simulated reverification request has been submitted and is awaiting authorization. No trust record and no firewall mutation will result."
+            } else {
+                "The reverification request has been submitted and is awaiting authorization. It does not change network enforcement."
+            }
+
+        ExecutionState.Authorized ->
+            if (simulated) {
+                "The request was authorized and is queued for simulation. No trust record and no firewall mutation will result."
+            } else {
+                "The request was authorized and is queued. The identity has not been re-checked yet, and network enforcement is unaffected."
+            }
+
+        ExecutionState.Denied ->
+            if (simulated) {
+                "Authorization was refused, so the simulated reverification never ran. No firewall mutation would have occurred in any case, and the identity's trust standing is unchanged."
+            } else {
+                "Authorization was refused. Reverification never ran and the identity's trust standing is unchanged."
+            }
+
+        ExecutionState.Executing ->
+            if (simulated) {
+                "NEXA is simulating a reverification of this identity. Nothing is being asked of the identity itself, and no firewall mutation is being applied."
+            } else {
+                "NEXA is asking the identity to verify again. Network enforcement is not being changed."
+            }
+
+        ExecutionState.Reconciling ->
+            if (simulated) {
+                "The simulation returned. There is no trust record to update and no firewall mutation occurred."
+            } else {
+                "The identity responded. NEXA is recording the resulting verification state; network enforcement is unaffected."
+            }
+
+        ExecutionState.Succeeded ->
+            if (simulated) {
+                "The simulation completed. The identity was not actually re-checked, no trust standing changed, and no firewall mutation occurred."
+            } else {
+                "The identity verified again. This updates its verification state only — it does not grant authorization and does not change network enforcement."
+            }
+
+        ExecutionState.Failed ->
+            if (simulated) {
+                "The simulation did not complete. No identity was re-checked and no firewall mutation occurred."
+            } else {
+                "Reverification did not complete. The identity's previous trust standing is unchanged — this is not a revocation, and nothing about network enforcement has changed."
+            }
+
+        ExecutionState.RollbackRequested ->
+            if (simulated) {
+                "The simulated reverification failed and a simulated rollback of its verification state has been requested. No identity was re-checked and no firewall mutation occurred."
+            } else {
+                "Reverification failed and a rollback of the recorded verification state has been requested. Network enforcement is unaffected."
+            }
+
+        ExecutionState.RolledBack ->
+            if (simulated) {
+                "The simulation failed and the simulated prior verification state was restored. No firewall mutation occurred."
+            } else {
+                "Reverification failed and the prior verification state was restored. The identity's trust standing is as it was, and network enforcement is unaffected."
+            }
+
+        ExecutionState.RollbackFailed ->
+            if (simulated) {
+                "The simulated reverification failed and the simulated rollback of its verification state also failed. No identity was re-checked and no firewall mutation occurred, but the simulated outcome is inconsistent and should be investigated."
+            } else {
+                "Reverification failed AND the rollback of its recorded verification state failed. The identity's recorded verification state may not match what was actually established. This requires operator attention. Network enforcement is unaffected."
+            }
+
+        ExecutionState.Unknown ->
+            if (simulated) {
+                "NEXA cannot determine the outcome of this simulation. No identity was re-checked and no firewall mutation occurred."
+            } else {
+                "NEXA cannot determine whether this identity verified again. Its trust standing is neither confirmed nor withdrawn by this attempt, and network enforcement is unchanged."
+            }
     }
 }
 

@@ -82,6 +82,23 @@ object RealtimeStore {
         }
     }
 
+    /**
+     * Anchors the store to a snapshot and waits for it to land.
+     *
+     * [onSnapshot] returns before the re-anchor has been applied, which is
+     * fine for the connection layer — nothing is emitting yet. A caller that
+     * anchors and then immediately starts publishing needs the ordering to be
+     * real, or its first frame races the anchor and is buffered against an
+     * expectation that no longer exists.
+     */
+    suspend fun anchor(sequence: Long, scopes: Set<String>) {
+        mutex.withLock {
+            subscribedScopes = scopes
+            sequencer.reset(sequence)
+            _state.value = RealtimeState(lastAppliedSequence = sequence)
+        }
+    }
+
     /** A frame off the wire. Validated, sequenced and reduced here. */
     fun onFrame(frame: Map<String, String>, nowMillis: Long = System.currentTimeMillis()) {
         scope.launch {

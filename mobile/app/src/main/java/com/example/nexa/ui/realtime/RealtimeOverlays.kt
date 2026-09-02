@@ -2,6 +2,8 @@ package com.example.nexa.ui.realtime
 
 import com.example.nexa.ui.alerts.AlertListItem
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.availabilityOf
+import com.example.nexa.ui.enforcement.ActionContext
 import com.example.nexa.ui.devices.DeviceListItem
 import com.example.nexa.ui.identity.IdentitySummary
 import com.example.nexa.ui.notifications.NotificationRecord
@@ -100,4 +102,56 @@ fun List<IdentitySummary>.withRealtime(state: RealtimeState): List<IdentitySumma
         val overlay = state.identities[identity.identityId] ?: return@map identity
         identity.copy(trust = overlay.trust)
     }
+}
+
+/**
+ * A prepared action context, re-derived against the newest live state.
+ *
+ * A confirmation screen can sit open for as long as an operator takes to read
+ * it, and everything it describes can move underneath it: the device goes
+ * absent, trust is withdrawn, the breaker opens, enforcement changes because
+ * somebody else acted first. Executing against the copy captured when the
+ * screen opened would be executing against a screenshot.
+ *
+ * So the context is rebuilt from the overlays before it is evaluated, and
+ * only the fields the stream actually reports are replaced. What the stream
+ * has said nothing about keeps the value the preparation established — an
+ * event is a change, not a replacement.
+ *
+ * Two things are deliberately *not* re-derived here:
+ *
+ *  - Authorization. It is not carried on the realtime stream at all, and
+ *    inferring it from trust or presence is the exact mistake the model
+ *    exists to prevent. It is re-checked authoritatively at execution.
+ *  - Execution mode. The prepared mode is what the operator was shown and
+ *    agreed to; a mode arriving later belongs to a reported *action*, and is
+ *    applied there rather than being folded back into the request.
+ */
+fun ActionContext.withLiveTarget(state: RealtimeState): ActionContext {
+    val device = state.devices[target.deviceId]
+    val identity = target.identityId?.let { state.identities[it] }
+    if (device == null && identity == null && state.circuitBreaker == null) return this
+
+    val refreshedTarget = target.copy(
+        presence = device?.presence ?: target.presence,
+        ip = device?.observedAddress ?: target.ip,
+        lastObservedLabel = device?.lastSeenLabel ?: target.lastObservedLabel,
+        // A live observation is, by definition, current. Absence of one leaves
+        // the freshness the preparation recorded, however old that was.
+        observationFreshness = if (device?.lastSeenLabel != null) {
+            DataFreshness.Live
+        } else {
+            target.observationFreshness
+        },
+        // Trust travels on its own events and is never inferred from the
+        // device having been seen.
+        trust = identity?.trust ?: target.trust
+    )
+
+    return copy(
+        target = refreshedTarget,
+        currentEnforcement = device?.enforcement ?: currentEnforcement,
+        circuitBreaker = state.circuitBreaker ?: circuitBreaker,
+        dataAvailability = availabilityOf(refreshedTarget.observationFreshness)
+    )
 }
