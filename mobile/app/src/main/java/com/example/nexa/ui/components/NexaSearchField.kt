@@ -90,7 +90,17 @@ fun NexaSearchField(
                     keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .semantics { contentDescription = label }
+                        // A content description on an editable node replaces
+                        // what a screen reader would otherwise read, so a bare
+                        // label here would silence the very text the operator
+                        // just typed. Both are said, in that order.
+                        .semantics {
+                            contentDescription = if (query.isEmpty()) {
+                                label
+                            } else {
+                                "$label, $query"
+                            }
+                        }
                 )
             }
 

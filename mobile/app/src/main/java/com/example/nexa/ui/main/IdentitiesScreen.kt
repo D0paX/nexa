@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,6 +23,8 @@ import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.contentAvailability
 import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.filterCountSpoken
+import com.example.nexa.ui.common.spokenSummaryLine
 import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.nexaResults
 import com.example.nexa.ui.common.resultCountLabel
@@ -132,6 +136,10 @@ private fun IdentitiesContent(
             ) {
                 Text(
                     text = identityCountLabel(state),
+                    // Said with commas rather than middle dots.
+                    modifier = Modifier.semantics {
+                        contentDescription = spokenSummaryLine(identityCountLabel(state))
+                    },
                     style = NexaType.Metadata,
                     color = NexaTextSecondary
                 )
@@ -199,6 +207,7 @@ private fun IdentitiesContent(
                 // narrowings an operator reaches for most.
                 NexaFilterChip(
                     label = filterButtonLabel(state.filters.activeCount),
+                    spokenLabel = filterCountSpoken(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -282,6 +291,8 @@ private fun IdentityRow(identity: IdentitySummary, onClick: () -> Unit) {
     NexaListRow(
         title = identity.subjectLabel,
         onClick = onClick,
+        actionLabel = "Open identity ${identity.identityId}",
+        trailingDescription = badgeLabel,
         variant = if (badge == NexaStatus.Danger || badge == NexaStatus.Critical) {
             GlassVariant.Strong
         } else {

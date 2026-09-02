@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -37,7 +40,15 @@ fun NexaFilterChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /**
+     * What to say when the printed label does not read aloud well.
+     *
+     * "Filters · 3" is right on screen and wrong out loud — a screen reader
+     * reads the separator. The typography keeps its shorthand and the
+     * announcement gets a sentence.
+     */
+    spokenLabel: String? = null
 ) {
     // The pill stays 36dp so a row of chips keeps its density, but the thing
     // that receives the touch is 48dp tall. Shrinking the target to match the
@@ -48,7 +59,16 @@ fun NexaFilterChip(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .defaultMinSize(minHeight = NexaTokens.MinTouchTarget)
-            .semantics { this.selected = selected }
+            // The boolean is what assistive technology filters and navigates
+            // by; the phrase is what a person hears. Colour carries neither.
+            // One stop, one sentence. The chip's printed label is cleared so
+            // it is not a second focus stop announcing the same value; the
+            // selection state travels as a semantic rather than as a tint.
+            .clearAndSetSemantics {
+                this.selected = selected
+                contentDescription = spokenLabel ?: label
+                stateDescription = if (selected) "Selected" else "Not selected"
+            }
             .clickable(role = Role.Checkbox, onClick = onClick)
     ) {
         Row(

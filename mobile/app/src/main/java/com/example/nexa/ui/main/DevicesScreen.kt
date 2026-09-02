@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,6 +30,8 @@ import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.filterCountSpoken
+import com.example.nexa.ui.common.spokenSummaryLine
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.devices.*
 
@@ -152,6 +156,10 @@ private fun DevicesContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             Text(
                 text = deviceCountLabel(state),
+                // Said with commas rather than middle dots.
+                modifier = Modifier.semantics {
+                    contentDescription = spokenSummaryLine(deviceCountLabel(state))
+                },
                 style = NexaType.Metadata,
                 color = NexaTextSecondary
             )
@@ -202,6 +210,7 @@ private fun DevicesContent(
             ) {
                 NexaFilterChip(
                     label = filterButtonLabel(state.filters.activeCount),
+                    spokenLabel = filterCountSpoken(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -283,6 +292,8 @@ private fun DeviceRow(device: DeviceListItem, onClick: () -> Unit) {
     NexaListRow(
         title = device.label,
         onClick = onClick,
+        actionLabel = "Open device details for ${device.label}",
+        trailingDescription = badgeLabel,
         variant = if (badge == NexaStatus.Critical) GlassVariant.Strong else GlassVariant.Standard,
         leadingIcon = device.presence.icon,
         leadingTint = device.presence.status.style.onLight,

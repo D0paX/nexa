@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,6 +27,8 @@ import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.filterCountSpoken
+import com.example.nexa.ui.common.spokenSummaryLine
 import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.nexaResults
 import com.example.nexa.ui.common.resultCountLabel
@@ -148,6 +152,10 @@ private fun AuditContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             Text(
                 text = auditSummaryLine(state),
+                // Said with commas rather than middle dots.
+                modifier = Modifier.semantics {
+                    contentDescription = spokenSummaryLine(auditSummaryLine(state))
+                },
                 style = NexaType.Metadata,
                 color = NexaTextSecondary
             )
@@ -226,6 +234,7 @@ private fun AuditContent(
             ) {
                 NexaFilterChip(
                     label = filterButtonLabel(state.filters.activeCount),
+                    spokenLabel = filterCountSpoken(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -307,6 +316,11 @@ private fun AuditRow(entry: AuditEntry, onClick: () -> Unit) {
     NexaListRow(
         title = auditHeadline(entry),
         onClick = onClick,
+        actionLabel = "Open security record ${entry.id}",
+        trailingDescription = listOfNotNull(
+            badge?.label,
+            entry.relativeLabel
+        ).joinToString(", "),
         variant = auditSurfaceFor(entry),
         leadingIcon = entry.type.icon,
         leadingTint = status.style.onLight,

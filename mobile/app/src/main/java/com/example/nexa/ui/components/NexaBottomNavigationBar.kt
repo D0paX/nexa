@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import com.example.nexa.theme.GlassVariant
@@ -80,7 +82,18 @@ fun NexaBottomNavigationItem(
         modifier = modifier
             .fillMaxHeight()
             .clip(NexaShapes.Pill)
-            .semantics { selected = item.isSelected }
+            // One stop per destination. Without merging, the capsule's icon
+            // and its label are separate stops and the destination is
+            // announced twice — once as the tab, once as its contents.
+            // The tab names itself once. Clearing the descendants folds the
+            // capsule's icon and label into this node, so the destination is
+            // announced as one thing rather than as a tab and then again as
+            // its contents. The clickable below still supplies the role and
+            // the action.
+            .clearAndSetSemantics {
+                selected = item.isSelected
+                contentDescription = item.label
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

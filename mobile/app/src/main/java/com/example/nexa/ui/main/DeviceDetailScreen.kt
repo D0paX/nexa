@@ -26,6 +26,7 @@ import com.example.nexa.ui.enforcement.AuthorizationState
 import com.example.nexa.ui.enforcement.EnforcementAction
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.status
+import com.example.nexa.ui.common.nexaDisabled
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.devices.*
 
@@ -429,7 +430,17 @@ private fun DeviceHeader(data: DeviceDetailData) {
  */
 @Composable
 private fun DeviceActionControl(action: DeviceAction, onInvoke: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    // The reason a control cannot be used belongs to the control, not to a
+    // sentence somewhere after it. A screen reader that says "quarantine
+    // device, disabled" and stops has told the operator what they already
+    // suspected and nothing they can act on.
+    val controlSemantics = if (!action.enabled && action.disabledReason != null) {
+        Modifier.nexaDisabled(action.disabledReason)
+    } else {
+        Modifier
+    }
+
+    Column(modifier = Modifier.fillMaxWidth().then(controlSemantics)) {
         if (action.destructive) {
             NexaButton(
                 text = action.label,

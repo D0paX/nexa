@@ -24,6 +24,7 @@ import com.example.nexa.theme.NexaMotion
 import com.example.nexa.theme.NexaTextMuted
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTokens
+import com.example.nexa.ui.common.nexaDisabled
 
 /**
  * Every icon in NEXA is drawn through here.
@@ -86,6 +87,10 @@ fun NexaIconButton(
             .sizeIn(minWidth = NexaTokens.MinTouchTarget, minHeight = NexaTokens.MinTouchTarget)
             .clip(CircleShape)
             .background(pressedSurface, CircleShape)
+            // Dimming is invisible to a screen reader. The control keeps its
+            // place and its name and is announced as unavailable, rather than
+            // quietly becoming something that reads as tappable and is not.
+            .then(if (enabled) Modifier else Modifier.nexaDisabled())
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

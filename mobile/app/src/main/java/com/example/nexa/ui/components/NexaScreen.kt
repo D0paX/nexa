@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.nexa.theme.NexaTextPrimary
 import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.NexaType
+import com.example.nexa.ui.common.nexaHeading
 
 /**
  * The frame every NEXA screen sits in.
@@ -47,7 +48,15 @@ fun NexaScreen(
         topBar = {
             if (title != null) {
                 TopAppBar(
-                    title = { Text(title, style = NexaType.ScreenTitle, color = NexaTextPrimary) },
+                    title = {
+                        Text(
+                            text = title,
+                            style = NexaType.ScreenTitle,
+                            color = NexaTextPrimary,
+                            // The landmark a screen reader jumps to first.
+                            modifier = Modifier.nexaHeading()
+                        )
+                    },
                     navigationIcon = {
                         if (onBack != null) {
                             NexaBackButton(

@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,6 +29,8 @@ import com.example.nexa.ui.common.contentAvailability
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.filterCountSpoken
+import com.example.nexa.ui.common.spokenSummaryLine
 import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.nexaResults
 import com.example.nexa.ui.common.resultCountLabel
@@ -156,6 +160,10 @@ private fun AlertsContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             Text(
                 text = summaryLine(state),
+                // Said with commas rather than middle dots.
+                modifier = Modifier.semantics {
+                    contentDescription = spokenSummaryLine(summaryLine(state))
+                },
                 style = NexaType.Metadata,
                 color = NexaTextSecondary
             )
@@ -252,6 +260,7 @@ private fun AlertsContent(
             ) {
                 NexaFilterChip(
                     label = filterButtonLabel(state.filters.activeCount),
+                    spokenLabel = filterCountSpoken(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -336,6 +345,12 @@ private fun AlertRow(alert: AlertListItem, onClick: () -> Unit) {
     NexaListRow(
         title = alert.title,
         onClick = onClick,
+        actionLabel = "Open alert ${alert.id}",
+        trailingDescription = listOfNotNull(
+            alert.lifecycle.label,
+            deliveryWarning,
+            alert.createdLabel
+        ).joinToString(", "),
         variant = surfaceFor(alert),
         leadingIcon = alert.severity.icon,
         leadingTint = alert.severity.status.style.onLight,

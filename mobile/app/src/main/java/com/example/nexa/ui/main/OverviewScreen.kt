@@ -414,6 +414,11 @@ private fun AttentionRow(item: AttentionItem, onItemClick: (NavKey) -> Unit) {
             is AttentionTarget.Device -> ({ onItemClick(DeviceDetail(target.mac)) })
             AttentionTarget.None -> null
         },
+        actionLabel = when (target) {
+            is AttentionTarget.Alert -> "Open alert ${target.id}"
+            is AttentionTarget.Device -> "Open device details"
+            AttentionTarget.None -> null
+        },
         variant = if (item.status == NexaStatus.Critical) GlassVariant.Strong else GlassVariant.Standard,
         leadingIcon = style.icon,
         leadingTint = style.onLight,
@@ -434,6 +439,11 @@ private fun ActivityRow(entry: ActivityEntry, onItemClick: (NavKey) -> Unit) {
             { onItemClick(AlertDetail(entry.id)) }
         } else {
             { onItemClick(DeviceDetail(entry.target)) }
+        },
+        actionLabel = if (entry.kind == ActivityKind.AlertRaised) {
+            "Open alert ${entry.id}"
+        } else {
+            "Open device details"
         },
         leadingIcon = entry.kind.icon,
         leadingTint = style.onLight,

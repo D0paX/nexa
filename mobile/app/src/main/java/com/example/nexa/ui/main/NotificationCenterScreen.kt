@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,6 +27,8 @@ import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.filterCountSpoken
+import com.example.nexa.ui.common.spokenSummaryLine
 import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.nexaResults
 import com.example.nexa.ui.common.resultCountLabel
@@ -142,7 +146,12 @@ private fun NotificationCenterContent(
                 text = deliverySummaryLine(state),
                 style = NexaType.Metadata,
                 color = NexaTextSecondary,
-                modifier = Modifier.fillMaxWidth()
+                // Said with commas rather than middle dots.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = spokenSummaryLine(deliverySummaryLine(state))
+                    }
             )
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
             // One status line, not two, with the control that acts on it
@@ -227,6 +236,7 @@ private fun NotificationCenterContent(
             ) {
                 NexaFilterChip(
                     label = filterButtonLabel(state.filters.activeCount),
+                    spokenLabel = filterCountSpoken(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -301,6 +311,12 @@ private fun NotificationRow(record: NotificationRecord, onClick: () -> Unit) {
     NexaListRow(
         title = deliveryHeadline(delivery),
         onClick = onClick,
+        actionLabel = "Open delivery record ${record.id}",
+        trailingDescription = listOfNotNull(
+            delivery.stateLabel,
+            sourceState,
+            delivery.lastAttemptLabel
+        ).joinToString(", "),
         variant = deliverySurfaceFor(record),
         leadingIcon = delivery.icon,
         leadingTint = delivery.status.style.onLight,
