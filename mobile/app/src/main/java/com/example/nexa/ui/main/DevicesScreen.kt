@@ -99,8 +99,7 @@ private fun RetryButton(onRetry: () -> Unit) {
     NexaOutlinedButton(
         text = "Retry",
         onClick = onRetry,
-        icon = NexaIcons.Refresh,
-        modifier = Modifier.widthIn(max = 240.dp)
+        icon = NexaIcons.Refresh
     )
 }
 

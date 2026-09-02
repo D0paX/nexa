@@ -94,8 +94,7 @@ private fun RetryAction(onRetry: () -> Unit) {
     NexaOutlinedButton(
         text = "Retry",
         onClick = onRetry,
-        icon = NexaIcons.Refresh,
-        modifier = Modifier.widthIn(max = 240.dp)
+        icon = NexaIcons.Refresh
     )
 }
 
@@ -311,13 +310,17 @@ private fun EnforcementCard(enforcement: EnforcementState) {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingSmall),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = if (enforcement.isOperational) "Enforcement available" else "Enforcement halted",
                     style = NexaType.Body,
-                    color = NexaTextPrimary
+                    color = NexaTextPrimary,
+                    // The title wraps; the badge beside it does not. Given the
+                    // row equally, a long title at a large font left the badge
+                    // a sliver to spell "AUDIT ONLY" down.
+                    modifier = Modifier.weight(1f)
                 )
                 StatusBadge(
                     status = if (enforcement.executionMode == ExecutionMode.AuditOnly) {

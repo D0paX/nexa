@@ -451,6 +451,36 @@ class FilterPipelineTest {
         assertFalse(empty is NexaResults.NoMatch)
     }
 
+    /**
+     * A count inside a sentence agrees with its noun.
+     *
+     * The screens were writing "3 device(s) carry an existing enforcement
+     * binding" and "1 notification delivery failure(s)" — the parenthesis a
+     * developer reaches for when they have a number and do not want to think
+     * about grammar. On the command centre it was the first sentence an
+     * operator read.
+     */
+    @Test
+    fun `a count agrees with its noun`() {
+        assertEquals("1 device", countLabel(1, "device"))
+        assertEquals("3 devices", countLabel(3, "device"))
+        assertEquals("0 devices", countLabel(0, "device"))
+    }
+
+    /** Including the words English declines to make regular. */
+    @Test
+    fun `an irregular plural can be given`() {
+        assertEquals("1 identity", countLabel(1, "identity", "identities"))
+        assertEquals("5 identities", countLabel(5, "identity", "identities"))
+    }
+
+    /** And it agrees with the list vocabulary it sits beside. */
+    @Test
+    fun `a count and a result count use the same words`() {
+        assertEquals(resultCountLabel(1, 1, "device"), countLabel(1, "device"))
+        assertEquals(resultCountLabel(8, 8, "device"), countLabel(8, "device"))
+    }
+
     @Test
     fun `the count describes the list it sits above`() {
         assertEquals("8 devices", resultCountLabel(8, 8, "device"))

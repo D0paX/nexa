@@ -2,6 +2,7 @@ package com.example.nexa.ui.main
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
@@ -104,8 +105,7 @@ private fun RetryControl(onRetry: () -> Unit) {
     NexaOutlinedButton(
         text = "Retry",
         onClick = onRetry,
-        icon = NexaIcons.Refresh,
-        modifier = Modifier.widthIn(max = 240.dp)
+        icon = NexaIcons.Refresh
     )
 }
 
@@ -130,23 +130,27 @@ private fun IdentitiesContent(
         onBack = onBack
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = identityCountLabel(state),
-                    // Said with commas rather than middle dots.
-                    modifier = Modifier.semantics {
+            // Stacked rather than side by side, for the reason the delivery
+            // screen already records: the summary and the freshness both grow,
+            // and a row cannot give way to both. Sharing one left them touching
+            // — "5 cryptographic identities - 5 need attention" running
+            // straight into "Updated just n...", each having crushed the other.
+            Text(
+                text = identityCountLabel(state),
+                style = NexaType.Metadata,
+                color = NexaTextSecondary,
+                // Said with commas rather than middle dots.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
                         contentDescription = spokenSummaryLine(identityCountLabel(state))
-                    },
-                    style = NexaType.Metadata,
-                    color = NexaTextSecondary
-                )
-                // One status line, not two. While a check is running it is the more
-                // useful thing to say, and the freshness it replaces is about to be
-                // restated anyway.
+                    }
+            )
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // One status line, not two. While a check is running it is the
+                // more useful thing to say, and the freshness it replaces is
+                // about to be restated anyway.
                 HeaderStatus {
                     if (state.refreshing) {
                         RefreshingIndicator()
@@ -154,8 +158,10 @@ private fun IdentitiesContent(
                         FreshnessTag(state.freshness)
                     }
                 }
-                // The control that acts on the label beside it. Disabled while a
-                // check is already running, so a second tap cannot start a second.
+                Spacer(modifier = Modifier.width(NexaTokens.SpacingXSmall))
+                // The control that acts on the label beside it. Disabled while
+                // a check is already running, so a second tap cannot start a
+                // second.
                 NexaIconButton(
                     icon = NexaIcons.Refresh,
                     onClick = onRefresh,

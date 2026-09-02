@@ -185,12 +185,35 @@ class ManifestSurfaceTest {
         )
     }
 
-    /** And no shared preferences file of ours exists either. */
+    /**
+     * And no shared preferences of ours either.
+     *
+     * The platform writes one itself. On a Galaxy S24 the data directory
+     * contains exactly `shared_prefs/android.app.ActivityThread.IDS.xml`,
+     * holding a single integer named IDSCount — written by the framework
+     * class its filename names, on a device whose vendor ships that variant.
+     * The Pixel has no such file and has the profile-installer marker
+     * instead, which is why running on one device only is how you come to
+     * believe an app writes nothing.
+     *
+     * Both are named here rather than filtered by pattern. NEXA has no
+     * SharedPreferences code at all, so any file that is not one of these two
+     * is something new, and this test exists to say so.
+     */
     @Test
     fun we_keep_no_shared_preferences() {
         val prefsDir = java.io.File(context.applicationInfo.dataDir, "shared_prefs")
         val files = prefsDir.listFiles().orEmpty().map { it.name }
-            .filterNot { it.contains("profileinstaller", ignoreCase = true) }
-        assertTrue("NEXA wrote shared preferences: $files", files.isEmpty())
+
+        val writtenByThePlatform = setOf(
+            // Samsung's ActivityThread. One integer, no NEXA state.
+            "android.app.ActivityThread.IDS.xml"
+        )
+
+        assertEquals(
+            "NEXA wrote shared preferences",
+            emptyList<String>(),
+            (files - writtenByThePlatform).sorted()
+        )
     }
 }

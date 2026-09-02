@@ -19,6 +19,23 @@ object NexaTokens {
     val IconLarge = 24.dp    // navigation, icon-only controls, buttons
     val IconHero = 40.dp     // empty, error and unavailable states
 
+    /**
+     * How wide a centred state screen is allowed to read.
+     *
+     * An empty, error or unavailable screen is one icon, one line of title and
+     * a sentence explaining what NEXA does and does not know. Centred and
+     * unbounded, that sentence ran the full width of the screen, so the eye
+     * had to travel the whole display to find the start of the next line while
+     * the recovery button below it sat at 240dp — the copy and the control
+     * disagreeing about the same column.
+     *
+     * Every one of those buttons was carrying its own copy of that number:
+     * sixteen call sites, one magic constant. The measure belongs here, and
+     * the container applies it to both.
+     */
+    val StateContentMaxWidth = 320.dp
+    val StateActionMaxWidth = 240.dp
+
     val BackIconSize = IconLarge
     val NavigationIconSize = IconLarge
 

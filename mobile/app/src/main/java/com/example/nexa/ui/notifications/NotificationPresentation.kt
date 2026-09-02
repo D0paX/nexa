@@ -9,6 +9,7 @@ import com.example.nexa.ui.alerts.status
 import com.example.nexa.ui.common.DeliveryState
 import com.example.nexa.ui.common.ExecutionMode
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.countLabel
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.status
@@ -120,9 +121,9 @@ fun retryLine(delivery: NotificationDeliverySummary): String? = when {
 fun attemptLine(delivery: NotificationDeliverySummary): String {
     val max = delivery.maxAttempts
     return if (max != null) {
-        "${delivery.attemptCount} of $max attempt(s)"
+        "${delivery.attemptCount} of ${countLabel(max, "attempt")}"
     } else {
-        "${delivery.attemptCount} attempt(s)"
+        "${countLabel(delivery.attemptCount, "attempt")}"
     }
 }
 

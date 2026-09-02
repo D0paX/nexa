@@ -1,6 +1,7 @@
 package com.example.nexa.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,11 +54,17 @@ private fun NexaStateContainer(
                 text = message,
                 style = NexaType.Body,
                 color = NexaTextSecondary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = NexaTokens.StateContentMaxWidth)
             )
             if (action != null) {
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingLarge))
-                action()
+                // The recovery control is bounded here rather than at every
+                // call site. Sixteen screens were each repeating the same
+                // width, which is sixteen chances for one of them to drift.
+                Box(modifier = Modifier.widthIn(max = NexaTokens.StateActionMaxWidth)) {
+                    action()
+                }
             }
         }
     }

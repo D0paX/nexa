@@ -59,8 +59,7 @@ fun AuditDetailScreen(
                     NexaOutlinedButton(
                         text = "Back to history",
                         onClick = onBack,
-                        icon = NexaIcons.Back,
-                        modifier = Modifier.widthIn(max = 240.dp)
+                        icon = NexaIcons.Back
                     )
                 }
             )
@@ -74,8 +73,7 @@ fun AuditDetailScreen(
                     NexaOutlinedButton(
                         text = "Retry",
                         onClick = viewModel::refresh,
-                        icon = NexaIcons.Refresh,
-                        modifier = Modifier.widthIn(max = 240.dp)
+                        icon = NexaIcons.Refresh
                     )
                 }
             )

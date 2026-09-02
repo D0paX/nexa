@@ -25,6 +25,7 @@ import com.example.nexa.theme.*
 import com.example.nexa.ui.audit.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.availabilityOf
+import com.example.nexa.ui.common.countLabel
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.filterButtonLabel
@@ -101,8 +102,7 @@ private fun RetryAuditButton(onRetry: () -> Unit) {
     NexaOutlinedButton(
         text = "Retry",
         onClick = onRetry,
-        icon = NexaIcons.Refresh,
-        modifier = Modifier.widthIn(max = 240.dp)
+        icon = NexaIcons.Refresh
     )
 }
 
@@ -170,7 +170,7 @@ private fun AuditContent(
             if (state.summary.simulated > 0 || state.summary.liveEnforcement > 0) {
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
                 Text(
-                    text = "${state.summary.liveEnforcement} live enforcement record(s) · ${state.summary.simulated} simulated",
+                    text = "${countLabel(state.summary.liveEnforcement, "live enforcement record")} · ${state.summary.simulated} simulated",
                     style = NexaType.Metadata,
                     color = NexaTextMuted
                 )
@@ -418,7 +418,7 @@ private fun AuditFooter(state: AuditUiState.Content, onLoadMore: () -> Unit) {
         )
     } else {
         Text(
-            text = "End of the retrieved history · ${state.visible.size} record(s)",
+            text = "End of the retrieved history · ${countLabel(state.visible.size, "record")}",
             style = NexaType.Metadata,
             color = NexaTextMuted
         )

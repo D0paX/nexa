@@ -73,8 +73,7 @@ fun AlertDetailScreen(
                     NexaOutlinedButton(
                         text = "Back",
                         onClick = onBack,
-                        icon = NexaIcons.Back,
-                        modifier = Modifier.widthIn(max = 240.dp)
+                        icon = NexaIcons.Back
                     )
                 }
             )
@@ -88,8 +87,7 @@ fun AlertDetailScreen(
                     NexaOutlinedButton(
                         text = "Retry",
                         onClick = viewModel::refresh,
-                        icon = NexaIcons.Refresh,
-                        modifier = Modifier.widthIn(max = 240.dp)
+                        icon = NexaIcons.Refresh
                     )
                 }
             )

@@ -94,3 +94,19 @@ fun resultCountLabel(
         "$visibleCount of $sourceCount $pluralNoun"
     }
 }
+
+/**
+ * A count and its noun, agreeing.
+ *
+ * The screens were writing "3 device(s) carry an existing enforcement
+ * binding" and "1 notification delivery failure(s)" — the parenthesis that
+ * means a developer had a count and did not want to think about grammar. It
+ * reads as unfinished, and on the command centre it is the first sentence an
+ * operator sees.
+ *
+ * [resultCountLabel] above already knew how to do this for lists; this is the
+ * same rule for a count that appears inside a sentence. Same default, same
+ * override for the words English declines to be regular about.
+ */
+fun countLabel(count: Int, noun: String, pluralNoun: String = "${noun}s"): String =
+    "$count ${if (count == 1) noun else pluralNoun}"

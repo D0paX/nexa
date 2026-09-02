@@ -25,6 +25,7 @@ import com.example.nexa.NotificationDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.availabilityOf
+import com.example.nexa.ui.common.countLabel
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.filterButtonLabel
@@ -103,8 +104,7 @@ private fun RetryDeliveryButton(onRetry: () -> Unit) {
     NexaOutlinedButton(
         text = "Retry",
         onClick = onRetry,
-        icon = NexaIcons.Refresh,
-        modifier = Modifier.widthIn(max = 240.dp)
+        icon = NexaIcons.Refresh
     )
 }
 
@@ -405,7 +405,7 @@ private fun NotificationFooter(
         )
     } else {
         Text(
-            text = "End of the retrieved delivery records · ${state.visible.size} record(s)",
+            text = "End of the retrieved delivery records · ${countLabel(state.visible.size, "record")}",
             style = NexaType.Metadata,
             color = NexaTextMuted
         )

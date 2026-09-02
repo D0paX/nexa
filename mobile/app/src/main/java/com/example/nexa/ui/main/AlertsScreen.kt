@@ -28,6 +28,7 @@ import com.example.nexa.theme.*
 import com.example.nexa.ui.alerts.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.contentAvailability
+import com.example.nexa.ui.common.countLabel
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.filterButtonLabel
@@ -102,8 +103,7 @@ private fun RetryAlertsButton(onRetry: () -> Unit) {
     NexaOutlinedButton(
         text = "Retry",
         onClick = onRetry,
-        icon = NexaIcons.Refresh,
-        modifier = Modifier.widthIn(max = 240.dp)
+        icon = NexaIcons.Refresh
     )
 }
 
@@ -196,7 +196,7 @@ private fun AlertsContent(
                         .pressResponse(pressScale)
                 ) {
                     Text(
-                        text = "${state.summary.deliveryFailures} notification delivery failure(s) — alerts themselves are unaffected",
+                        text = "${countLabel(state.summary.deliveryFailures, "notification delivery failure")} — alerts themselves are unaffected",
                         style = NexaType.Metadata,
                         color = NexaWarning,
                         modifier = Modifier.weight(1f, fill = false)

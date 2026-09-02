@@ -5,6 +5,7 @@ import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.countLabel
 
 /**
  * The operator-facing state of the NEXA Security Command Center.
@@ -217,7 +218,7 @@ fun buildAttentionItems(
         items += AttentionItem(
             id = "enforcement-failed",
             title = "Enforcement action failed",
-            detail = "${enforcement.failedActions} action(s) did not complete. Target state is not confirmed.",
+            detail = "${countLabel(enforcement.failedActions, "action")} did not complete. Target state is not confirmed.",
             status = NexaStatus.Critical,
             target = AttentionTarget.None,
             priority = 0
@@ -250,7 +251,7 @@ fun buildAttentionItems(
         items += AttentionItem(
             id = "reconciliation",
             title = "Reconciliation required",
-            detail = "${enforcement.reconciliationIssues} binding(s) could not be reconciled after restart.",
+            detail = "${countLabel(enforcement.reconciliationIssues, "binding")} could not be reconciled after restart.",
             status = NexaStatus.Degraded,
             target = AttentionTarget.None,
             priority = 4
@@ -261,7 +262,7 @@ fun buildAttentionItems(
         items += AttentionItem(
             id = "pending",
             title = "Action pending",
-            detail = "${enforcement.pendingActions} action(s) awaiting execution.",
+            detail = "${countLabel(enforcement.pendingActions, "action")} awaiting execution.",
             status = NexaStatus.Information,
             target = AttentionTarget.None,
             priority = 5
@@ -272,7 +273,7 @@ fun buildAttentionItems(
         items += AttentionItem(
             id = "unacknowledged",
             title = "Unacknowledged alerts",
-            detail = "${alerts.unacknowledged} alert(s) have not been acknowledged.",
+            detail = "${countLabel(alerts.unacknowledged, "alert")} ${if (alerts.unacknowledged == 1) "has" else "have"} not been acknowledged.",
             status = NexaStatus.Warning,
             target = AttentionTarget.None,
             priority = 6
@@ -298,7 +299,7 @@ fun postureDetail(posture: SecurityPosture, enforcement: EnforcementState): Stri
             SecurityPosture.Secure ->
                 "Enforcement is available in AUDIT_ONLY. Actions are simulated and no firewall mutation will occur."
             SecurityPosture.Enforcing ->
-                "${enforcement.quarantinedDevices} device(s) carry an existing enforcement binding. NEXA is in AUDIT_ONLY: new actions are simulated and will not mutate firewall state."
+                "${countLabel(enforcement.quarantinedDevices, "device")} ${if (enforcement.quarantinedDevices == 1) "carries" else "carry"} an existing enforcement binding. NEXA is in AUDIT_ONLY: new actions are simulated and will not mutate firewall state."
             SecurityPosture.Degraded ->
                 "NEXA is running with reduced capability in AUDIT_ONLY. Actions are simulated."
             SecurityPosture.Paused ->
@@ -314,7 +315,7 @@ fun postureDetail(posture: SecurityPosture, enforcement: EnforcementState): Stri
         SecurityPosture.Secure ->
             "Enforcement is available. No outstanding conditions."
         SecurityPosture.Enforcing ->
-            "Enforcement is active on ${enforcement.quarantinedDevices} device(s). Other targets are unaffected."
+            "Enforcement is active on ${countLabel(enforcement.quarantinedDevices, "device")}. Other targets are unaffected."
     SecurityPosture.Degraded ->
         "NEXA is running with reduced capability. Enforcement results may be incomplete."
     SecurityPosture.Paused ->

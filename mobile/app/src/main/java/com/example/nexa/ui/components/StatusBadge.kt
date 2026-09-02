@@ -74,7 +74,15 @@ fun StatusBadge(
             Text(
                 text = text.uppercase(),
                 style = NexaType.Status,
-                color = color
+                color = color,
+                // A badge is a single word about state, and it is never the
+                // thing that should give way. Squeezed by a long label beside
+                // it on a narrow screen at a large font, "AUDIT ONLY" broke
+                // one letter per line — a vertical column spelling out the
+                // most important fact on the card. It keeps its own width now
+                // and whatever shares its row yields instead.
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
