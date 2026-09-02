@@ -24,6 +24,31 @@ class MainActivity : ComponentActivity() {
     // being ready.
     handleDeepLinkIntent(intent)
 
+    // Screen capture is deliberately not blocked, and the reasoning belongs
+    // next to where the flag would go rather than in a document nobody reads
+    // beside this file.
+    //
+    // FLAG_SECURE stops screenshots and blanks the recents preview. What NEXA
+    // shows is network posture an operator already administers — device
+    // labels, MAC addresses, scopes, trust standing, enforcement state. It
+    // shows no credential, no key material and no token: the identity screens
+    // display a fingerprint and the push status a fingerprint, both of which
+    // exist precisely so that the real values never appear. So the material
+    // the flag would protect is not the material on screen.
+    //
+    // Against that, the flag is expensive in a way that is easy to
+    // underestimate. Screenshots are how an operator escalates: the fastest
+    // honest description of a quarantined device with a failed reconciliation
+    // is a picture of the screen that says so. Blocking it does not stop
+    // anyone who has the unlocked phone — they can simply open the app — it
+    // stops the person trying to explain what they are looking at.
+    //
+    // The threat it does address is an attacker holding the unlocked device,
+    // who has already won more than a screenshot. The trade is therefore
+    // real usability against a marginal gain, and it is refused. If NEXA ever
+    // displays key material, a session token or an operator credential, this
+    // decision changes and this is the line to change.
+
     // Edge to edge, with the system's indicators told which surface they are
     // being drawn over. Without the styles this call resolves the appearance
     // from the phone's night setting, which NEXA does not follow: the app
