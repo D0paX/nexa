@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -130,10 +131,12 @@ private fun DevicesContent(
                     // One status line, not two. While a check is running it is the
                     // more useful thing to say, and the freshness it would replace is
                     // about to be restated anyway.
-                    if (state.refreshing) {
-                        RefreshingIndicator()
-                    } else {
-                        FreshnessLabel(state.freshness)
+                    HeaderStatus {
+                        if (state.refreshing) {
+                            RefreshingIndicator()
+                        } else {
+                            FreshnessLabel(state.freshness)
+                        }
                     }
                     // The control that acts on the label beside it. Disabled
                     // while a check is already running, so a second tap cannot
@@ -327,7 +330,11 @@ private fun FreshnessLabel(freshness: DataFreshness) {
         Text(
             text = freshness.label,
             style = NexaType.Metadata,
-            color = if (stale) NexaWarning else NexaTextMuted
+            color = if (stale) NexaWarning else NexaTextMuted,
+            // Truncates rather than wrapping the header onto a second line.
+            // The same freshness is restated in full below it.
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

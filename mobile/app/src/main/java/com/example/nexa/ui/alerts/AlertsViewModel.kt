@@ -197,9 +197,48 @@ class AlertDetailViewModel : ViewModel() {
 
     private var loadedId: String? = null
 
+    /**
+     * The condition the loaded record was read under.
+     *
+     * A record is cached so that returning to it does not re-run the load,
+     * but the availability it was read under is part of what it says. When
+     * that changes, the cached copy is describing a moment that has passed —
+     * on a real device this showed a detail claiming an observation from two
+     * minutes ago while the list it was opened from already said the state
+     * could not be confirmed. Keying the cache on the condition as well as
+     * the identifier makes the record reload instead.
+     */
+    private var loadedUnder: DegradedScenario.Scenario? = null
+
+    /**
+     * A change of condition re-reads the record.
+     *
+     * Waiting for the screen to be entered again is not enough. The detail is
+     * still open when connectivity goes, and a record left as it was would go
+     * on claiming an observation NEXA can no longer confirm — to the reader,
+     * and to the action path, which builds its target snapshot from this same
+     * record.
+     */
+    init {
+        viewModelScope.launch {
+            DegradedScenario.active.collect { scenario ->
+                val loaded = loadedId ?: return@collect
+                if (loadedUnder == scenario) return@collect
+                loadedId = null
+                load(loaded)
+            }
+        }
+    }
+
     fun load(alertId: String) {
-        if (loadedId == alertId && _state.value is AlertDetailUiState.Content) return
+        val scenario = DegradedScenario.active.value
+        if (loadedId == alertId && loadedUnder == scenario &&
+            _state.value is AlertDetailUiState.Content
+        ) {
+            return
+        }
         loadedId = alertId
+        loadedUnder = scenario
         viewModelScope.launch {
             _state.value = AlertDetailUiState.Loading
             delay(LOAD_DELAY_MS)

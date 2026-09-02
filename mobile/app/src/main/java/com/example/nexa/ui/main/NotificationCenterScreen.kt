@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -157,10 +158,12 @@ private fun NotificationCenterContent(
             // One status line, not two, with the control that acts on it
             // beside it. Disabled while a check is already running.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (state.refreshing) {
-                    RefreshingIndicator()
-                } else {
-                    DeliveryFreshness(state.freshness)
+                HeaderStatus {
+                    if (state.refreshing) {
+                        RefreshingIndicator()
+                    } else {
+                        DeliveryFreshness(state.freshness)
+                    }
                 }
                 Spacer(modifier = Modifier.width(NexaTokens.SpacingXSmall))
                 NexaIconButton(
@@ -427,7 +430,11 @@ private fun DeliveryFreshness(freshness: DataFreshness) {
         Text(
             text = freshness.label,
             style = NexaType.Metadata,
-            color = if (stale) NexaWarning else NexaTextMuted
+            color = if (stale) NexaWarning else NexaTextMuted,
+            // Truncates rather than wrapping the header onto a second line.
+            // The same freshness is restated in full below it.
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

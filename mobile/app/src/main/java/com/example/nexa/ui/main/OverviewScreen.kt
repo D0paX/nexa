@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -132,10 +133,12 @@ private fun OverviewContent(
                     // One status line, not two. While a check is running it is the more
                     // useful thing to say, and the freshness it replaces is about to be
                     // restated anyway.
-                    if (refreshing) {
-                        RefreshingIndicator()
-                    } else {
-                        FreshnessLabel(freshness = data.freshness)
+                    HeaderStatus {
+                        if (refreshing) {
+                            RefreshingIndicator()
+                        } else {
+                            FreshnessLabel(freshness = data.freshness)
+                        }
                     }
                     // The control that acts on the label beside it. Disabled while a
                     // check is already running, so a second tap cannot start a second.
@@ -483,7 +486,11 @@ private fun FreshnessLabel(freshness: DataFreshness) {
         Text(
             text = freshness.label,
             style = NexaType.Metadata,
-            color = if (stale) NexaWarning else NexaTextMuted
+            color = if (stale) NexaWarning else NexaTextMuted,
+            // Truncates rather than wrapping the header onto a second line.
+            // The same freshness is restated in full below it.
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
