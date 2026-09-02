@@ -199,17 +199,19 @@ private fun OverviewContent(
 
         // 4 — DEVICE / ALERT SUMMARY (Bento)
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingMedium)
-            ) {
+            // One height for the pair. The device caption wraps at some
+            // widths and the alert caption does not, so left to themselves the
+            // two cards measure differently and their bottom edges disagree.
+            MetricRow {
                 MetricSurface(
                     title = "ACTIVE DEVICES",
                     value = data.devices.active.toString(),
                     caption = deviceCaption(data.devices),
                     glassVariant = GlassVariant.Interactive,
                     onClick = { onItemClick(Devices) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
                 MetricSurface(
                     title = "ACTIVE ALERTS",
@@ -218,7 +220,9 @@ private fun OverviewContent(
                     caption = alertCaption(data.alerts),
                     glassVariant = GlassVariant.Strong,
                     onClick = { onItemClick(Alerts) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingLarge))
