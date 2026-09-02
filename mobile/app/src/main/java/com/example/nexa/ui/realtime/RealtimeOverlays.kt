@@ -3,6 +3,7 @@ package com.example.nexa.ui.realtime
 import com.example.nexa.ui.alerts.AlertListItem
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.availabilityOf
+import com.example.nexa.ui.devices.Presence
 import com.example.nexa.ui.enforcement.ActionContext
 import com.example.nexa.ui.devices.DeviceListItem
 import com.example.nexa.ui.identity.IdentitySummary
@@ -136,13 +137,7 @@ fun ActionContext.withLiveTarget(state: RealtimeState): ActionContext {
         presence = device?.presence ?: target.presence,
         ip = device?.observedAddress ?: target.ip,
         lastObservedLabel = device?.lastSeenLabel ?: target.lastObservedLabel,
-        // A live observation is, by definition, current. Absence of one leaves
-        // the freshness the preparation recorded, however old that was.
-        observationFreshness = if (device?.lastSeenLabel != null) {
-            DataFreshness.Live
-        } else {
-            target.observationFreshness
-        },
+        observationFreshness = observedFreshness(device, target.observationFreshness),
         // Trust travels on its own events and is never inferred from the
         // device having been seen.
         trust = identity?.trust ?: target.trust
@@ -154,4 +149,45 @@ fun ActionContext.withLiveTarget(state: RealtimeState): ActionContext {
         circuitBreaker = state.circuitBreaker ?: circuitBreaker,
         dataAvailability = availabilityOf(refreshedTarget.observationFreshness)
     )
+}
+
+/**
+ * What an arriving observation says about how current the target is.
+ *
+ * The rule this replaces read "any event carrying a last-seen label means the
+ * observation is live". An event arriving proves the stream is alive; it does
+ * not prove the device was seen. An event that says a device is ABSENT, last
+ * seen three hours ago, was being read as a fresh sighting — so a quarantine
+ * correctly blocked with "target observation is stale" became available again
+ * the moment the network reported that the device had left, and the
+ * confirmation screen described that target's observation as CURRENT.
+ *
+ * That is the upgrade the freshness vocabulary exists to prevent: the client
+ * became more confident about a target because of an event whose content was
+ * that it could no longer see it.
+ *
+ * So the presence the event reports decides:
+ *
+ *  - PRESENT is a sighting. The observation is current as of this event.
+ *  - ABSENT is the opposite of a sighting. Whatever NEXA last saw is old, and
+ *    the label the publisher sent says how old.
+ *  - UNKNOWN is not a statement about the device at all, only about NEXA's
+ *    ability to say — which is what [DataFreshness.Unknown] means.
+ *
+ * With no observation at all the preparation's own freshness stands, however
+ * old it was. Nothing here invents currency it was not told about.
+ */
+private fun observedFreshness(
+    device: DeviceOverlay?,
+    prepared: DataFreshness
+): DataFreshness {
+    val label = device?.lastSeenLabel ?: return prepared
+    return when (device.presence) {
+        Presence.Present -> DataFreshness.Live
+        Presence.Absent -> DataFreshness.Stale(label)
+        // Includes the case where the event carried no presence at all: an
+        // observation that does not say whether the device is there is not
+        // evidence that it is.
+        Presence.Unknown, null -> DataFreshness.Unknown
+    }
 }

@@ -319,6 +319,13 @@ class SecureActionLifecycleTest {
      * A live observation makes a stale target current again. This is the
      * re-resolution path having a real effect rather than merely clearing a
      * flag.
+     *
+     * The overlay states a presence because a real one always does — the
+     * parser refuses an observation frame whose presence is missing or not a
+     * known value, so an overlay carrying a last-seen label without one cannot
+     * come off the wire. Which presence it carries is the whole question:
+     * PRESENT is a sighting and clears staleness, and the sibling test below
+     * covers what an absence does instead.
      */
     @Test
     fun `an observation refreshes a stale target`() {
@@ -333,6 +340,7 @@ class SecureActionLifecycleTest {
         val realtime = RealtimeState(
             devices = mapOf(
                 stale.target.deviceId to DeviceOverlay(
+                    presence = Presence.Present,
                     lastSeenLabel = "just now",
                     scope = stale.target.scope
                 )

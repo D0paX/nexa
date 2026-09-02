@@ -78,6 +78,9 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+  // The end-to-end workflow tests drive real view models on a device,
+  // so they need the same coroutine test dispatcher the unit tests use.
+  androidTestImplementation(libs.kotlinx.coroutines.test)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 
   // Local tests: jUnit, coroutines, Android runner

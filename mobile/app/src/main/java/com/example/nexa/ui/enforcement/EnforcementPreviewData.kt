@@ -196,7 +196,18 @@ object EnforcementPreview {
 
     fun resolve(id: String): ActionContext? = contexts[id]
 
-    fun outcomeFor(id: String): Outcome = outcomes[id] ?: Outcome.Success
+    /**
+     * The scripted outcome for a prepared context.
+     *
+     * An id nothing recorded an outcome for resolves to [Outcome.Unknown],
+     * not to success. The default used to be success, which meant a handle the
+     * store no longer held — evicted, or never stored — would have played a
+     * complete winning lifecycle: authorized, executing, reconciling,
+     * succeeded. An outcome nobody recorded is precisely the case where the
+     * client has been told nothing, and "told nothing" is the definition of
+     * unknown rather than a synonym for it having worked.
+     */
+    fun outcomeFor(id: String): Outcome = outcomes[id] ?: Outcome.Unknown
 
     /** Clears stored contexts. Test-facing. */
     fun reset() {
