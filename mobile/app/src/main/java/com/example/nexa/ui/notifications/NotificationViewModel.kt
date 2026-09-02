@@ -3,6 +3,7 @@ package com.example.nexa.ui.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexa.push.PushInbox
+import com.example.nexa.ui.common.DegradedScenario
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -63,7 +64,12 @@ class NotificationCenterViewModel : ViewModel() {
             _state.value = NotificationCenterUiState.Loading
             delay(LOAD_DELAY_MS)
             pageLimit = NOTIFICATION_PAGE_SIZE
-            val scenario = NotificationPreview.scenario as NotificationCenterUiState.Content
+            val loaded = degradedOrDefault()
+            if (loaded !is NotificationCenterUiState.Content) {
+                _state.value = loaded
+                return@launch
+            }
+            val scenario = loaded
             // Messages that arrived before this screen existed are part of the
             // record too, so the load starts from what the inbox already holds.
             _state.value = project(
@@ -132,6 +138,25 @@ class NotificationCenterViewModel : ViewModel() {
             }
         )
     }
+
+    /**
+     * The snapshot to load, honouring a review scenario when one is active.
+     *
+     * Unavailable is not failure. A delivery record NEXA could not read is
+     * not a message that failed to arrive, and the two must never render the
+     * same way.
+     */
+    private fun degradedOrDefault(): NotificationCenterUiState =
+        when (DegradedScenario.active.value) {
+            null, DegradedScenario.Scenario.Current -> NotificationPreview.scenario
+            DegradedScenario.Scenario.Empty -> NotificationPreview.empty
+            DegradedScenario.Scenario.Stale -> NotificationPreview.stale
+            DegradedScenario.Scenario.Offline -> NotificationPreview.offline
+            DegradedScenario.Scenario.Degraded -> NotificationPreview.degraded
+            DegradedScenario.Scenario.Unavailable -> NotificationPreview.unavailable
+            DegradedScenario.Scenario.Error ->
+                NotificationCenterUiState.Error("Delivery records could not be read.")
+        }
 
     private fun update(
         resetPage: Boolean = false,

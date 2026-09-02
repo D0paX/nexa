@@ -298,7 +298,9 @@ sealed interface IdentitiesUiState {
         val query: String,
         val filters: IdentityFilters,
         val freshness: DataFreshness,
-        val degraded: Boolean
+        val degraded: Boolean,
+        /** Cached identity state, no connection. Distinct from merely stale. */
+        val offline: Boolean = false
     ) : IdentitiesUiState
 
     data object Offline : IdentitiesUiState

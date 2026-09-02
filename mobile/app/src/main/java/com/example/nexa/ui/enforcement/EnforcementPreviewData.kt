@@ -3,7 +3,9 @@ package com.example.nexa.ui.enforcement
 import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.NexaAvailability
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.devices.DeviceEnforcement
 import com.example.nexa.ui.devices.Presence
 import java.util.concurrent.ConcurrentHashMap
@@ -188,6 +190,15 @@ object ActionPreparation {
         currentEnforcement: com.example.nexa.ui.devices.DeviceEnforcement,
         circuitBreaker: CircuitBreakerState,
         alreadyInDesiredState: Boolean = false,
+        /**
+         * How readable the state behind this action was.
+         *
+         * Defaults to what the target's own observation freshness implies, so
+         * a caller cannot forget it and silently get a confident context out
+         * of uncertain data. A screen that knows more — that its whole
+         * inventory was unavailable, say — passes that instead.
+         */
+        dataAvailability: NexaAvailability = availabilityOf(target.observationFreshness),
         outcome: EnforcementPreview.Outcome = EnforcementPreview.Outcome.Success
     ): String = EnforcementPreview.store(
         ActionContext(
@@ -198,7 +209,8 @@ object ActionPreparation {
             executionMode = executionMode,
             currentEnforcement = currentEnforcement,
             circuitBreaker = circuitBreaker,
-            alreadyInDesiredState = alreadyInDesiredState
+            alreadyInDesiredState = alreadyInDesiredState,
+            dataAvailability = dataAvailability
         ),
         outcome
     )

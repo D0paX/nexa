@@ -20,7 +20,9 @@ import com.example.nexa.ui.alerts.*
 import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.NexaAvailability
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.devices.DeviceEnforcement
 import com.example.nexa.ui.enforcement.ActionPreparation
@@ -294,7 +296,13 @@ private fun AlertDetailContent(
                     AlertActionControl(
                         action = action,
                         onInvoke = {
-                            handleAction(action, alert, onNavigate, onLifecycleChange)
+                            handleAction(
+                                action = action,
+                                alert = alert,
+                                freshness = data.freshness,
+                                onNavigate = onNavigate,
+                                onLifecycleChange = onLifecycleChange
+                            )
                         }
                     )
                     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
@@ -323,6 +331,7 @@ private fun AlertDetailContent(
 private fun handleAction(
     action: AlertAction,
     alert: AlertListItem,
+    freshness: DataFreshness,
     onNavigate: (NavKey) -> Unit,
     onLifecycleChange: (AlertLifecycle) -> Unit
 ) {
@@ -337,7 +346,7 @@ private fun handleAction(
         AlertActionKind.QuarantineTarget, AlertActionKind.RequireReverification -> {
             // Alerts do not own enforcement logic: they prepare the same
             // context and hand it to the same pipeline as everywhere else.
-            val contextId = prepareAlertAction(action, alert)
+            val contextId = prepareAlertAction(action, alert, freshness)
             if (contextId != null) onNavigate(ActionConfirmation(contextId))
         }
     }
@@ -348,8 +357,17 @@ private fun handleAction(
  *
  * Returns null when the alert has no resolvable device target — a response
  * cannot be prepared against something NEXA cannot identify.
+ *
+ * [freshness] is the screen's own account of how well it could read this
+ * record, and it is passed rather than left to be inferred from the target's
+ * observation: the two are different facts, and the more pessimistic one has
+ * to reach the pipeline.
  */
-private fun prepareAlertAction(action: AlertAction, alert: AlertListItem): String? {
+private fun prepareAlertAction(
+    action: AlertAction,
+    alert: AlertListItem,
+    freshness: DataFreshness
+): String? {
     val device = alert.target.deviceRef ?: return null
     val identity = alert.target.identityRef
     val enforcementAction = when (action.kind) {
@@ -375,9 +393,22 @@ private fun prepareAlertAction(action: AlertAction, alert: AlertListItem): Strin
         authorization = AuthorizationState.ApprovalRequired,
         executionMode = ExecutionMode.AuditOnly,
         currentEnforcement = DeviceEnforcement.Normal,
-        circuitBreaker = CircuitBreakerState.Closed
+        circuitBreaker = CircuitBreakerState.Closed,
+        dataAvailability = worseOf(
+            availabilityOf(freshness),
+            availabilityOf(device.recordFreshness)
+        )
     )
 }
+
+/**
+ * The less confident of two readings.
+ *
+ * A record NEXA could not confirm and an observation that is current do not
+ * average out into something safe to act on — the weaker claim governs.
+ */
+private fun worseOf(a: NexaAvailability, b: NexaAvailability): NexaAvailability =
+    if (a.isActionable) b else a
 
 /** Identifier, severity and title — the incident at a glance. */
 @Composable

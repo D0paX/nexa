@@ -386,7 +386,9 @@ sealed interface AlertsUiState {
         val sort: AlertSort,
         val view: AlertScopeView,
         val freshness: DataFreshness,
-        val degraded: Boolean
+        val degraded: Boolean,
+        /** Cached alert state, no connection. Distinct from merely stale. */
+        val offline: Boolean = false
     ) : AlertsUiState
 
     data object Offline : AlertsUiState

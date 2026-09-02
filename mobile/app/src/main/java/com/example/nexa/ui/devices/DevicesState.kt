@@ -3,6 +3,8 @@ package com.example.nexa.ui.devices
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.availabilityOf
+import com.example.nexa.ui.enforcement.unreadableStateReason
 
 /**
  * The operator-facing model of the device inventory.
@@ -185,6 +187,16 @@ data class DeviceAction(
 fun availableActions(device: DeviceListItem): List<DeviceAction> {
     val paused = device.enforcement == DeviceEnforcement.Paused
     val pausedReason = "Enforcement is paused by the circuit breaker."
+
+    // The same objection the confirmation screen would raise, raised here so
+    // an operator is not walked up to a full-strength destructive button and
+    // turned away at the last step. Wording is shared with that screen.
+    val availability = availabilityOf(device.freshness)
+    val blocksEnforcement =
+        if (availability.isActionable) null else unreadableStateReason(availability)
+    val blocksEverything =
+        if (availability.hasData) null else unreadableStateReason(availability)
+
     val actions = mutableListOf<DeviceAction>()
 
     when (device.enforcement) {
@@ -192,14 +204,15 @@ fun availableActions(device: DeviceListItem): List<DeviceAction> {
             kind = DeviceActionKind.Release,
             label = "Release Quarantine",
             actionCode = "RELEASE_QUARANTINE",
-            enabled = true
+            enabled = blocksEnforcement == null,
+            disabledReason = blocksEnforcement
         )
         DeviceEnforcement.Normal, DeviceEnforcement.Paused -> actions += DeviceAction(
             kind = DeviceActionKind.Quarantine,
             label = "Quarantine Device",
             actionCode = "QUARANTINE_DEVICE",
-            enabled = !paused,
-            disabledReason = if (paused) pausedReason else null,
+            enabled = !paused && blocksEnforcement == null,
+            disabledReason = if (paused) pausedReason else blocksEnforcement,
             destructive = true
         )
         DeviceEnforcement.Reconciling -> actions += DeviceAction(
@@ -214,8 +227,8 @@ fun availableActions(device: DeviceListItem): List<DeviceAction> {
             kind = DeviceActionKind.Quarantine,
             label = "Retry Quarantine",
             actionCode = "QUARANTINE_DEVICE",
-            enabled = !paused,
-            disabledReason = if (paused) pausedReason else null,
+            enabled = !paused && blocksEnforcement == null,
+            disabledReason = if (paused) pausedReason else blocksEnforcement,
             destructive = true
         )
         DeviceEnforcement.Unknown -> actions += DeviceAction(
@@ -234,7 +247,11 @@ fun availableActions(device: DeviceListItem): List<DeviceAction> {
             kind = DeviceActionKind.RequireReverification,
             label = "Require Reverification",
             actionCode = "REQUIRE_REVERIFICATION",
-            enabled = true
+            // Reverification is not a firewall change: an old observation
+            // does not block it, because it asks the identity itself to
+            // prove it is there. State NEXA cannot read at all does.
+            enabled = blocksEverything == null,
+            disabledReason = blocksEverything
         )
     }
 
@@ -259,7 +276,16 @@ sealed interface DevicesUiState {
         val filters: DeviceFilters,
         val sort: DeviceSort,
         val freshness: DataFreshness,
-        val degraded: Boolean
+        val degraded: Boolean,
+        /**
+         * Cached inventory, no connection.
+         *
+         * Separate from [degraded] and from [freshness]: an offline picture
+         * may be complete and only minutes old, and a stale one may have
+         * arrived over a perfectly good connection. Collapsing the two would
+         * leave an operator unable to tell "this is old" from "I cannot ask".
+         */
+        val offline: Boolean = false
     ) : DevicesUiState
 
     data object Offline : DevicesUiState

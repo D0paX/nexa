@@ -2,6 +2,8 @@ package com.example.nexa.ui.identity
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.DegradedScenario
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -33,7 +35,7 @@ class IdentitiesViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = IdentitiesUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = IdentityPreview.scenario
+            _state.value = degradedOrDefault()
             // Re-project so trust changes already reported are applied.
             updateContent { it }
         }
@@ -62,6 +64,19 @@ class IdentitiesViewModel : ViewModel() {
     fun onFiltersChange(filters: IdentityFilters) = updateContent { it.copy(filters = filters) }
 
     fun clearFilters() = updateContent { it.copy(filters = IdentityFilters()) }
+
+    /** The snapshot to load, honouring a review scenario when one is active. */
+    private fun degradedOrDefault(): IdentitiesUiState =
+        when (DegradedScenario.active.value) {
+            null, DegradedScenario.Scenario.Current -> IdentityPreview.scenario
+            DegradedScenario.Scenario.Empty -> IdentityPreview.empty()
+            DegradedScenario.Scenario.Stale -> IdentityPreview.stale()
+            DegradedScenario.Scenario.Offline -> IdentityPreview.offlineWithCache()
+            DegradedScenario.Scenario.Degraded -> IdentityPreview.degraded()
+            DegradedScenario.Scenario.Unavailable -> IdentityPreview.unavailable()
+            DegradedScenario.Scenario.Error ->
+                IdentitiesUiState.Error("Identity data could not be read.")
+        }
 
     private fun updateContent(transform: (IdentitiesUiState.Content) -> IdentitiesUiState.Content) {
         val current = _state.value as? IdentitiesUiState.Content ?: return
@@ -92,8 +107,50 @@ class IdentityDetailViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = IdentityDetailUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = IdentityPreview.detailFor(identityId)
+            _state.value = degradedOrDefault(identityId)
         }
+    }
+
+    /**
+     * The record to show, honouring a review scenario when one is active.
+     *
+     * Reverification is prepared against the identity's associated device, so
+     * it is that observation which has to be honest about its age.
+     */
+    private fun degradedOrDefault(identityId: String): IdentityDetailUiState =
+        when (DegradedScenario.active.value) {
+            null,
+            DegradedScenario.Scenario.Current,
+            DegradedScenario.Scenario.Empty -> IdentityPreview.detailFor(identityId)
+            DegradedScenario.Scenario.Stale, DegradedScenario.Scenario.Offline ->
+                IdentityPreview.detailFor(identityId).aged(
+                    DataFreshness.Stale("Last confirmed 12 min ago"),
+                    "12m ago"
+                )
+            DegradedScenario.Scenario.Degraded ->
+                IdentityPreview.detailFor(identityId).aged(DataFreshness.Unknown, "unknown")
+            DegradedScenario.Scenario.Unavailable -> IdentityDetailUiState.Unavailable
+            DegradedScenario.Scenario.Error ->
+                IdentityDetailUiState.Error("This identity record could not be read.")
+        }
+
+    private fun IdentityDetailUiState.aged(
+        freshness: DataFreshness,
+        label: String
+    ): IdentityDetailUiState {
+        val content = this as? IdentityDetailUiState.Content ?: return this
+        val identity = content.data.identity
+        val device = identity.device ?: return this
+        return IdentityDetailUiState.Content(
+            content.data.copy(
+                identity = identity.copy(
+                    device = device.copy(
+                        recordFreshness = freshness,
+                        lastObservedLabel = label
+                    )
+                )
+            )
+        )
     }
 
     fun refresh() {
@@ -102,6 +159,7 @@ class IdentityDetailViewModel : ViewModel() {
             load(it)
         }
     }
+
 
     private companion object {
         const val LOAD_DELAY_MS = 320L

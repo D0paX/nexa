@@ -20,6 +20,7 @@ import com.example.nexa.DeviceDetail
 import com.example.nexa.Identities
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.contentAvailability
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.TrustState
@@ -48,6 +49,7 @@ fun DevicesScreen(
 
         is DevicesUiState.Offline ->
             OfflineState(
+                message = "No network connection. NEXA cannot read the device inventory and has no confirmed inventory to show instead. This is not a report that no devices are present.",
                 modifier = modifier,
                 action = { RetryButton(viewModel::refresh) }
             )
@@ -132,9 +134,26 @@ private fun DevicesContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }
 
-        if (state.degraded) {
+        // One notice, driven by the shared vocabulary, so "incomplete" means
+        // the same here as it does on every other surface. Absent when the
+        // inventory is current.
+        val availability = contentAvailability(
+            freshness = state.freshness,
+            isEmpty = state.all.isEmpty(),
+            degraded = state.degraded,
+            offline = state.offline
+        )
+        if (availability.warrantsNotice) {
             item {
-                DegradedNotice()
+                AvailabilityNotice(
+                    availability = availability,
+                    subject = "the device inventory",
+                    detail = if (state.degraded) {
+                        "Some devices may be missing from this list. Do not treat it as a complete inventory."
+                    } else {
+                        state.freshness.label
+                    }
+                )
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
             }
         }
@@ -285,29 +304,6 @@ private fun NoResults(inventoryEmpty: Boolean, query: String, filtersActive: Boo
 }
 
 @Composable
-private fun DegradedNotice() {
-    GlassSurface(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            NexaIcon(
-                icon = NexaIcons.Warning,
-                size = NexaTokens.IconMedium,
-                tint = NexaWarning
-            )
-            Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
-            Column {
-                Text("Inventory degraded", style = NexaType.Title, color = NexaTextPrimary)
-                Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
-                Text(
-                    text = "Some devices may be missing from this list. Do not treat it as a complete inventory.",
-                    style = NexaType.BodySecondary,
-                    color = NexaTextSecondary
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun FreshnessLabel(freshness: DataFreshness) {
     val stale = !freshness.isTrustworthy
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -326,7 +322,11 @@ private fun FreshnessLabel(freshness: DataFreshness) {
 private fun deviceCountLabel(state: DevicesUiState.Content): String {
     val total = state.all.size
     val shown = state.visible.size
-    val base = if (shown == total) "$total devices" else "$shown of $total devices"
+    // A bare count reads as the whole inventory. When part of it could not be
+    // retrieved the number is a floor, not a total, and it says so — the
+    // banner above explains why, but the count is what gets read first.
+    val counted = if (state.degraded) "$total counted" else "$total devices"
+    val base = if (shown == total) counted else "$shown of $counted"
     val attention = state.visible.count { attentionBadge(it) != null }
     return if (attention > 0) "$base · $attention need attention" else base
 }

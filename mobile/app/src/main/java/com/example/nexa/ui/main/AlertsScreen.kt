@@ -23,6 +23,7 @@ import com.example.nexa.NotificationCenter
 import com.example.nexa.theme.*
 import com.example.nexa.ui.alerts.*
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.contentAvailability
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.components.*
@@ -168,23 +169,25 @@ private fun AlertsContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }
 
-        if (state.degraded) {
+        // One notice, shared wording. Stale and incomplete are different
+        // failures and the operator is told which one this is.
+        val availability = contentAvailability(
+            freshness = state.freshness,
+            isEmpty = state.all.isEmpty(),
+            degraded = state.degraded,
+            offline = state.offline
+        )
+        if (availability.warrantsNotice) {
             item {
-                GlassSurface(modifier = Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        NexaIcon(icon = NexaIcons.Warning, size = NexaTokens.IconMedium, tint = NexaWarning)
-                        Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
-                        Column {
-                            Text("Alert subsystem degraded", style = NexaType.Title, color = NexaTextPrimary)
-                            Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
-                            Text(
-                                text = "Some alerts may be missing from this list. Do not treat it as the complete incident load.",
-                                style = NexaType.BodySecondary,
-                                color = NexaTextSecondary
-                            )
-                        }
+                AvailabilityNotice(
+                    availability = availability,
+                    subject = "alert state",
+                    detail = if (state.degraded) {
+                        "Some alerts may be missing from this list. Do not treat it as the complete incident load."
+                    } else {
+                        state.freshness.label
                     }
-                }
+                )
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
             }
         }
@@ -386,11 +389,15 @@ private fun summaryLine(state: AlertsUiState.Content): String {
         AlertScopeView.History -> "$shown closed"
         AlertScopeView.All -> "$shown alerts"
     }
-    return if (state.view == AlertScopeView.Open && s.open > 0) {
+    val counts = if (state.view == AlertScopeView.Open && s.open > 0) {
         "$base · ${s.critical} critical · ${s.unacknowledged} unacknowledged"
     } else {
         base
     }
+    // When part of the alert state could not be retrieved, these are the
+    // alerts NEXA can see, not the alerts that exist. The banner above says
+    // why; the count is what an operator reads first, so it says so too.
+    return if (state.degraded) "$counts · visible only" else counts
 }
 
 private fun AlertFilters.toggleSeverity(value: AlertSeverity) =

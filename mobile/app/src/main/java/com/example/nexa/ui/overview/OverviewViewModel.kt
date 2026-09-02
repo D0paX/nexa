@@ -2,6 +2,7 @@ package com.example.nexa.ui.overview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.common.DegradedScenario
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import kotlinx.coroutines.delay
@@ -38,6 +39,25 @@ class OverviewViewModel : ViewModel() {
      * breaker that opens is reflected here and in action availability from one
      * fact rather than two.
      */
+    /**
+     * The snapshot to load, honouring a review scenario when one is active.
+     *
+     * Note what is absent: no scenario produces a secure posture. Posture is
+     * derived from content, and a screen that could not read anything has no
+     * content to derive it from.
+     */
+    private fun degradedOrDefault(): OverviewUiState =
+        when (DegradedScenario.active.value) {
+            null, DegradedScenario.Scenario.Current -> OverviewPreview.scenario
+            DegradedScenario.Scenario.Empty -> OverviewPreview.secure()
+            DegradedScenario.Scenario.Stale -> OverviewPreview.stale()
+            DegradedScenario.Scenario.Offline -> OverviewPreview.offline()
+            DegradedScenario.Scenario.Degraded -> OverviewPreview.degraded()
+            DegradedScenario.Scenario.Unavailable -> OverviewPreview.unavailable()
+            DegradedScenario.Scenario.Error ->
+                OverviewUiState.Error("System state could not be read.")
+        }
+
     private fun observeRealtime() {
         viewModelScope.launch {
             RealtimeStore.state.collect { live ->
@@ -80,7 +100,7 @@ class OverviewViewModel : ViewModel() {
             _state.value = OverviewUiState.Loading
             // Stands in for the round trip to the read model.
             delay(LOAD_DELAY_MS)
-            val loaded = OverviewPreview.scenario
+            val loaded = degradedOrDefault()
             snapshot = loaded as? OverviewUiState.Content
             _state.value = loaded
             project()

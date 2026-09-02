@@ -10,6 +10,7 @@ import com.example.nexa.push.PushInbox
 import com.example.nexa.push.PushNotifier
 import com.example.nexa.push.PushParseResult
 import com.example.nexa.push.PushPayloadParser
+import com.example.nexa.ui.common.DegradedScenario
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,6 +39,10 @@ class NexaPushTestReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!context.isDebuggable()) {
             Log.w(TAG, "Refusing test push: build is not debuggable")
+            return
+        }
+        if (intent.action == ACTION_TEST_STATE) {
+            applyStateScenario(intent)
             return
         }
         if (intent.action == ACTION_TEST_REALTIME) {
@@ -90,6 +95,37 @@ class NexaPushTestReceiver : BroadcastReceiver() {
         }
     }
 
+    /**
+     * Switches the app into a degraded condition for review.
+     *
+     * Offline, stale, unavailable and degraded are the states nobody can
+     * summon on demand — there is no backend to unplug — and they are exactly
+     * the states where a security console is most likely to lie. This makes
+     * them reviewable.
+     *
+     * Debug-only, twice over: the class is not compiled into a release build,
+     * and the runtime check above refuses to act in a non-debuggable one.
+     */
+    private fun applyStateScenario(intent: Intent) {
+        val name = intent.getStringExtra(EXTRA_SCENARIO)
+        if (name.equals("clear", ignoreCase = true)) {
+            DegradedScenario.activate(null)
+            Log.i(TAG, "State scenario cleared")
+            return
+        }
+        val scenario = DegradedScenario.Scenario.fromName(name)
+        if (scenario == null) {
+            Log.w(
+                TAG,
+                "Unknown scenario: $name. Known: " +
+                    DegradedScenario.Scenario.entries.map { it.name.lowercase() } + " and 'clear'"
+            )
+            return
+        }
+        DegradedScenario.activate(scenario)
+        Log.i(TAG, "State scenario active: $scenario")
+    }
+
     private fun Context.isDebuggable(): Boolean =
         (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
@@ -97,6 +133,8 @@ class NexaPushTestReceiver : BroadcastReceiver() {
         const val TAG = "NexaPushTest"
         const val ACTION_TEST_PUSH = "com.example.nexa.debug.TEST_PUSH"
         const val ACTION_TEST_REALTIME = "com.example.nexa.debug.TEST_REALTIME"
+        const val ACTION_TEST_STATE = "com.example.nexa.debug.TEST_STATE"
+        const val EXTRA_SCENARIO = "scenario"
         const val EXTRA_FIXTURE = "fixture"
         const val DEFAULT_FIXTURE = "critical_alert"
     }

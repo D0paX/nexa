@@ -16,6 +16,7 @@
             <intent-filter>
                 <action android:name="com.example.nexa.debug.TEST_PUSH" />
                 <action android:name="com.example.nexa.debug.TEST_REALTIME" />
+                <action android:name="com.example.nexa.debug.TEST_STATE" />
             </intent-filter>
         </receiver>
     </application>

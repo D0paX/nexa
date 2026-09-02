@@ -309,7 +309,11 @@ private fun DeviceDetailContent(
                         InlineNotice(
                             icon = NexaIcons.Stale,
                             tint = NexaWarning,
-                            text = "Target context is stale. Any action will be re-snapshotted and re-authorized before it executes."
+                            // Says what actually happens now: enforcement
+                            // changes are refused on an unconfirmed target
+                            // rather than merely re-checked later. Promising
+                            // a re-snapshot here would read as permission.
+                            text = "Target context is stale. Enforcement changes are not offered until it is re-confirmed."
                         )
                     }
                 }

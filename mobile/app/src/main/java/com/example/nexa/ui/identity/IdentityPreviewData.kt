@@ -51,6 +51,17 @@ object IdentityPreview {
     fun stale(): IdentitiesUiState = (content() as IdentitiesUiState.Content)
         .copy(freshness = DataFreshness.Stale("Last confirmed 12 min ago"))
 
+    /**
+     * The connection is gone and the last confirmed picture is still on
+     * screen, marked as such.
+     *
+     * Deliberately not the same as [offline], which is the surface for
+     * having no cache at all. Blanking a screen the moment connectivity
+     * drops throws away the only information an operator still has.
+     */
+    fun offlineWithCache(): IdentitiesUiState = (content() as IdentitiesUiState.Content)
+        .copy(offline = true, freshness = DataFreshness.Stale("Last confirmed 12 min ago"))
+
     fun offline(): IdentitiesUiState = IdentitiesUiState.Offline
 
     fun unavailable(): IdentitiesUiState = IdentitiesUiState.Unavailable

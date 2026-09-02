@@ -16,6 +16,7 @@ import androidx.navigation3.runtime.NavKey
 import com.example.nexa.IdentityDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.contentAvailability
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.common.isTrustworthy
@@ -121,23 +122,23 @@ private fun IdentitiesContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }
 
-        if (state.degraded) {
+        val availability = contentAvailability(
+            freshness = state.freshness,
+            isEmpty = state.all.isEmpty(),
+            degraded = state.degraded,
+            offline = state.offline
+        )
+        if (availability.warrantsNotice) {
             item {
-                GlassSurface(modifier = Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        NexaIcon(icon = NexaIcons.Warning, size = NexaTokens.IconMedium, tint = NexaWarning)
-                        Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
-                        Column {
-                            Text("Identity subsystem degraded", style = NexaType.Title, color = NexaTextPrimary)
-                            Spacer(modifier = Modifier.height(NexaTokens.SpacingHairline))
-                            Text(
-                                text = "Some identities may be missing. Do not treat this as the complete set.",
-                                style = NexaType.BodySecondary,
-                                color = NexaTextSecondary
-                            )
-                        }
+                AvailabilityNotice(
+                    availability = availability,
+                    subject = "identity state",
+                    detail = if (state.degraded) {
+                        "Some identities may be missing. Do not treat this as the complete set."
+                    } else {
+                        state.freshness.label
                     }
-                }
+                )
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
             }
         }
@@ -270,7 +271,10 @@ private fun FreshnessTag(freshness: DataFreshness) {
 private fun identityCountLabel(state: IdentitiesUiState.Content): String {
     val total = state.all.size
     val shown = state.visible.size
-    val base = if (shown == total) "$total cryptographic identities" else "$shown of $total identities"
+    // When part of the set could not be retrieved these are the identities
+    // NEXA can see, not the identities that exist.
+    val counted = if (state.degraded) "$total visible" else "$total cryptographic identities"
+    val base = if (shown == total) counted else "$shown of $counted"
     val attention = state.visible.count { identityAttentionBadge(it) != null }
     return if (attention > 0) "$base · $attention need attention" else base
 }

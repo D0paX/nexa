@@ -2,6 +2,7 @@ package com.example.nexa.ui.audit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.common.DegradedScenario
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +35,7 @@ class AuditViewModel : ViewModel() {
             _state.value = AuditUiState.Loading
             delay(LOAD_DELAY_MS)
             pageLimit = AUDIT_PAGE_SIZE
-            _state.value = AuditPreview.scenario
+            _state.value = degradedOrDefault()
         }
     }
 
@@ -76,6 +77,22 @@ class AuditViewModel : ViewModel() {
         val merged = (events + it.all).distinctBy { entry -> entry.id }
         it.copy(all = merged)
     }
+
+    /** The snapshot to load, honouring a review scenario when one is active. */
+    private fun degradedOrDefault(): AuditUiState =
+        when (DegradedScenario.active.value) {
+            null, DegradedScenario.Scenario.Current -> AuditPreview.scenario
+            DegradedScenario.Scenario.Empty -> AuditPreview.empty
+            DegradedScenario.Scenario.Stale -> AuditPreview.stale
+            DegradedScenario.Scenario.Offline -> AuditPreview.offline
+            // Partial history is stated as partial. Presenting an incomplete
+            // record as the whole is how an operator concludes nothing
+            // happened during a window NEXA could not see.
+            DegradedScenario.Scenario.Degraded -> AuditPreview.degraded
+            DegradedScenario.Scenario.Unavailable -> AuditPreview.unavailable
+            DegradedScenario.Scenario.Error ->
+                AuditUiState.Error("Security history could not be read.")
+        }
 
     private fun update(
         resetPage: Boolean = false,

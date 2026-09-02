@@ -21,6 +21,7 @@ import androidx.navigation3.runtime.NavKey
 import com.example.nexa.NotificationDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.components.*
@@ -125,29 +126,42 @@ private fun NotificationCenterContent(
                 color = NexaTextSecondary
             )
             Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(
-                    text = deliverySummaryLine(state),
-                    style = NexaType.Metadata,
-                    color = NexaTextSecondary,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(NexaTokens.SpacingSmall))
-                DeliveryFreshness(state.freshness)
-            }
+            // Stacked rather than side by side: the breakdown is six counts
+            // long and the freshness label grows when the answer is old, so
+            // sharing a row squeezes the counts into an unreadable column
+            // exactly when the screen most needs to be read.
+            Text(
+                text = deliverySummaryLine(state),
+                style = NexaType.Metadata,
+                color = NexaTextSecondary,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
+            DeliveryFreshness(state.freshness)
             Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
             PushStatusCard()
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }
 
+        // As on the audit trail: the coverage notice names the window that is
+        // missing, and the shared notice covers a complete record that is
+        // simply old. One or the other, never both.
         if (!state.coverage.isComplete) {
             item {
                 DeliveryCoverageNotice(state.coverage as NotificationCoverage.Partial)
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+            }
+        } else {
+            val availability = availabilityOf(state.freshness)
+            if (availability.warrantsNotice) {
+                item {
+                    AvailabilityNotice(
+                        availability = availability,
+                        subject = "delivery visibility",
+                        detail = state.freshness.label
+                    )
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+                }
             }
         }
 

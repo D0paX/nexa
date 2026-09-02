@@ -3,6 +3,7 @@ package com.example.nexa.ui.enforcement
 import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.NexaAvailability
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.devices.DeviceEnforcement
 import com.example.nexa.ui.devices.Presence
@@ -141,6 +142,16 @@ data class ActionContext(
     val currentEnforcement: DeviceEnforcement,
     val circuitBreaker: CircuitBreakerState,
     val alreadyInDesiredState: Boolean = false,
+    /**
+     * How much NEXA actually knows about the state this decision rests on.
+     *
+     * Separate from [targetIsStale], which is about one observation. This is
+     * about whether the picture as a whole — inventory, enforcement,
+     * authorization — was readable at all. A confirmation screen assembled
+     * from a service that could not answer is a screen full of plausible
+     * blanks, and no operator should be asked to commit against it.
+     */
+    val dataAvailability: NexaAvailability = NexaAvailability.Current,
     val note: String? = null
 ) {
     val targetIsStale: Boolean
@@ -227,7 +238,28 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
         )
     }
 
-    // 4. The circuit breaker halts enforcement globally. Trust operations are
+    // 4. The state this decision rests on has to be readable at all.
+    //
+    // Offline, unavailable, unknown, still-loading or outright failed means
+    // the context an operator would be confirming against was never
+    // established. That refusal applies to every action, including trust
+    // operations: reverification is not a firewall change, but asking for one
+    // against an identity NEXA cannot currently see is still acting blind.
+    if (!context.dataAvailability.hasData) {
+        return ActionAvailability.Disabled(unreadableStateReason(context.dataAvailability))
+    }
+
+    // 5. Data that exists but is old or partial blocks anything that mutates
+    // enforcement.
+    //
+    // Reverification is deliberately exempt here, for the same reason it is
+    // exempt from the staleness rule below: it asks the identity itself to
+    // prove it is present, rather than acting on what NEXA last saw.
+    if (action.mutatesEnforcement && !context.dataAvailability.isActionable) {
+        return ActionAvailability.Disabled(unreadableStateReason(context.dataAvailability))
+    }
+
+    // 6. The circuit breaker halts enforcement globally. Trust operations are
     // not firewall mutations and are unaffected by it.
     if (action.mutatesEnforcement && !context.circuitBreaker.allowsExecution) {
         return ActionAvailability.Disabled(
@@ -235,14 +267,14 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
         )
     }
 
-    // 5. An unknown enforcement state makes the outcome unreasonable to predict.
+    // 7. An unknown enforcement state makes the outcome unreasonable to predict.
     if (action.mutatesEnforcement && enforcement == DeviceEnforcement.Unknown) {
         return ActionAvailability.Disabled(
             "Current enforcement state for this target is unknown."
         )
     }
 
-    // 6. Idempotency, stated rather than hidden.
+    // 8. Idempotency, stated rather than hidden.
     if (context.alreadyInDesiredState) {
         return ActionAvailability.Disabled(
             when (action) {
@@ -253,7 +285,7 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
         )
     }
 
-    // 7. A stale observation is a security condition for anything that mutates
+    // 9. A stale observation is a security condition for anything that mutates
     // enforcement: the target it names may no longer be the target it reaches.
     // Simulation does not lift this — the requirement exists to keep the
     // request honest, not merely to protect the firewall.
@@ -264,6 +296,38 @@ fun availabilityOf(context: ActionContext): ActionAvailability {
     }
 
     return ActionAvailability.Available
+}
+
+/**
+ * Why an action cannot be offered when the state behind it is not solid.
+ *
+ * Each sentence names what NEXA does not know, rather than saying the action
+ * is unavailable and leaving the operator to invent a reason — and none of
+ * them implies the target is fine.
+ *
+ * Shared rather than private so the list that offers an action and the screen
+ * that refuses it give the same reason. An operator who is told one thing on
+ * the device screen and another on the confirmation screen learns to trust
+ * neither.
+ */
+fun unreadableStateReason(availability: NexaAvailability): String = when (availability) {
+    NexaAvailability.Offline ->
+        "NEXA is offline and cannot confirm this target's current state. Reconnect before requesting an action."
+    NexaAvailability.Unavailable ->
+        "The service that describes this target is unavailable. NEXA cannot confirm what it would be acting on."
+    NexaAvailability.Unknown ->
+        "This target's current state cannot be established. NEXA will not request an action it cannot evaluate."
+    NexaAvailability.Error ->
+        "Reading this target's state failed. NEXA will not request an action against an unconfirmed context."
+    NexaAvailability.Loading ->
+        "This target's state is still being read."
+    NexaAvailability.Stale ->
+        "This target's state is no longer current. Refresh before requesting an action that changes enforcement."
+    NexaAvailability.Degraded ->
+        "Only part of this target's state could be retrieved. NEXA will not request an enforcement change against an incomplete picture."
+    NexaAvailability.Empty ->
+        "There is no state recorded for this target."
+    NexaAvailability.Current -> "This target's state is current."
 }
 
 // ============================================================

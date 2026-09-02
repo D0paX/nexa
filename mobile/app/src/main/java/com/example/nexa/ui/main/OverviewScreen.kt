@@ -23,6 +23,7 @@ import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.ActivityKind
 import com.example.nexa.ui.common.CircuitBreakerState
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.ExecutionMode
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.common.isTrustworthy
@@ -52,6 +53,7 @@ fun OverviewScreen(
 
         is OverviewUiState.Offline ->
             OfflineState(
+                message = "No network connection. NEXA cannot read system state and has no confirmed picture to show instead. This is not a report that the network is quiet.",
                 modifier = modifier,
                 action = { RetryAction(onRetry = viewModel::refresh) }
             )
@@ -122,6 +124,22 @@ private fun OverviewContent(
                 }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+        }
+
+        // Said before the posture, not after it. An operator who reads the
+        // hero first and the caveat second has already formed a judgement,
+        // and this is precisely the screen where a stale reading is most
+        // likely to be mistaken for a current one.
+        val availability = availabilityOf(data.freshness)
+        if (availability.warrantsNotice) {
+            item {
+                AvailabilityNotice(
+                    availability = availability,
+                    subject = "the system picture",
+                    detail = data.freshness.label
+                )
+                Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+            }
         }
 
         // 1 — SYSTEM POSTURE

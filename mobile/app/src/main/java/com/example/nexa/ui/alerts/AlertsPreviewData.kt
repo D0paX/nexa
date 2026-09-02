@@ -38,6 +38,17 @@ object AlertsPreview {
     fun stale(): AlertsUiState = (content() as AlertsUiState.Content)
         .copy(freshness = DataFreshness.Stale("Last confirmed 9 min ago"))
 
+    /**
+     * The connection is gone and the last confirmed picture is still on
+     * screen, marked as such.
+     *
+     * Deliberately not the same as [offline], which is the surface for
+     * having no cache at all. Blanking a screen the moment connectivity
+     * drops throws away the only information an operator still has.
+     */
+    fun offlineWithCache(): AlertsUiState = (content() as AlertsUiState.Content)
+        .copy(offline = true, freshness = DataFreshness.Stale("Last confirmed 9 min ago"))
+
     fun offline(): AlertsUiState = AlertsUiState.Offline
 
     fun unavailable(): AlertsUiState = AlertsUiState.Unavailable

@@ -51,6 +51,17 @@ object DevicesPreview {
     fun degraded(): DevicesUiState = (content() as DevicesUiState.Content)
         .copy(degraded = true)
 
+    /**
+     * The connection is gone and the last confirmed picture is still on
+     * screen, marked as such.
+     *
+     * Deliberately not the same as [offline], which is the surface for
+     * having no cache at all. Blanking a screen the moment connectivity
+     * drops throws away the only information an operator still has.
+     */
+    fun offlineWithCache(): DevicesUiState = (content() as DevicesUiState.Content)
+        .copy(offline = true, freshness = DataFreshness.Stale("Last confirmed 6 min ago"))
+
     fun offline(): DevicesUiState = DevicesUiState.Offline
 
     fun unavailable(): DevicesUiState = DevicesUiState.Unavailable

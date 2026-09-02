@@ -2,6 +2,8 @@ package com.example.nexa.ui.devices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.DegradedScenario
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -51,7 +53,7 @@ class DevicesViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = DevicesUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = DevicesPreview.scenario
+            _state.value = degradedOrDefault()
             // Re-project so anything the stream already reported is applied
             // to the newly loaded snapshot. Without this a screen opened
             // after an event would show the snapshot as though nothing had
@@ -74,6 +76,26 @@ class DevicesViewModel : ViewModel() {
 
     /** Entry point for a future live inventory push. */
     fun onInventory(devices: List<DeviceListItem>) = updateContent { it.copy(all = devices) }
+
+    /**
+     * The snapshot to load, honouring a review scenario when one is active.
+     *
+     * Offline deliberately keeps the last confirmed inventory and marks it
+     * stale rather than blanking the screen. Erasing what NEXA legitimately
+     * knew a minute ago helps nobody, and an empty list is the one thing an
+     * offline inventory must never look like.
+     */
+    private fun degradedOrDefault(): DevicesUiState =
+        when (DegradedScenario.active.value) {
+            null, DegradedScenario.Scenario.Current -> DevicesPreview.scenario
+            DegradedScenario.Scenario.Empty -> DevicesPreview.empty()
+            DegradedScenario.Scenario.Stale -> DevicesPreview.stale()
+            DegradedScenario.Scenario.Offline -> DevicesPreview.offlineWithCache()
+            DegradedScenario.Scenario.Degraded -> DevicesPreview.degraded()
+            DegradedScenario.Scenario.Unavailable -> DevicesPreview.unavailable()
+            DegradedScenario.Scenario.Error ->
+                DevicesUiState.Error("The device inventory could not be read.")
+        }
 
     /**
      * Applies a change and re-resolves the visible list once, so `visible`
@@ -116,8 +138,62 @@ class DeviceDetailViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = DeviceDetailUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = DevicesPreview.detailFor(mac)
+            _state.value = degradedOrDefault(mac)
         }
+    }
+
+    /**
+     * The record to show, honouring a review scenario when one is active.
+     *
+     * This is where the degraded condition reaches the action path. Ageing
+     * the observation is not decoration: [ActionPreparation] derives how much
+     * NEXA knows from exactly this field, so a detail screen opened while the
+     * inventory could not be confirmed produces a context that refuses
+     * enforcement changes rather than one that looks confident.
+     */
+    private fun degradedOrDefault(mac: String): DeviceDetailUiState =
+        when (DegradedScenario.active.value) {
+            null,
+            DegradedScenario.Scenario.Current,
+            DegradedScenario.Scenario.Empty -> DevicesPreview.detailFor(mac)
+            // Old and disconnected differ on the list, where the whole
+            // picture is the subject. For one record they amount to the same
+            // fact: this observation has not been confirmed recently.
+            DegradedScenario.Scenario.Stale, DegradedScenario.Scenario.Offline ->
+                DevicesPreview.detailFor(mac).aged(
+                    DataFreshness.Stale("Last confirmed 6 min ago"),
+                    "6m ago"
+                )
+            // Part of the record could not be retrieved, and the observation
+            // is part of it. NEXA says it does not know rather than showing a
+            // time it cannot stand behind.
+            DegradedScenario.Scenario.Degraded ->
+                DevicesPreview.detailFor(mac).aged(DataFreshness.Unknown, "unknown")
+            DegradedScenario.Scenario.Unavailable -> DeviceDetailUiState.Unavailable
+            DegradedScenario.Scenario.Error ->
+                DeviceDetailUiState.Error("This device record could not be read.")
+        }
+
+    /**
+     * Re-dates the observation this record rests on.
+     *
+     * Both copies are updated together — the one the screen renders and the
+     * one the action path reads — because a screen that says "6m ago" while
+     * preparing an action that believes the target was seen just now is
+     * exactly the inconsistency this checkpoint exists to remove.
+     */
+    private fun DeviceDetailUiState.aged(
+        freshness: DataFreshness,
+        label: String
+    ): DeviceDetailUiState {
+        val content = this as? DeviceDetailUiState.Content ?: return this
+        val data = content.data
+        return DeviceDetailUiState.Content(
+            data.copy(
+                device = data.device.copy(freshness = freshness, lastSeenLabel = label),
+                record = data.record.copy(freshness = freshness, lastObservedLabel = label)
+            )
+        )
     }
 
     fun refresh() {

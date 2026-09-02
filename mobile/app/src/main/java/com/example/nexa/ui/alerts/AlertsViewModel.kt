@@ -2,6 +2,8 @@ package com.example.nexa.ui.alerts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.DegradedScenario
 import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import com.example.nexa.ui.realtime.withRealtime
@@ -51,7 +53,7 @@ class AlertsViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = AlertsUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = AlertsPreview.scenario
+            _state.value = degradedOrDefault()
             // Re-project so events that arrived before this screen existed
             // are applied to the snapshot it just loaded.
             update { it }
@@ -88,6 +90,19 @@ class AlertsViewModel : ViewModel() {
         )
     }
 
+    /** The snapshot to load, honouring a review scenario when one is active. */
+    private fun degradedOrDefault(): AlertsUiState =
+        when (DegradedScenario.active.value) {
+            null, DegradedScenario.Scenario.Current -> AlertsPreview.scenario
+            DegradedScenario.Scenario.Empty -> AlertsPreview.empty()
+            DegradedScenario.Scenario.Stale -> AlertsPreview.stale()
+            DegradedScenario.Scenario.Offline -> AlertsPreview.offlineWithCache()
+            DegradedScenario.Scenario.Degraded -> AlertsPreview.degraded()
+            DegradedScenario.Scenario.Unavailable -> AlertsPreview.unavailable()
+            DegradedScenario.Scenario.Error ->
+                AlertsUiState.Error("Alert state could not be read.")
+        }
+
     private fun update(transform: (AlertsUiState.Content) -> AlertsUiState.Content) {
         val current = _state.value as? AlertsUiState.Content ?: return
         val updated = transform(current)
@@ -118,8 +133,35 @@ class AlertDetailViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = AlertDetailUiState.Loading
             delay(LOAD_DELAY_MS)
-            _state.value = AlertsPreview.detailFor(alertId)
+            _state.value = degradedOrDefault(alertId)
         }
+    }
+
+    /**
+     * The record to show, honouring a review scenario when one is active.
+     *
+     * The freshness carried here is what the action path consults before it
+     * will prepare a quarantine against the alert's target, so a scenario
+     * that ages it also closes that path.
+     */
+    private fun degradedOrDefault(alertId: String): AlertDetailUiState =
+        when (DegradedScenario.active.value) {
+            null,
+            DegradedScenario.Scenario.Current,
+            DegradedScenario.Scenario.Empty -> AlertsPreview.detailFor(alertId)
+            DegradedScenario.Scenario.Stale, DegradedScenario.Scenario.Offline ->
+                AlertsPreview.detailFor(alertId)
+                    .aged(DataFreshness.Stale("Last confirmed 9 min ago"))
+            DegradedScenario.Scenario.Degraded ->
+                AlertsPreview.detailFor(alertId).aged(DataFreshness.Unknown)
+            DegradedScenario.Scenario.Unavailable -> AlertDetailUiState.Unavailable
+            DegradedScenario.Scenario.Error ->
+                AlertDetailUiState.Error("This alert record could not be read.")
+        }
+
+    private fun AlertDetailUiState.aged(freshness: DataFreshness): AlertDetailUiState {
+        val content = this as? AlertDetailUiState.Content ?: return this
+        return AlertDetailUiState.Content(content.data.copy(freshness = freshness))
     }
 
     fun refresh() {
@@ -146,6 +188,7 @@ class AlertDetailViewModel : ViewModel() {
             )
         )
     }
+
 
     private companion object {
         const val LOAD_DELAY_MS = 330L

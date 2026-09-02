@@ -21,6 +21,7 @@ import com.example.nexa.AuditDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.audit.*
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.components.*
@@ -140,10 +141,27 @@ private fun AuditContent(
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
         }
 
+        // Incompleteness has its own notice, because it can name the window
+        // that is missing — which the shared wording cannot. When the record
+        // is complete but old, the shared notice covers it. Never both: two
+        // banners saying different things about the same list is worse than
+        // either alone.
         if (!state.coverage.isComplete) {
             item {
                 AuditCoverageNotice(state.coverage as AuditCoverage.Partial)
                 Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+            }
+        } else {
+            val availability = availabilityOf(state.freshness)
+            if (availability.warrantsNotice) {
+                item {
+                    AvailabilityNotice(
+                        availability = availability,
+                        subject = "the audit record",
+                        detail = state.freshness.label
+                    )
+                    Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
+                }
             }
         }
 

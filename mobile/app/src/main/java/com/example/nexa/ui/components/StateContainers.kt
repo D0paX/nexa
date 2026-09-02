@@ -137,11 +137,18 @@ fun UnavailableState(
     )
 }
 
-/** The device is offline; what is shown may not reflect the live system. */
+/**
+ * There is no connection and no confirmed picture to fall back on.
+ *
+ * The cached case — content on screen, marked offline — belongs to
+ * [AvailabilityNotice], not here. This surface is the one where NEXA has
+ * nothing, so the wording must not imply there is something on screen to
+ * read, nor that the silence means anything about the network.
+ */
 @Composable
 fun OfflineState(
     title: String = "Offline",
-    message: String = "No network connection. Displayed state was last confirmed earlier and may be out of date.",
+    message: String = "No network connection. NEXA cannot confirm current state and has nothing confirmed to show instead. This says nothing about what is happening on the network.",
     modifier: Modifier = Modifier,
     action: @Composable (() -> Unit)? = null
 ) {
