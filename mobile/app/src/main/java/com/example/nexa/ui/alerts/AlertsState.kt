@@ -330,6 +330,20 @@ fun List<AlertListItem>.applyFilters(filters: AlertFilters): List<AlertListItem>
         (!filters.onlyDeliveryFailures || alert.delivery.isFailure)
 }
 
+/**
+ * How many alerts a view holds, without building it.
+ *
+ * The count and the slice are the same question asked two ways, and the
+ * summary line needs only the number. Materializing the list to call `.size`
+ * on it allocates a copy of most of the incident load every time the screen
+ * recomposes.
+ */
+fun List<AlertListItem>.countInView(view: AlertScopeView): Int = when (view) {
+    AlertScopeView.Open -> count { it.lifecycle.isOpen }
+    AlertScopeView.History -> count { !it.lifecycle.isOpen }
+    AlertScopeView.All -> size
+}
+
 fun List<AlertListItem>.applyView(view: AlertScopeView): List<AlertListItem> = when (view) {
     AlertScopeView.Open -> filter { it.lifecycle.isOpen }
     AlertScopeView.History -> filter { !it.lifecycle.isOpen }

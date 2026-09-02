@@ -52,7 +52,7 @@ object PushInbox {
     fun onIncomingPush(payload: PushPayload): Boolean {
         val existing = _records.value
         if (existing.any { it.id == payload.notificationId }) return false
-        _records.value = listOf(recordFor(payload)) + existing
+        _records.value = (listOf(recordFor(payload)) + existing).take(MAX_RECORDS)
         return true
     }
 
@@ -67,6 +67,27 @@ object PushInbox {
         _records.value = emptyList()
         _rejections.value = emptyList()
     }
+
+    /**
+     * How many delivery records the in-memory inbox keeps.
+     *
+     * It kept every message for the life of the process, which grew without
+     * limit and made the deduplication scan linear in everything ever
+     * received — quadratic across a long session.
+     *
+     * Bounding it is safe because this is not the record of what happened.
+     * The audit trail is; this is the convenience surface that shows what
+     * arrived on this device, it already does not survive a process restart,
+     * and the Notification Center pages twenty-five at a time. The limit is
+     * generous against both.
+     *
+     * The one consequence worth stating: deduplication can only recognise a
+     * repeat while the original is still retained. That covers the case it
+     * exists for — a transport retrying the same message — and does not cover
+     * the same id arriving again after two hundred others, which is not a
+     * retry.
+     */
+    private const val MAX_RECORDS = 200
 
     private const val MAX_REJECTIONS = 20
 

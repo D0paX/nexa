@@ -141,6 +141,9 @@ object EnforcementPreview {
     private val outcomes = ConcurrentHashMap<String, Outcome>()
     private val counter = AtomicLong(0)
 
+    /** Insertion order, so the oldest prepared context is the one released. */
+    private val order = java.util.concurrent.ConcurrentLinkedQueue<String>()
+
     /**
      * Stores a prepared context and returns its handle.
      *
@@ -155,7 +158,40 @@ object EnforcementPreview {
         val stored = context.copy(id = id)
         contexts[id] = stored
         outcomes[id] = outcome
+        order.add(id)
+        evictOldest()
         return id
+    }
+
+    /**
+     * How many prepared contexts are kept.
+     *
+     * Preparing an action stored a context and never released it, so a long
+     * session accumulated one full [ActionContext] — target, identity, scope,
+     * enforcement — for every action an operator ever started, including the
+     * ones they backed out of.
+     *
+     * The bound is set by what a person can actually be in the middle of. A
+     * prepared context is live between a tap on a device screen and a decision
+     * on the confirmation screen; nobody has thirty-two of those open at once,
+     * and the flow already handles a handle that cannot be resolved by
+     * reporting [ActionUiState.Unavailable] rather than reconstructing
+     * anything. Evicting the oldest is therefore safe in exactly the way
+     * losing it to process death already is.
+     *
+     * Note what is *not* bounded: [ActionSubmissions]. Forgetting that a
+     * context was submitted would let it be submitted again, which is the one
+     * thing the idempotency boundary exists to prevent. It holds two strings
+     * per action and is left alone deliberately.
+     */
+    private const val RETAINED_CONTEXTS = 32
+
+    private fun evictOldest() {
+        while (order.size > RETAINED_CONTEXTS) {
+            val oldest = order.poll() ?: return
+            contexts.remove(oldest)
+            outcomes.remove(oldest)
+        }
     }
 
     fun resolve(id: String): ActionContext? = contexts[id]
@@ -166,6 +202,7 @@ object EnforcementPreview {
     fun reset() {
         contexts.clear()
         outcomes.clear()
+        order.clear()
     }
 }
 

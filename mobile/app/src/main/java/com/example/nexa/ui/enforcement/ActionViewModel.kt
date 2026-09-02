@@ -166,8 +166,11 @@ class ActionViewModel : ViewModel() {
     private fun observeLifecycle(context: ActionContext, id: String) {
         lifecycleJob?.cancel()
         lifecycleJob = viewModelScope.launch {
-            RealtimeStore.state.collect { realtime ->
-                val overlay = realtime.actions[id]
+            // This action's overlay, not the whole store. Collecting the store
+            // meant every device observation and every delivery attempt
+            // anywhere re-derived this screen's execution state, for an answer
+            // that had not changed.
+            RealtimeStore.actionState(id).collect { overlay ->
                 _state.value = projectActionState(context, overlay)
             }
         }

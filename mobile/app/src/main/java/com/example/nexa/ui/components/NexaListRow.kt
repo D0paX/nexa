@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,14 +70,18 @@ fun NexaListRow(
     // leading icon is left out whenever a secondary line exists: on a device
     // row the icon means "Present" and the secondary line already says it, and
     // hearing it twice per row is how a list becomes unusable.
-    val spoken = listOfNotNull(
-        title,
-        if (secondary == null) leadingContentDescription else null,
-        secondary,
-        trailingDescription,
-        technical,
-        timestamp
-    ).joinToString(", ") { it.replace(" · ", ", ") }
+    val spoken = remember(
+        title, leadingContentDescription, secondary, trailingDescription, technical, timestamp
+    ) {
+        listOfNotNull(
+            title,
+            if (secondary == null) leadingContentDescription else null,
+            secondary,
+            trailingDescription,
+            technical,
+            timestamp
+        ).joinToString(", ") { it.replace(" · ", ", ") }
+    }
 
     // Every row is one stop, whether or not it is an action: a row of facts
     // read out as five separate fragments is as hard to follow as a clickable

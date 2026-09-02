@@ -7,6 +7,7 @@ import com.example.nexa.ui.realtime.RealtimeState
 import com.example.nexa.ui.realtime.RealtimeStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -60,10 +61,17 @@ class OverviewViewModel : ViewModel() {
 
     private fun observeRealtime() {
         viewModelScope.launch {
-            RealtimeStore.state.collect { live ->
-                realtime = live
-                project()
-            }
+            // Only the slices this screen actually renders. Every applied
+            // event moves the store's sequence and applied count, so
+            // collecting the state itself re-ran this whole projection —
+            // overlay, search, filter, sort — for a delivery record in a
+            // domain this screen does not show.
+            RealtimeStore.state
+                .distinctUntilChangedBy { it.circuitBreaker }
+                .collect { live ->
+                    realtime = live
+                    project()
+                }
         }
     }
 

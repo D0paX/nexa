@@ -4,7 +4,10 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -194,6 +197,22 @@ object RealtimeStore {
         _connection.value = RealtimeConnectionState.Degraded
         _resyncRequests.value = _resyncRequests.value + 1
     }
+
+    /**
+     * The lifecycle of one action, and nothing else.
+     *
+     * [state] changes on every applied event in every domain, because the
+     * sequence and the applied count move with each one. A screen that
+     * collects it directly therefore re-projects itself when a delivery
+     * record updates in a scope it is not showing.
+     *
+     * This narrows to the single overlay a confirmation screen is waiting on,
+     * so unrelated traffic costs one map lookup and stops there. Nothing about
+     * ordering, deduplication or the reduction changes — this reads the same
+     * authoritative state, later.
+     */
+    fun actionState(actionId: String): Flow<ActionOverlay?> =
+        state.map { it.actions[actionId] }.distinctUntilChanged()
 
     /** Test and lifecycle hygiene. */
     suspend fun reset() {

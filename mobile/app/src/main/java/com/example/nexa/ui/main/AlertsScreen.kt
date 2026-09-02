@@ -415,7 +415,10 @@ private fun summaryLine(state: AlertsUiState.Content): String {
     // Counted against the slice being viewed, not the whole load: "3 of 5
     // open" is true, "3 of 12 open" would silently compare against closed
     // alerts the operator did not ask to see.
-    val inView = state.all.applyView(state.view).size
+    // Counted rather than built. applyView allocates the whole slice, and
+    // this needed only its size — on a screen that recomposes whenever a chip
+    // is pressed or an alert arrives.
+    val inView = state.all.countInView(state.view)
     val base = when (state.view) {
         AlertScopeView.Open -> resultCountLabel(state.visible.size, inView, "open", "open")
         AlertScopeView.History -> resultCountLabel(state.visible.size, inView, "closed", "closed")

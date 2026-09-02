@@ -121,7 +121,10 @@ private fun AuditContent(
 ) {
     var showFilters by remember { mutableStateOf(false) }
     val activeQuick = state.filters.activeQuickFilter()
-    val days = groupByDay(state.page) { it.dayLabel }
+    // Grouping walks the whole page and allocates a list per day. It depends
+    // on the page and nothing else, so it does not belong in the body of a
+    // composable that recomposes when a filter chip is pressed.
+    val days = remember(state.page) { groupByDay(state.page) { it.dayLabel } }
 
     NexaScreen(modifier = modifier) {
         item {
