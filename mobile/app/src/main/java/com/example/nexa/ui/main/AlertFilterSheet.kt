@@ -20,6 +20,7 @@ import com.example.nexa.ui.alerts.AlertLifecycle
 import com.example.nexa.ui.alerts.AlertSeverity
 import com.example.nexa.ui.alerts.AlertSort
 import com.example.nexa.ui.alerts.label
+import com.example.nexa.ui.components.FilterGroup
 import com.example.nexa.ui.components.NexaBottomSheet
 import com.example.nexa.ui.components.NexaFilterChip
 import com.example.nexa.ui.components.NexaOutlinedButton
@@ -27,6 +28,7 @@ import com.example.nexa.ui.components.SectionHeader
 import com.example.nexa.ui.components.SectionLevel
 import com.example.nexa.ui.common.DeliveryState
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.toggleFacet
 
 /**
  * Alert filtering and ordering.
@@ -52,7 +54,7 @@ fun AlertFilterSheet(
             Group(title = "Sort by") {
                 AlertSort.entries.forEach { option ->
                     NexaFilterChip(
-                        label = option.sortLabel,
+                        label = option.label,
                         selected = sort == option,
                         onClick = { onSortChange(option) }
                     )
@@ -65,7 +67,7 @@ fun AlertFilterSheet(
                         label = value.label,
                         selected = value in filters.severity,
                         onClick = {
-                            onFiltersChange(filters.copy(severity = filters.severity.toggle(value)))
+                            onFiltersChange(filters.copy(severity = filters.severity.toggleFacet(value)))
                         }
                     )
                 }
@@ -77,7 +79,7 @@ fun AlertFilterSheet(
                         label = value.label,
                         selected = value in filters.lifecycle,
                         onClick = {
-                            onFiltersChange(filters.copy(lifecycle = filters.lifecycle.toggle(value)))
+                            onFiltersChange(filters.copy(lifecycle = filters.lifecycle.toggleFacet(value)))
                         }
                     )
                 }
@@ -92,7 +94,7 @@ fun AlertFilterSheet(
                         label = value.label,
                         selected = value in filters.delivery,
                         onClick = {
-                            onFiltersChange(filters.copy(delivery = filters.delivery.toggle(value)))
+                            onFiltersChange(filters.copy(delivery = filters.delivery.toggleFacet(value)))
                         }
                     )
                 }
@@ -105,7 +107,7 @@ fun AlertFilterSheet(
                             label = scope,
                             selected = scope in filters.scopes,
                             onClick = {
-                                onFiltersChange(filters.copy(scopes = filters.scopes.toggle(scope)))
+                                onFiltersChange(filters.copy(scopes = filters.scopes.toggleFacet(scope)))
                             }
                         )
                     }
@@ -141,12 +143,3 @@ private fun Group(title: String, note: String? = null, content: @Composable () -
     }
     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
 }
-
-private val AlertSort.sortLabel: String
-    get() = when (this) {
-        AlertSort.Attention -> "Needs attention"
-        AlertSort.Newest -> "Newest"
-        AlertSort.Severity -> "Severity"
-    }
-
-private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value

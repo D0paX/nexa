@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.nexa.theme.NexaTokens
+import com.example.nexa.ui.components.FilterGroup
 import com.example.nexa.ui.components.NexaBottomSheet
 import com.example.nexa.ui.components.NexaFilterChip
 import com.example.nexa.ui.components.NexaOutlinedButton
@@ -24,6 +25,7 @@ import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.devices.Presence
 import com.example.nexa.ui.devices.label
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.toggleFacet
 
 /**
  * Device filtering and ordering.
@@ -50,7 +52,7 @@ fun DeviceFilterSheet(
             FilterGroup(title = "Sort by") {
                 DeviceSort.entries.forEach { option ->
                     NexaFilterChip(
-                        label = option.sortLabel,
+                        label = option.label,
                         selected = sort == option,
                         onClick = { onSortChange(option) }
                     )
@@ -65,7 +67,7 @@ fun DeviceFilterSheet(
                         onClick = {
                             onFiltersChange(
                                 filters.copy(
-                                    presence = filters.presence.toggle(value)
+                                    presence = filters.presence.toggleFacet(value)
                                 )
                             )
                         }
@@ -79,7 +81,7 @@ fun DeviceFilterSheet(
                         label = value.label,
                         selected = value in filters.trust,
                         onClick = {
-                            onFiltersChange(filters.copy(trust = filters.trust.toggle(value)))
+                            onFiltersChange(filters.copy(trust = filters.trust.toggleFacet(value)))
                         }
                     )
                 }
@@ -91,7 +93,7 @@ fun DeviceFilterSheet(
                         label = value.label,
                         selected = value in filters.enforcement,
                         onClick = {
-                            onFiltersChange(filters.copy(enforcement = filters.enforcement.toggle(value)))
+                            onFiltersChange(filters.copy(enforcement = filters.enforcement.toggleFacet(value)))
                         }
                     )
                 }
@@ -104,7 +106,7 @@ fun DeviceFilterSheet(
                             label = scope,
                             selected = scope in filters.scopes,
                             onClick = {
-                                onFiltersChange(filters.copy(scopes = filters.scopes.toggle(scope)))
+                                onFiltersChange(filters.copy(scopes = filters.scopes.toggleFacet(scope)))
                             }
                         )
                     }
@@ -121,27 +123,3 @@ fun DeviceFilterSheet(
         }
     }
 }
-
-@Composable
-private fun FilterGroup(title: String, content: @Composable () -> Unit) {
-    SectionHeader(text = title, level = SectionLevel.Group)
-    Spacer(modifier = Modifier.height(NexaTokens.SpacingSmall))
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingSmall),
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-    ) {
-        content()
-    }
-    Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
-}
-
-private val DeviceSort.sortLabel: String
-    get() = when (this) {
-        DeviceSort.Attention -> "Needs attention"
-        DeviceSort.Name -> "Name"
-        DeviceSort.LastSeen -> "Presence"
-    }
-
-private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value

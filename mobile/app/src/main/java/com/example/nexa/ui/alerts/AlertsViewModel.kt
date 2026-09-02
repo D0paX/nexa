@@ -70,7 +70,16 @@ class AlertsViewModel : ViewModel() {
 
     fun onViewChange(view: AlertScopeView) = update { it.copy(view = view) }
 
+    /**
+     * Clears the filter set and nothing else.
+     *
+     * The search query survives, because clearing filters is not a request to
+     * undo a search — the two controls are separate and each clears only its
+     * own concern.
+     */
     fun clearFilters() = update { it.copy(filters = AlertFilters()) }
+
+    fun clearQuery() = update { it.copy(query = "") }
 
     /** Entry point for a future live alert stream. */
     fun onAlerts(alerts: List<AlertListItem>) = update { it.copy(all = alerts) }
@@ -107,10 +116,15 @@ class AlertsViewModel : ViewModel() {
         val current = _state.value as? AlertsUiState.Content ?: return
         val updated = transform(current)
         val live = updated.all.withRealtime(realtime)
+        val visible = live.resolve(updated.query, updated.filters, updated.sort, updated.view)
         _state.value = updated.copy(
             all = live,
-            visible = live.resolve(updated.query, updated.filters, updated.sort, updated.view),
-            summary = summarize(live)
+            visible = visible,
+            // Counted over what is on screen, never over the whole set. A
+            // breakdown drawn from a different collection than the list it
+            // sits above is a count that describes something the operator
+            // cannot see.
+            summary = summarize(visible)
         )
     }
 

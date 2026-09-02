@@ -2,7 +2,11 @@ package com.example.nexa.ui.devices
 
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.NexaQuery
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.facetMatches
+import com.example.nexa.ui.common.matches
+import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.enforcement.unreadableStateReason
 
@@ -87,35 +91,54 @@ data class DeviceFilters(
         get() = presence.size + trust.size + enforcement.size + scopes.size + (if (onlyWithAlerts) 1 else 0)
 }
 
-enum class DeviceSort {
+enum class DeviceSort(val label: String) {
     /** Devices needing an operator first. The default. */
-    Attention,
-    Name,
-    LastSeen
+    Attention("Needs attention"),
+    Name("Name"),
+    Presence("Presence")
 }
 
 /**
- * Free-text match across the identifiers an operator would actually type.
- * Never matches on anything secret — identity *identifiers* only, no key
- * material.
+ * The text a device is searchable by.
+ *
+ * Operator-facing identifiers only. Nothing in [DeviceListItem] is secret —
+ * there is no credential, key or token on the model to exclude — and the list
+ * is written out explicitly rather than derived from the data class so that
+ * adding a field to the model can never silently make it searchable.
  */
-fun List<DeviceListItem>.applyQuery(query: String): List<DeviceListItem> {
-    val q = query.trim()
-    if (q.isEmpty()) return this
-    return filter { device ->
-        device.label.contains(q, ignoreCase = true) ||
-            device.mac.contains(q, ignoreCase = true) ||
-            (device.ip?.contains(q, ignoreCase = true) == true) ||
-            device.scope.contains(q, ignoreCase = true) ||
-            (device.identityId?.contains(q, ignoreCase = true) == true)
-    }
-}
+fun deviceSearchFields(device: DeviceListItem): List<String?> = listOf(
+    device.label,
+    device.mac,
+    device.ip,
+    device.scope,
+    device.identityId,
+    device.id
+)
 
+fun List<DeviceListItem>.applyQuery(query: NexaQuery): List<DeviceListItem> =
+    if (!query.isActive) this else filter { query.matches(deviceSearchFields(it)) }
+
+/**
+ * Convenience overload: normalizes then matches.
+ *
+ * The normalized form is what matching actually uses, so a caller that has a
+ * raw string goes through the same door as everything else rather than
+ * inventing its own trimming.
+ */
+fun List<DeviceListItem>.applyQuery(query: String): List<DeviceListItem> = applyQuery(nexaQuery(query))
+
+/**
+ * AND between facets, OR within each — the shared rule, see [facetMatches].
+ *
+ * A device excluded here is not changed by being excluded. Its trust, its
+ * enforcement state and what an operator may do to it are exactly what they
+ * were before the filter was applied.
+ */
 fun List<DeviceListItem>.applyFilters(filters: DeviceFilters): List<DeviceListItem> = filter { device ->
-    (filters.presence.isEmpty() || device.presence in filters.presence) &&
-        (filters.trust.isEmpty() || device.trust in filters.trust) &&
-        (filters.enforcement.isEmpty() || device.enforcement in filters.enforcement) &&
-        (filters.scopes.isEmpty() || device.scope in filters.scopes) &&
+    filters.presence.facetMatches(device.presence) &&
+        filters.trust.facetMatches(device.trust) &&
+        filters.enforcement.facetMatches(device.enforcement) &&
+        filters.scopes.facetMatches(device.scope) &&
         (!filters.onlyWithAlerts || device.alerts.hasAny)
 }
 
@@ -138,18 +161,40 @@ fun attentionRank(device: DeviceListItem): Int = when {
     else -> 9
 }
 
-fun List<DeviceListItem>.applySort(sort: DeviceSort): List<DeviceListItem> = when (sort) {
-    DeviceSort.Attention -> sortedWith(compareBy({ attentionRank(it) }, { it.label.lowercase() }))
-    DeviceSort.Name -> sortedBy { it.label.lowercase() }
-    DeviceSort.LastSeen -> sortedWith(compareBy({ it.presence != Presence.Present }, { it.label.lowercase() }))
+private fun presenceOrder(presence: com.example.nexa.ui.devices.Presence): Int = when (presence) {
+    com.example.nexa.ui.devices.Presence.Present -> 0
+    com.example.nexa.ui.devices.Presence.Unknown -> 1
+    com.example.nexa.ui.devices.Presence.Absent -> 2
 }
 
-/** The whole pipeline, in one place so the screen never does this itself. */
+/**
+ * Ordering, always ending in the device id.
+ *
+ * The id tie-break is not decoration. Two devices can legitimately share a
+ * label, and without a deterministic final comparison they would swap places
+ * between two identical loads — and again on every realtime update, which is
+ * exactly when a list must hold still.
+ */
+fun List<DeviceListItem>.applySort(sort: DeviceSort): List<DeviceListItem> = when (sort) {
+    DeviceSort.Attention ->
+        sortedWith(compareBy({ attentionRank(it) }, { it.label.lowercase() }, { it.id }))
+    DeviceSort.Name ->
+        sortedWith(compareBy({ it.label.lowercase() }, { it.id }))
+    DeviceSort.Presence ->
+        sortedWith(compareBy({ presenceOrder(it.presence) }, { it.label.lowercase() }, { it.id }))
+}
+
+/**
+ * The whole pipeline, in one place so the screen never does this itself.
+ *
+ * Order is fixed and shared across every domain: search, then filter, then
+ * sort. The query is normalized once here rather than per record.
+ */
 fun List<DeviceListItem>.resolve(
     query: String,
     filters: DeviceFilters,
     sort: DeviceSort
-): List<DeviceListItem> = applyQuery(query).applyFilters(filters).applySort(sort)
+): List<DeviceListItem> = applyQuery(nexaQuery(query)).applyFilters(filters).applySort(sort)
 
 // ============================================================
 // ACTIONS

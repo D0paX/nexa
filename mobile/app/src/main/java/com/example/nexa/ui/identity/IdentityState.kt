@@ -2,7 +2,11 @@ package com.example.nexa.ui.identity
 
 import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.DataFreshness
+import com.example.nexa.ui.common.NexaQuery
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.facetMatches
+import com.example.nexa.ui.common.matches
+import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.hasIdentity
 import com.example.nexa.ui.devices.Presence
 
@@ -242,30 +246,106 @@ fun reverificationPrompt(identity: IdentitySummary): String? = when {
 // LIST QUERY / FILTER
 // ============================================================
 
-data class IdentityFilters(val trust: Set<TrustState> = emptySet()) {
-    val isActive: Boolean get() = trust.isNotEmpty()
+/**
+ * What an operator can narrow the identity inventory by.
+ *
+ * Four facets, each answering a different question, combined with the shared
+ * rule — AND between them, OR within each:
+ *
+ *   trust         where the identity stands in its trust lifecycle
+ *   relationship  whether observation and binding agree
+ *   scopes        which network scope the associated device sits in
+ *   freshness     how recently verification was confirmed
+ *
+ * Trust here is a *view* selector. Selecting "Trusted" shows the identities
+ * that are trusted; it does not make anything trusted, and it authorizes
+ * nothing. The record's trust standing is decided by Phase 2 and remains
+ * exactly what it was whether or not the filter is on.
+ */
+data class IdentityFilters(
+    val trust: Set<TrustState> = emptySet(),
+    val relationship: Set<IdentityRelationship> = emptySet(),
+    val scopes: Set<String> = emptySet(),
+    val freshness: Set<IdentityFreshnessFacet> = emptySet()
+) {
+    val isActive: Boolean
+        get() = trust.isNotEmpty() || relationship.isNotEmpty() ||
+            scopes.isNotEmpty() || freshness.isNotEmpty()
+
+    val activeCount: Int
+        get() = trust.size + relationship.size + scopes.size + freshness.size
 }
 
 /**
- * Free-text match over operator-facing identifiers only.
+ * Verification freshness, as something selectable.
  *
- * Never matches key material, and there is none in the model to match.
+ * A narrower vocabulary than [DataFreshness] on purpose: an operator wants
+ * "which identities have not been confirmed recently", not the full
+ * availability vocabulary. [Unknown] stays separate from [Stale] because not
+ * having looked and having looked a while ago are different facts.
  */
-fun List<IdentitySummary>.applyQuery(query: String): List<IdentitySummary> {
-    val q = query.trim()
-    if (q.isEmpty()) return this
-    return filter { identity ->
-        identity.identityId.contains(q, ignoreCase = true) ||
-            identity.subjectLabel.contains(q, ignoreCase = true) ||
-            (identity.owner?.contains(q, ignoreCase = true) == true) ||
-            (identity.device?.mac?.contains(q, ignoreCase = true) == true) ||
-            (identity.device?.ip?.contains(q, ignoreCase = true) == true) ||
-            (identity.device?.scope?.contains(q, ignoreCase = true) == true)
-    }
+enum class IdentityFreshnessFacet(val label: String) {
+    Current("Recently verified"),
+    Stale("Not recent"),
+    Unknown("Verification unknown")
 }
 
+fun identityFreshnessFacet(freshness: DataFreshness): IdentityFreshnessFacet = when (freshness) {
+    is DataFreshness.Live -> IdentityFreshnessFacet.Current
+    is DataFreshness.Stale -> IdentityFreshnessFacet.Stale
+    is DataFreshness.Unknown -> IdentityFreshnessFacet.Unknown
+}
+
+enum class IdentitySort(val label: String) {
+    /** Identities needing an operator first. The default. */
+    Attention("Needs attention"),
+    Subject("Subject"),
+    Trust("Trust")
+}
+
+/**
+ * The text an identity is searchable by.
+ *
+ * Operator-facing identifiers only. There is no key material on this model to
+ * match — the credential is represented by an identifier and a lifecycle
+ * state, never by the key itself — so search cannot reach anything secret.
+ * The list is written out explicitly so that adding a field to
+ * [IdentitySummary] can never silently make it searchable.
+ */
+fun identitySearchFields(identity: IdentitySummary): List<String?> = listOf(
+    identity.identityId,
+    identity.subjectLabel,
+    identity.owner,
+    identity.trust.name,
+    identity.credential.identifier,
+    identity.device?.label,
+    identity.device?.mac,
+    identity.device?.ip,
+    identity.device?.scope,
+    identity.device?.deviceId
+)
+
+fun List<IdentitySummary>.applyQuery(query: NexaQuery): List<IdentitySummary> =
+    if (!query.isActive) this else filter { query.matches(identitySearchFields(it)) }
+
+/**
+ * Convenience overload: normalizes then matches.
+ *
+ * The normalized form is what matching actually uses, so a caller that has a
+ * raw string goes through the same door as everything else rather than
+ * inventing its own trimming.
+ */
+fun List<IdentitySummary>.applyQuery(query: String): List<IdentitySummary> = applyQuery(nexaQuery(query))
+
 fun List<IdentitySummary>.applyFilters(filters: IdentityFilters): List<IdentitySummary> =
-    filter { filters.trust.isEmpty() || it.trust in filters.trust }
+    filter { identity ->
+        filters.trust.facetMatches(identity.trust) &&
+            filters.relationship.facetMatches(identity.relationship) &&
+            filters.scopes.facetMatches(identity.device?.scope) &&
+            filters.freshness.facetMatches(
+                identityFreshnessFacet(identity.verification.freshness)
+            )
+    }
 
 /** Identities needing attention sort first; none are ever hidden. */
 fun identityAttentionRank(identity: IdentitySummary): Int = when {
@@ -280,10 +360,40 @@ fun identityAttentionRank(identity: IdentitySummary): Int = when {
     else -> 8
 }
 
-fun List<IdentitySummary>.resolve(query: String, filters: IdentityFilters): List<IdentitySummary> =
-    applyQuery(query)
-        .applyFilters(filters)
-        .sortedWith(compareBy({ identityAttentionRank(it) }, { it.subjectLabel.lowercase() }))
+private fun trustOrder(trust: TrustState): Int = when (trust) {
+    TrustState.Revoked -> 0
+    TrustState.Unverified -> 1
+    TrustState.Unknown -> 2
+    TrustState.Pending -> 3
+    TrustState.Trusted -> 4
+}
+
+/**
+ * Ordering, always ending in the identity id.
+ *
+ * Two identities can carry the same subject label — that is exactly what an
+ * ambiguous binding looks like — so the id is what makes the order hold still
+ * between loads and across realtime updates.
+ */
+fun List<IdentitySummary>.applySort(sort: IdentitySort): List<IdentitySummary> = when (sort) {
+    IdentitySort.Attention -> sortedWith(
+        compareBy({ identityAttentionRank(it) }, { it.subjectLabel.lowercase() }, { it.identityId })
+    )
+    IdentitySort.Subject -> sortedWith(
+        compareBy({ it.subjectLabel.lowercase() }, { it.identityId })
+    )
+    IdentitySort.Trust -> sortedWith(
+        compareBy({ trustOrder(it.trust) }, { it.subjectLabel.lowercase() }, { it.identityId })
+    )
+}
+
+/** The whole pipeline. Same order as every other domain. */
+fun List<IdentitySummary>.resolve(
+    query: String,
+    filters: IdentityFilters,
+    sort: IdentitySort = IdentitySort.Attention
+): List<IdentitySummary> =
+    applyQuery(nexaQuery(query)).applyFilters(filters).applySort(sort)
 
 // ============================================================
 // SCREEN STATE
@@ -297,6 +407,7 @@ sealed interface IdentitiesUiState {
         val visible: List<IdentitySummary>,
         val query: String,
         val filters: IdentityFilters,
+        val sort: IdentitySort,
         val freshness: DataFreshness,
         val degraded: Boolean,
         /** Cached identity state, no connection. Distinct from merely stale. */

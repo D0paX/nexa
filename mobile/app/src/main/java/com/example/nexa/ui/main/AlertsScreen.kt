@@ -26,6 +26,10 @@ import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.contentAvailability
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.nexaQuery
+import com.example.nexa.ui.common.nexaResults
+import com.example.nexa.ui.common.resultCountLabel
 import com.example.nexa.ui.components.*
 
 /**
@@ -79,6 +83,7 @@ fun AlertsScreen(
                 onSortChange = viewModel::onSortChange,
                 onViewChange = viewModel::onViewChange,
                 onClearFilters = viewModel::clearFilters,
+                onClearQuery = viewModel::clearQuery,
                 onItemClick = onItemClick,
                 modifier = modifier
             )
@@ -103,6 +108,7 @@ private fun AlertsContent(
     onSortChange: (AlertSort) -> Unit,
     onViewChange: (AlertScopeView) -> Unit,
     onClearFilters: () -> Unit,
+    onClearQuery: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -228,7 +234,7 @@ private fun AlertsContent(
                     .horizontalScroll(rememberScrollState())
             ) {
                 NexaFilterChip(
-                    label = if (state.filters.isActive) "Filters (${state.filters.activeCount})" else "Filters",
+                    label = filterButtonLabel(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -257,7 +263,25 @@ private fun AlertsContent(
         }
 
         if (state.visible.isEmpty()) {
-            item { AlertsEmpty(state) }
+            item { NoMatchNotice(
+                    results = nexaResults(
+                        sourceCount = state.all.applyView(state.view).size,
+                        visibleCount = state.visible.size,
+                        queryActive = nexaQuery(state.query).isActive,
+                        filtersActive = state.filters.isActive
+                    ),
+                    subject = "alerts",
+                    emptyTitle = when (state.view) {
+                        AlertScopeView.History -> "No closed alerts"
+                        else -> "No active alerts"
+                    },
+                    emptyMessage = when (state.view) {
+                        AlertScopeView.History -> "No alerts have been resolved or ignored."
+                        else -> "Nothing currently requires attention. This reports the alert load only — it is not an assessment of overall system posture."
+                    },
+                    onClearSearch = onClearQuery,
+                    onClearFilters = onClearFilters
+                ) }
         } else {
             items(state.visible, key = { it.id }) { alert ->
                 AlertRow(alert = alert, onClick = { onItemClick(AlertDetail(alert.id)) })
@@ -330,33 +354,6 @@ private fun AlertRow(alert: AlertListItem, onClick: () -> Unit) {
  * Says only what the alert service actually reported. An empty incident
  * load is not evidence that the system is secure, so it never claims that.
  */
-@Composable
-private fun AlertsEmpty(state: AlertsUiState.Content) {
-    val filtered = state.query.isNotEmpty() || state.filters.isActive
-    GlassSurface(modifier = Modifier.fillMaxWidth()) {
-        Column {
-            Text(
-                text = when {
-                    filtered -> "No matching alerts"
-                    state.view == AlertScopeView.History -> "No closed alerts"
-                    else -> "No active alerts"
-                },
-                style = NexaType.Title,
-                color = NexaTextPrimary
-            )
-            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-            Text(
-                text = when {
-                    filtered -> "No alert matches the current search or filters."
-                    state.view == AlertScopeView.History -> "No alerts have been resolved or ignored."
-                    else -> "Nothing currently requires attention. This reports the alert load only — it is not an assessment of overall system posture."
-                },
-                style = NexaType.BodySecondary,
-                color = NexaTextSecondary
-            )
-        }
-    }
-}
 
 @Composable
 private fun AlertsFreshness(freshness: DataFreshness) {
@@ -382,12 +379,15 @@ private val AlertScopeView.viewLabel: String
     }
 
 private fun summaryLine(state: AlertsUiState.Content): String {
-    val shown = state.visible.size
     val s = state.summary
+    // Counted against the slice being viewed, not the whole load: "3 of 5
+    // open" is true, "3 of 12 open" would silently compare against closed
+    // alerts the operator did not ask to see.
+    val inView = state.all.applyView(state.view).size
     val base = when (state.view) {
-        AlertScopeView.Open -> "$shown open"
-        AlertScopeView.History -> "$shown closed"
-        AlertScopeView.All -> "$shown alerts"
+        AlertScopeView.Open -> resultCountLabel(state.visible.size, inView, "open", "open")
+        AlertScopeView.History -> resultCountLabel(state.visible.size, inView, "closed", "closed")
+        AlertScopeView.All -> resultCountLabel(state.visible.size, inView, "alert")
     }
     val counts = if (state.view == AlertScopeView.Open && s.open > 0) {
         "$base · ${s.critical} critical · ${s.unacknowledged} unacknowledged"

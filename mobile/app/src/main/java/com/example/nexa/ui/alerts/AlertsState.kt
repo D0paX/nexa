@@ -4,6 +4,10 @@ import com.example.nexa.ui.common.ActivityEntry
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.DeliveryAttempt
 import com.example.nexa.ui.common.DeliveryState
+import com.example.nexa.ui.common.NexaQuery
+import com.example.nexa.ui.common.facetMatches
+import com.example.nexa.ui.common.matches
+import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.devices.Presence
 
@@ -266,30 +270,63 @@ data class AlertFilters(
             (if (onlyDeliveryFailures) 1 else 0)
 }
 
-enum class AlertSort { Attention, Newest, Severity }
+enum class AlertSort(val label: String) {
+    Attention("Needs attention"),
+    Newest("Newest"),
+    Severity("Severity")
+}
 
 /** Which slice of the incident load is being viewed. */
 enum class AlertScopeView { Open, History, All }
 
-fun List<AlertListItem>.applyQuery(query: String): List<AlertListItem> {
-    val q = query.trim()
-    if (q.isEmpty()) return this
-    return filter { alert ->
-        alert.id.contains(q, ignoreCase = true) ||
-            alert.title.contains(q, ignoreCase = true) ||
-            (alert.target.deviceRef?.label?.contains(q, ignoreCase = true) == true) ||
-            (alert.target.deviceRef?.mac?.contains(q, ignoreCase = true) == true) ||
-            (alert.target.deviceRef?.ip?.contains(q, ignoreCase = true) == true) ||
-            (alert.target.deviceRef?.scope?.contains(q, ignoreCase = true) == true) ||
-            (alert.target.identityRef?.identityId?.contains(q, ignoreCase = true) == true)
-    }
-}
+/**
+ * The text an alert is searchable by.
+ *
+ * Operator-facing fields only. The lifecycle and severity words are included
+ * deliberately — an operator who types "critical" expects the critical
+ * incidents — but that is a text match on a displayed label and is not a
+ * substitute for the severity or lifecycle facet, which remain the
+ * authoritative way to narrow by those dimensions.
+ */
+fun alertSearchFields(alert: AlertListItem): List<String?> = listOf(
+    alert.id,
+    alert.title,
+    alert.severity.name,
+    alert.lifecycle.name,
+    alert.target.deviceRef?.label,
+    alert.target.deviceRef?.mac,
+    alert.target.deviceRef?.ip,
+    alert.target.deviceRef?.scope,
+    alert.target.deviceRef?.deviceId,
+    alert.target.identityRef?.identityId
+)
 
+fun List<AlertListItem>.applyQuery(query: NexaQuery): List<AlertListItem> =
+    if (!query.isActive) this else filter { query.matches(alertSearchFields(it)) }
+
+/**
+ * Convenience overload: normalizes then matches.
+ *
+ * The normalized form is what matching actually uses, so a caller that has a
+ * raw string goes through the same door as everything else rather than
+ * inventing its own trimming.
+ */
+fun List<AlertListItem>.applyQuery(query: String): List<AlertListItem> = applyQuery(nexaQuery(query))
+
+/**
+ * AND between facets, OR within each.
+ *
+ * Severity, lifecycle and notification delivery are three separate facets and
+ * are never merged into one "status". They answer three different questions —
+ * how serious the incident is, where it stands in its own lifecycle, and what
+ * happened to the message about it — and an operator who filters by one has
+ * said nothing about the other two.
+ */
 fun List<AlertListItem>.applyFilters(filters: AlertFilters): List<AlertListItem> = filter { alert ->
-    (filters.severity.isEmpty() || alert.severity in filters.severity) &&
-        (filters.lifecycle.isEmpty() || alert.lifecycle in filters.lifecycle) &&
-        (filters.delivery.isEmpty() || alert.delivery in filters.delivery) &&
-        (filters.scopes.isEmpty() || alert.target.deviceRef?.scope in filters.scopes) &&
+    filters.severity.facetMatches(alert.severity) &&
+        filters.lifecycle.facetMatches(alert.lifecycle) &&
+        filters.delivery.facetMatches(alert.delivery) &&
+        filters.scopes.facetMatches(alert.target.deviceRef?.scope) &&
         (!filters.onlyDeliveryFailures || alert.delivery.isFailure)
 }
 
@@ -338,12 +375,20 @@ fun List<AlertListItem>.applySort(sort: AlertSort): List<AlertListItem> = when (
     AlertSort.Severity -> sortedWith(compareBy({ severityOrder(it.severity) }, { it.ageMinutes }, { it.id }))
 }
 
+/**
+ * The whole pipeline. Same order as every other domain.
+ *
+ * The view selector runs first because it is not a filter an operator sets in
+ * the sheet — it is which half of the incident load the screen is showing,
+ * and the counts beside it describe that half.
+ */
 fun List<AlertListItem>.resolve(
     query: String,
     filters: AlertFilters,
     sort: AlertSort,
     view: AlertScopeView
-): List<AlertListItem> = applyView(view).applyQuery(query).applyFilters(filters).applySort(sort)
+): List<AlertListItem> =
+    applyView(view).applyQuery(nexaQuery(query)).applyFilters(filters).applySort(sort)
 
 // ============================================================
 // SUMMARY

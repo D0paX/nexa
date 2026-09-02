@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
@@ -38,35 +39,46 @@ fun NexaFilterChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingXSmall),
+    // The pill stays 36dp so a row of chips keeps its density, but the thing
+    // that receives the touch is 48dp tall. Shrinking the target to match the
+    // paint would put every filter control below the minimum, and filters are
+    // exactly the controls someone uses one-handed while looking at something
+    // else.
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
-            .defaultMinSize(minHeight = 36.dp)
-            .background(
-                color = if (selected) NexaAction.copy(alpha = 0.10f) else androidx.compose.ui.graphics.Color.Transparent,
-                shape = NexaShapes.Pill
-            )
-            .border(
-                width = NexaTokens.BorderHairline,
-                color = if (selected) NexaAction.copy(alpha = 0.45f) else NexaBorderNeutral,
-                shape = NexaShapes.Pill
-            )
+            .defaultMinSize(minHeight = NexaTokens.MinTouchTarget)
             .semantics { this.selected = selected }
             .clickable(role = Role.Checkbox, onClick = onClick)
-            .padding(horizontal = NexaTokens.SpacingMedium, vertical = NexaTokens.SpacingSmall)
     ) {
-        if (selected) {
-            NexaIcon(
-                icon = NexaIcons.Acknowledge,
-                size = NexaTokens.IconSmall,
-                tint = NexaAction
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NexaTokens.SpacingXSmall),
+            modifier = Modifier
+                .defaultMinSize(minHeight = 36.dp)
+                .background(
+                    color = if (selected) NexaAction.copy(alpha = 0.10f) else androidx.compose.ui.graphics.Color.Transparent,
+                    shape = NexaShapes.Pill
+                )
+                .border(
+                    width = NexaTokens.BorderHairline,
+                    color = if (selected) NexaAction.copy(alpha = 0.45f) else NexaBorderNeutral,
+                    shape = NexaShapes.Pill
+                )
+                .padding(horizontal = NexaTokens.SpacingMedium, vertical = NexaTokens.SpacingSmall)
+        ) {
+            if (selected) {
+                NexaIcon(
+                    icon = NexaIcons.Acknowledge,
+                    size = NexaTokens.IconSmall,
+                    tint = NexaAction
+                )
+            }
+            Text(
+                text = label,
+                style = NexaType.Metadata,
+                color = if (selected) NexaTextPrimary else NexaTextSecondary
             )
         }
-        Text(
-            text = label,
-            style = NexaType.Metadata,
-            color = if (selected) NexaTextPrimary else NexaTextSecondary
-        )
     }
 }

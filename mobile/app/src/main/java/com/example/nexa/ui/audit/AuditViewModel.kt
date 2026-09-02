@@ -51,7 +51,16 @@ class AuditViewModel : ViewModel() {
         it.copy(filters = it.filters.withQuickFilter(quick))
     }
 
+    /**
+     * Clears the filter set and nothing else.
+     *
+     * The search query survives, because clearing filters is not a request to
+     * undo a search — the two controls are separate and each clears only its
+     * own concern.
+     */
     fun clearFilters() = update(resetPage = true) { it.copy(filters = AuditFilters()) }
+
+    fun clearQuery() = update(resetPage = true) { it.copy(query = "") }
 
     /**
      * Extends the rendered window.

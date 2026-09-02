@@ -17,6 +17,8 @@ import com.example.nexa.theme.NexaTokens
 import com.example.nexa.theme.NexaType
 import com.example.nexa.ui.common.DeliveryState
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.toggleFacet
+import com.example.nexa.ui.components.FilterGroup
 import com.example.nexa.ui.components.NexaBottomSheet
 import com.example.nexa.ui.components.NexaFilterChip
 import com.example.nexa.ui.components.NexaOutlinedButton
@@ -78,7 +80,7 @@ fun NotificationFilterSheet(
                         label = value.label,
                         selected = value in filters.states,
                         onClick = {
-                            onFiltersChange(filters.copy(states = filters.states.toggle(value)))
+                            onFiltersChange(filters.copy(states = filters.states.toggleFacet(value)))
                         }
                     )
                 }
@@ -91,7 +93,7 @@ fun NotificationFilterSheet(
                         selected = value in filters.sourceTypes,
                         onClick = {
                             onFiltersChange(
-                                filters.copy(sourceTypes = filters.sourceTypes.toggle(value))
+                                filters.copy(sourceTypes = filters.sourceTypes.toggleFacet(value))
                             )
                         }
                     )
@@ -105,7 +107,7 @@ fun NotificationFilterSheet(
                             label = scope,
                             selected = scope in filters.scopes,
                             onClick = {
-                                onFiltersChange(filters.copy(scopes = filters.scopes.toggle(scope)))
+                                onFiltersChange(filters.copy(scopes = filters.scopes.toggleFacet(scope)))
                             }
                         )
                     }
@@ -142,4 +144,3 @@ private fun Group(title: String, note: String? = null, content: @Composable () -
     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
 }
 
-private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value

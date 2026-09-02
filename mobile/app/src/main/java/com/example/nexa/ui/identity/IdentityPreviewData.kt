@@ -28,9 +28,10 @@ object IdentityPreview {
         val all = identities
         return IdentitiesUiState.Content(
             all = all,
-            visible = all.resolve("", IdentityFilters()),
+            visible = all.resolve("", IdentityFilters(), IdentitySort.Attention),
             query = "",
             filters = IdentityFilters(),
+            sort = IdentitySort.Attention,
             freshness = DataFreshness.Live,
             degraded = false
         )
@@ -41,6 +42,7 @@ object IdentityPreview {
         visible = emptyList(),
         query = "",
         filters = IdentityFilters(),
+        sort = IdentitySort.Attention,
         freshness = DataFreshness.Live,
         degraded = false
     )

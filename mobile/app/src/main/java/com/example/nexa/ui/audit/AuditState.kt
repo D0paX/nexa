@@ -2,6 +2,10 @@ package com.example.nexa.ui.audit
 
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.NexaQuery
+import com.example.nexa.ui.common.facetMatches
+import com.example.nexa.ui.common.matches
+import com.example.nexa.ui.common.nexaQuery
 
 /**
  * The operator-facing model of NEXA's security history.
@@ -446,50 +450,64 @@ fun AuditFilters.activeQuickFilter(): AuditQuickFilter? = when {
 }
 
 /**
- * Search across the identifiers an operator would paste in.
+ * The text an audit record is searchable by.
  *
- * Every field searched is one intended for operator use. There is nothing
- * secret in this model to search — no key material, no credential, no token
- * is carried by [AuditEntry] at all, which is a stronger guarantee than
+ * Every field here is one intended for operator use. There is nothing secret
+ * in this model to search — no key material, no credential, no token is
+ * carried by [AuditEntry] at all, which is a stronger guarantee than
  * excluding such fields here would be.
+ *
+ * The execution mode is searchable by name so an operator can type
+ * "simulated" and find simulated runs. That is a text match on a displayed
+ * value; it does not and cannot change what any record's execution mode was.
  */
-fun List<AuditEntry>.applyQuery(query: String): List<AuditEntry> {
-    val q = query.trim()
-    if (q.isEmpty()) return this
-    return filter { entry ->
-        entry.id.contains(q, ignoreCase = true) ||
-            entry.correlationId?.contains(q, ignoreCase = true) == true ||
-            entry.alertId?.contains(q, ignoreCase = true) == true ||
-            entry.actionCode?.contains(q, ignoreCase = true) == true ||
-            entry.target.matchesQuery(q)
-    }
+fun auditSearchFields(entry: AuditEntry): List<String?> = listOf(
+    entry.id,
+    entry.correlationId,
+    entry.alertId,
+    entry.actionCode,
+    entry.category.name,
+    entry.outcome.name,
+    entry.executionMode?.name
+) + entry.target.searchFields()
+
+private fun AuditTarget.searchFields(): List<String?> = when (this) {
+    is AuditTarget.Device -> listOf(deviceId, label, mac, ip, scope)
+    is AuditTarget.Identity -> listOf(identityId, label, scope)
+    is AuditTarget.Scope -> listOf(scope)
+    is AuditTarget.Subsystem -> listOf(name)
+    AuditTarget.Unresolved -> emptyList()
 }
 
-private fun AuditTarget.matchesQuery(q: String): Boolean = when (this) {
-    is AuditTarget.Device ->
-        deviceId.contains(q, true) || label.contains(q, true) ||
-            mac.contains(q, true) || ip?.contains(q, true) == true ||
-            scope.contains(q, true)
-    is AuditTarget.Identity ->
-        identityId.contains(q, true) || label.contains(q, true) ||
-            scope?.contains(q, true) == true
-    is AuditTarget.Scope -> scope.contains(q, true)
-    is AuditTarget.Subsystem -> name.contains(q, true)
-    AuditTarget.Unresolved -> false
-}
+fun List<AuditEntry>.applyQuery(query: NexaQuery): List<AuditEntry> =
+    if (!query.isActive) this else filter { query.matches(auditSearchFields(it)) }
 
 /**
- * Applies the filter set.
+ * Convenience overload: normalizes then matches.
  *
- * The execution-mode filter matches only entries that actually recorded a
+ * The normalized form is what matching actually uses, so a caller that has a
+ * raw string goes through the same door as everything else rather than
+ * inventing its own trimming.
+ */
+fun List<AuditEntry>.applyQuery(query: String): List<AuditEntry> = applyQuery(nexaQuery(query))
+
+/**
+ * AND between facets, OR within each.
+ *
+ * The execution-mode facet matches only entries that actually recorded a
  * mode. An event with no mode is not swept into "live" because it is not
- * simulated — that inference is precisely the one this model refuses to make.
+ * simulated — that inference is precisely the one this model refuses to make,
+ * and [facetMatches] refusing to match a null is what enforces it.
+ *
+ * Filtering history is reading, never scheduling. A record that survives
+ * these predicates is a thing that already happened; nothing here can make it
+ * pending, repeatable or executable.
  */
 fun List<AuditEntry>.applyFilters(filters: AuditFilters): List<AuditEntry> = filter { entry ->
-    (filters.categories.isEmpty() || entry.category in filters.categories) &&
-        (filters.outcomes.isEmpty() || entry.outcome in filters.outcomes) &&
-        (filters.executionModes.isEmpty() || entry.executionMode in filters.executionModes) &&
-        (filters.scopes.isEmpty() || entry.target.scopeOrNull in filters.scopes) &&
+    filters.categories.facetMatches(entry.category) &&
+        filters.outcomes.facetMatches(entry.outcome) &&
+        filters.executionModes.facetMatches(entry.executionMode) &&
+        filters.scopes.facetMatches(entry.target.scopeOrNull) &&
         (filters.timeRange.minutes == null || entry.ageMinutes <= filters.timeRange.minutes) &&
         (!filters.onlySimulated || entry.isSimulated)
 }
@@ -518,7 +536,7 @@ fun List<AuditEntry>.resolve(
     query: String,
     filters: AuditFilters,
     sort: AuditSort
-): List<AuditEntry> = applyQuery(query).applyFilters(filters).applySort(sort)
+): List<AuditEntry> = applyQuery(nexaQuery(query)).applyFilters(filters).applySort(sort)
 
 // ============================================================
 // GROUPING

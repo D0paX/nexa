@@ -7,6 +7,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,6 +20,11 @@ import com.example.nexa.IdentityDetail
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.contentAvailability
+import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.nexaQuery
+import com.example.nexa.ui.common.nexaResults
+import com.example.nexa.ui.common.resultCountLabel
+import com.example.nexa.ui.common.toggleFacet
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.common.icon
 import com.example.nexa.ui.common.isTrustworthy
@@ -76,6 +84,9 @@ fun IdentitiesScreen(
                 onBack = onBack,
                 onQueryChange = viewModel::onQueryChange,
                 onFiltersChange = viewModel::onFiltersChange,
+                onSortChange = viewModel::onSortChange,
+                onClearFilters = viewModel::clearFilters,
+                onClearQuery = viewModel::clearQuery,
                 onNavigate = onNavigate,
                 modifier = modifier
             )
@@ -98,9 +109,14 @@ private fun IdentitiesContent(
     onBack: () -> Unit,
     onQueryChange: (String) -> Unit,
     onFiltersChange: (IdentityFilters) -> Unit,
+    onSortChange: (IdentitySort) -> Unit,
+    onClearFilters: () -> Unit,
+    onClearQuery: () -> Unit,
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showFilters by remember { mutableStateOf(false) }
+
     NexaScreen(
         modifier = modifier,
         title = "Identities",
@@ -161,27 +177,39 @@ private fun IdentitiesContent(
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
             ) {
-                // Only lifecycle states an identity can actually hold.
-                listOf(TrustState.Trusted, TrustState.Pending, TrustState.Revoked).forEach { value ->
-                    NexaFilterChip(
-                        label = value.label,
-                        selected = value in state.filters.trust,
-                        onClick = {
-                            val trust = state.filters.trust
-                            onFiltersChange(
-                                state.filters.copy(
-                                    trust = if (value in trust) trust - value else trust + value
-                                )
+                // Same filter language as every other domain: the sheet
+                // behind a counted button, then a few shortcuts for the
+                // narrowings an operator reaches for most.
+                NexaFilterChip(
+                    label = filterButtonLabel(state.filters.activeCount),
+                    selected = state.filters.isActive,
+                    onClick = { showFilters = true }
+                )
+                NexaFilterChip(
+                    label = TrustState.Revoked.label,
+                    selected = TrustState.Revoked in state.filters.trust,
+                    onClick = {
+                        onFiltersChange(
+                            state.filters.copy(
+                                trust = state.filters.trust.toggleFacet(TrustState.Revoked)
                             )
-                        }
-                    )
-                }
+                        )
+                    }
+                )
+                NexaFilterChip(
+                    label = "Ambiguous binding",
+                    selected = IdentityRelationship.Ambiguous in state.filters.relationship,
+                    onClick = {
+                        onFiltersChange(
+                            state.filters.copy(
+                                relationship = state.filters.relationship
+                                    .toggleFacet(IdentityRelationship.Ambiguous)
+                            )
+                        )
+                    }
+                )
                 if (state.filters.isActive) {
-                    NexaFilterChip(
-                        label = "Clear",
-                        selected = false,
-                        onClick = { onFiltersChange(IdentityFilters()) }
-                    )
+                    NexaFilterChip(label = "Clear", selected = false, onClick = onClearFilters)
                 }
             }
             Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
@@ -189,25 +217,19 @@ private fun IdentitiesContent(
 
         if (state.visible.isEmpty()) {
             item {
-                GlassSurface(modifier = Modifier.fillMaxWidth()) {
-                    Column {
-                        Text(
-                            text = if (state.all.isEmpty()) "No trusted identities" else "No matching identities",
-                            style = NexaType.Title,
-                            color = NexaTextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-                        Text(
-                            text = if (state.all.isEmpty()) {
-                                "NEXA holds no cryptographic identities. The identity service responded — this is a confirmed empty set, not a failure to read it."
-                            } else {
-                                "No identity matches the current search or filters."
-                            },
-                            style = NexaType.BodySecondary,
-                            color = NexaTextSecondary
-                        )
-                    }
-                }
+                NoMatchNotice(
+                    results = nexaResults(
+                        sourceCount = state.all.size,
+                        visibleCount = state.visible.size,
+                        queryActive = nexaQuery(state.query).isActive,
+                        filtersActive = state.filters.isActive
+                    ),
+                    subject = "identities",
+                    emptyTitle = "No trusted identities",
+                    emptyMessage = "NEXA holds no cryptographic identities. The identity service responded — this is a confirmed empty set, not a failure to read it.",
+                    onClearSearch = onClearQuery,
+                    onClearFilters = onClearFilters
+                )
             }
         } else {
             items(state.visible, key = { it.identityId }) { identity ->
@@ -220,6 +242,18 @@ private fun IdentitiesContent(
         }
 
         item { Spacer(modifier = Modifier.height(NexaTokens.SpacingXLarge)) }
+    }
+
+    if (showFilters) {
+        IdentityFilterSheet(
+            filters = state.filters,
+            sort = state.sort,
+            scopes = state.all.mapNotNull { it.device?.scope }.distinct().sorted(),
+            onFiltersChange = onFiltersChange,
+            onSortChange = onSortChange,
+            onClear = onClearFilters,
+            onDismiss = { showFilters = false }
+        )
     }
 }
 
@@ -269,12 +303,13 @@ private fun FreshnessTag(freshness: DataFreshness) {
 }
 
 private fun identityCountLabel(state: IdentitiesUiState.Content): String {
-    val total = state.all.size
-    val shown = state.visible.size
     // When part of the set could not be retrieved these are the identities
     // NEXA can see, not the identities that exist.
-    val counted = if (state.degraded) "$total visible" else "$total cryptographic identities"
-    val base = if (shown == total) counted else "$shown of $counted"
+    val base = if (state.degraded) {
+        resultCountLabel(state.visible.size, state.all.size, "identity visible", "identities visible")
+    } else {
+        resultCountLabel(state.visible.size, state.all.size, "cryptographic identity", "cryptographic identities")
+    }
     val attention = state.visible.count { identityAttentionBadge(it) != null }
     return if (attention > 0) "$base · $attention need attention" else base
 }

@@ -63,7 +63,18 @@ class IdentitiesViewModel : ViewModel() {
 
     fun onFiltersChange(filters: IdentityFilters) = updateContent { it.copy(filters = filters) }
 
+    fun onSortChange(sort: IdentitySort) = updateContent { it.copy(sort = sort) }
+
+    /**
+     * Clears the filter set and nothing else.
+     *
+     * The search query survives, because clearing filters is not a request to
+     * undo a search — the two controls are separate and each clears only its
+     * own concern.
+     */
     fun clearFilters() = updateContent { it.copy(filters = IdentityFilters()) }
+
+    fun clearQuery() = updateContent { it.copy(query = "") }
 
     /** The snapshot to load, honouring a review scenario when one is active. */
     private fun degradedOrDefault(): IdentitiesUiState =
@@ -84,7 +95,7 @@ class IdentitiesViewModel : ViewModel() {
         val live = updated.all.withRealtime(realtime)
         _state.value = updated.copy(
             all = live,
-            visible = live.resolve(updated.query, updated.filters)
+            visible = live.resolve(updated.query, updated.filters, updated.sort)
         )
     }
 

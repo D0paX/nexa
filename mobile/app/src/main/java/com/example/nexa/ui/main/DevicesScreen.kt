@@ -21,9 +21,13 @@ import com.example.nexa.Identities
 import com.example.nexa.theme.*
 import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.contentAvailability
+import com.example.nexa.ui.common.nexaQuery
+import com.example.nexa.ui.common.nexaResults
+import com.example.nexa.ui.common.resultCountLabel
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
 import com.example.nexa.ui.common.TrustState
+import com.example.nexa.ui.common.filterButtonLabel
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.devices.*
 
@@ -77,6 +81,7 @@ fun DevicesScreen(
                 onFiltersChange = viewModel::onFiltersChange,
                 onSortChange = viewModel::onSortChange,
                 onClearFilters = viewModel::clearFilters,
+                onClearQuery = viewModel::clearQuery,
                 onItemClick = onItemClick,
                 modifier = modifier
             )
@@ -100,6 +105,7 @@ private fun DevicesContent(
     onFiltersChange: (DeviceFilters) -> Unit,
     onSortChange: (DeviceSort) -> Unit,
     onClearFilters: () -> Unit,
+    onClearQuery: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -177,7 +183,7 @@ private fun DevicesContent(
                     .horizontalScroll(rememberScrollState())
             ) {
                 NexaFilterChip(
-                    label = if (state.filters.isActive) "Filters (${state.filters.activeCount})" else "Filters",
+                    label = filterButtonLabel(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -205,10 +211,18 @@ private fun DevicesContent(
 
         if (state.visible.isEmpty()) {
             item {
-                NoResults(
-                    inventoryEmpty = state.all.isEmpty(),
-                    query = state.query,
-                    filtersActive = state.filters.isActive
+                NoMatchNotice(
+                    results = nexaResults(
+                        sourceCount = state.all.size,
+                        visibleCount = state.visible.size,
+                        queryActive = nexaQuery(state.query).isActive,
+                        filtersActive = state.filters.isActive
+                    ),
+                    subject = "devices",
+                    emptyTitle = "No devices in inventory",
+                    emptyMessage = "NEXA has not observed any devices. The inventory is confirmed empty, not unavailable.",
+                    onClearSearch = onClearQuery,
+                    onClearFilters = onClearFilters
                 )
             }
         } else {
@@ -272,36 +286,6 @@ private fun DeviceRow(device: DeviceListItem, onClick: () -> Unit) {
  * Distinguishes "your search matched nothing" from "there are no devices" —
  * and neither is ever shown when the inventory itself is unavailable.
  */
-@Composable
-private fun NoResults(inventoryEmpty: Boolean, query: String, filtersActive: Boolean) {
-    GlassSurface(modifier = Modifier.fillMaxWidth()) {
-        Column {
-            Text(
-                text = when {
-                    inventoryEmpty -> "No devices in inventory"
-                    else -> "No matching devices"
-                },
-                style = NexaType.Title,
-                color = NexaTextPrimary
-            )
-            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-            Text(
-                text = when {
-                    inventoryEmpty ->
-                        "NEXA has not observed any devices. The inventory is confirmed empty, not unavailable."
-                    query.isNotEmpty() && filtersActive ->
-                        "No device matches \"$query\" with the current filters."
-                    query.isNotEmpty() ->
-                        "No device matches \"$query\"."
-                    else ->
-                        "No device matches the current filters."
-                },
-                style = NexaType.BodySecondary,
-                color = NexaTextSecondary
-            )
-        }
-    }
-}
 
 @Composable
 private fun FreshnessLabel(freshness: DataFreshness) {
@@ -320,13 +304,14 @@ private fun FreshnessLabel(freshness: DataFreshness) {
 }
 
 private fun deviceCountLabel(state: DevicesUiState.Content): String {
-    val total = state.all.size
-    val shown = state.visible.size
     // A bare count reads as the whole inventory. When part of it could not be
     // retrieved the number is a floor, not a total, and it says so — the
     // banner above explains why, but the count is what gets read first.
-    val counted = if (state.degraded) "$total counted" else "$total devices"
-    val base = if (shown == total) counted else "$shown of $counted"
+    val base = if (state.degraded) {
+        resultCountLabel(state.visible.size, state.all.size, "device counted", "devices counted")
+    } else {
+        resultCountLabel(state.visible.size, state.all.size, "device")
+    }
     val attention = state.visible.count { attentionBadge(it) != null }
     return if (attention > 0) "$base · $attention need attention" else base
 }

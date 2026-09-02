@@ -24,6 +24,10 @@ import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.nexaQuery
+import com.example.nexa.ui.common.nexaResults
+import com.example.nexa.ui.common.resultCountLabel
 import com.example.nexa.ui.components.*
 
 /**
@@ -78,6 +82,7 @@ fun AuditScreen(
                 onSortChange = viewModel::onSortChange,
                 onQuickFilter = viewModel::onQuickFilter,
                 onClearFilters = viewModel::clearFilters,
+                onClearQuery = viewModel::clearQuery,
                 onLoadMore = viewModel::loadMore,
                 onItemClick = onItemClick,
                 modifier = modifier
@@ -103,6 +108,7 @@ private fun AuditContent(
     onSortChange: (AuditSort) -> Unit,
     onQuickFilter: (AuditQuickFilter) -> Unit,
     onClearFilters: () -> Unit,
+    onClearQuery: () -> Unit,
     onLoadMore: () -> Unit,
     onItemClick: (NavKey) -> Unit,
     modifier: Modifier = Modifier
@@ -202,7 +208,7 @@ private fun AuditContent(
                     .horizontalScroll(rememberScrollState())
             ) {
                 NexaFilterChip(
-                    label = if (state.filters.isActive) "Filters (${state.filters.activeCount})" else "Filters",
+                    label = filterButtonLabel(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -223,7 +229,19 @@ private fun AuditContent(
         }
 
         if (state.page.isEmpty()) {
-            item { AuditEmpty(state) }
+            item { NoMatchNotice(
+                    results = nexaResults(
+                        sourceCount = state.all.size,
+                        visibleCount = state.visible.size,
+                        queryActive = nexaQuery(state.query).isActive,
+                        filtersActive = state.filters.isActive
+                    ),
+                    subject = "records",
+                    emptyTitle = "No security history recorded yet",
+                    emptyMessage = "The event store returned no records. This reports the contents of the history only — it is not an assessment of system posture.",
+                    onClearSearch = onClearQuery,
+                    onClearFilters = onClearFilters
+                ) }
         } else {
             days.forEach { day ->
                 item(key = "day-${day.label}") {
@@ -376,29 +394,6 @@ private fun AuditFooter(state: AuditUiState.Content, onLoadMore: () -> Unit) {
  * Reports what the event store said and nothing more. An empty history is not
  * evidence that the system is secure, and never says so.
  */
-@Composable
-private fun AuditEmpty(state: AuditUiState.Content) {
-    val filtered = state.query.isNotEmpty() || state.filters.isActive
-    GlassSurface(modifier = Modifier.fillMaxWidth()) {
-        Column {
-            Text(
-                text = if (filtered) "No matching records" else "No security history recorded yet",
-                style = NexaType.Title,
-                color = NexaTextPrimary
-            )
-            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-            Text(
-                text = if (filtered) {
-                    "No record matches the current search or filters."
-                } else {
-                    "The event store returned no records. This reports the contents of the history only — it is not an assessment of system posture."
-                },
-                style = NexaType.BodySecondary,
-                color = NexaTextSecondary
-            )
-        }
-    }
-}
 
 @Composable
 private fun AuditFreshness(freshness: DataFreshness) {
@@ -417,8 +412,9 @@ private fun AuditFreshness(freshness: DataFreshness) {
 }
 
 private fun auditSummaryLine(state: AuditUiState.Content): String {
-    val shown = state.visible.size
-    val base = "$shown record(s)"
+    // The number leads with what is on screen and names the total when the
+    // two differ, so it can never describe a set the operator cannot see.
+    val base = resultCountLabel(state.visible.size, state.all.size, "record")
     val s = state.summary
     val flags = buildList {
         if (s.failures > 0) add("${s.failures} failed")

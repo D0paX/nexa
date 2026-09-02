@@ -6,6 +6,10 @@ import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.DeliveryAttempt
 import com.example.nexa.ui.common.DeliveryState
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.NexaQuery
+import com.example.nexa.ui.common.facetMatches
+import com.example.nexa.ui.common.matches
+import com.example.nexa.ui.common.nexaQuery
 import com.example.nexa.ui.common.TrustState
 import com.example.nexa.ui.enforcement.ExecutionState
 
@@ -364,50 +368,67 @@ enum class NotificationSort(val label: String) {
 }
 
 /**
- * Search across the identifiers an operator would paste in.
+ * The text a delivery record is searchable by.
  *
  * Every searchable field is one intended for operator use. The model carries
- * no token, credential or payload to search — the push token that a real
- * delivery record would reference is not represented here at all.
+ * no token, credential or payload to search — the push registration token a
+ * real delivery record would reference is not represented here at all, so
+ * there is nothing to accidentally expose through a query.
+ *
+ * The delivery state is searchable by name, which is a text match on a
+ * displayed value. It is not a substitute for the delivery-state facet, and
+ * it cannot alter what happened to any message.
  */
-fun List<NotificationRecord>.applyQuery(query: String): List<NotificationRecord> {
-    val q = query.trim()
-    if (q.isEmpty()) return this
-    return filter { record ->
-        record.id.contains(q, ignoreCase = true) ||
-            record.delivery.deliveryId.contains(q, ignoreCase = true) ||
-            record.subject.contains(q, ignoreCase = true) ||
-            record.source.identifier?.contains(q, ignoreCase = true) == true ||
-            record.source.matchesQuery(q) ||
-            record.target.matchesQuery(q)
-    }
+fun notificationSearchFields(record: NotificationRecord): List<String?> = listOf(
+    record.id,
+    record.delivery.deliveryId,
+    record.subject,
+    record.delivery.state.name,
+    record.sourceType.name,
+    record.source.identifier
+) + record.source.searchFields() + record.target.searchFields()
+
+private fun NotificationSource.searchFields(): List<String?> = when (this) {
+    is NotificationSource.Alert -> listOf(title)
+    is NotificationSource.Action -> listOf(actionCode)
+    is NotificationSource.Trust -> listOf(label)
+    is NotificationSource.SecurityEvent -> listOf(summary)
+    NotificationSource.Unknown -> emptyList()
 }
 
-private fun NotificationSource.matchesQuery(q: String): Boolean = when (this) {
-    is NotificationSource.Alert -> title.contains(q, true)
-    is NotificationSource.Action -> actionCode.contains(q, true)
-    is NotificationSource.Trust -> label.contains(q, true)
-    is NotificationSource.SecurityEvent -> summary.contains(q, true)
-    NotificationSource.Unknown -> false
+private fun NotificationTarget.searchFields(): List<String?> = when (this) {
+    is NotificationTarget.Device -> listOf(deviceId, label, mac, ip, scope)
+    is NotificationTarget.Identity -> listOf(identityId, label, scope)
+    is NotificationTarget.UnresolvedDevice -> listOf(mac)
+    is NotificationTarget.UnresolvedIdentity -> listOf(identityId)
+    NotificationTarget.None -> emptyList()
 }
 
-private fun NotificationTarget.matchesQuery(q: String): Boolean = when (this) {
-    is NotificationTarget.Device ->
-        deviceId.contains(q, true) || label.contains(q, true) || mac.contains(q, true) ||
-            ip?.contains(q, true) == true || scope.contains(q, true)
-    is NotificationTarget.Identity ->
-        identityId.contains(q, true) || label.contains(q, true) ||
-            scope?.contains(q, true) == true
-    is NotificationTarget.UnresolvedDevice -> mac.contains(q, true)
-    is NotificationTarget.UnresolvedIdentity -> identityId.contains(q, true)
-    NotificationTarget.None -> false
-}
+fun List<NotificationRecord>.applyQuery(query: NexaQuery): List<NotificationRecord> =
+    if (!query.isActive) this else filter { query.matches(notificationSearchFields(it)) }
 
+/**
+ * Convenience overload: normalizes then matches.
+ *
+ * The normalized form is what matching actually uses, so a caller that has a
+ * raw string goes through the same door as everything else rather than
+ * inventing its own trimming.
+ */
+fun List<NotificationRecord>.applyQuery(query: String): List<NotificationRecord> = applyQuery(nexaQuery(query))
+
+/**
+ * AND between facets, OR within each.
+ *
+ * Delivery state is a transport fact and stays one. It is never folded into
+ * alert severity: a delivered notification about a critical incident and a
+ * failed notification about an informational one are both perfectly ordinary,
+ * and a filter that conflated them would hide that.
+ */
 fun List<NotificationRecord>.applyFilters(filters: NotificationFilters): List<NotificationRecord> =
     filter { record ->
-        (filters.states.isEmpty() || record.delivery.state in filters.states) &&
-            (filters.sourceTypes.isEmpty() || record.sourceType in filters.sourceTypes) &&
-            (filters.scopes.isEmpty() || record.target.scopeOrNull in filters.scopes) &&
+        filters.states.facetMatches(record.delivery.state) &&
+            filters.sourceTypes.facetMatches(record.sourceType) &&
+            filters.scopes.facetMatches(record.target.scopeOrNull) &&
             (filters.timeRange.minutes == null || record.delivery.ageMinutes <= filters.timeRange.minutes)
     }
 
@@ -430,7 +451,8 @@ fun List<NotificationRecord>.resolve(
     query: String,
     filters: NotificationFilters,
     sort: NotificationSort
-): List<NotificationRecord> = applyQuery(query).applyFilters(filters).applySort(sort)
+): List<NotificationRecord> =
+    applyQuery(nexaQuery(query)).applyFilters(filters).applySort(sort)
 
 // ============================================================
 // SUMMARY

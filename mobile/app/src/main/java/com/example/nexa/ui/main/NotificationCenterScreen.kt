@@ -24,6 +24,10 @@ import com.example.nexa.ui.common.DataFreshness
 import com.example.nexa.ui.common.availabilityOf
 import com.example.nexa.ui.common.isTrustworthy
 import com.example.nexa.ui.common.label
+import com.example.nexa.ui.common.filterButtonLabel
+import com.example.nexa.ui.common.nexaQuery
+import com.example.nexa.ui.common.nexaResults
+import com.example.nexa.ui.common.resultCountLabel
 import com.example.nexa.ui.components.*
 import com.example.nexa.ui.notifications.*
 
@@ -80,6 +84,7 @@ fun NotificationCenterScreen(
                 onSortChange = viewModel::onSortChange,
                 onQuickFilter = viewModel::onQuickFilter,
                 onClearFilters = viewModel::clearFilters,
+                onClearQuery = viewModel::clearQuery,
                 onLoadMore = viewModel::loadMore,
                 onNavigate = onNavigate,
                 modifier = modifier
@@ -106,6 +111,7 @@ private fun NotificationCenterContent(
     onSortChange: (NotificationSort) -> Unit,
     onQuickFilter: (NotificationQuickFilter) -> Unit,
     onClearFilters: () -> Unit,
+    onClearQuery: () -> Unit,
     onLoadMore: () -> Unit,
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier
@@ -202,7 +208,7 @@ private fun NotificationCenterContent(
                     .horizontalScroll(rememberScrollState())
             ) {
                 NexaFilterChip(
-                    label = if (state.filters.isActive) "Filters (${state.filters.activeCount})" else "Filters",
+                    label = filterButtonLabel(state.filters.activeCount),
                     selected = state.filters.isActive,
                     onClick = { showFilters = true }
                 )
@@ -219,7 +225,19 @@ private fun NotificationCenterContent(
         }
 
         if (state.page.isEmpty()) {
-            item { NotificationEmpty(state) }
+            item { NoMatchNotice(
+                    results = nexaResults(
+                        sourceCount = state.all.size,
+                        visibleCount = state.visible.size,
+                        queryActive = nexaQuery(state.query).isActive,
+                        filtersActive = state.filters.isActive
+                    ),
+                    subject = "delivery records",
+                    emptyTitle = "No notification delivery records yet",
+                    emptyMessage = "The notification service has no delivery records. This describes notification delivery only — it is not a statement about alerts or security events.",
+                    onClearSearch = onClearQuery,
+                    onClearFilters = onClearFilters
+                ) }
         } else {
             items(state.page, key = { it.id }) { record ->
                 NotificationRow(
@@ -363,29 +381,6 @@ private fun NotificationFooter(
  * Reports the contents of the delivery record only. This is not the event
  * store, so it never says anything about whether security events exist.
  */
-@Composable
-private fun NotificationEmpty(state: NotificationCenterUiState.Content) {
-    val filtered = state.query.isNotEmpty() || state.filters.isActive
-    GlassSurface(modifier = Modifier.fillMaxWidth()) {
-        Column {
-            Text(
-                text = if (filtered) "No matching delivery records" else "No notification delivery records yet",
-                style = NexaType.Title,
-                color = NexaTextPrimary
-            )
-            Spacer(modifier = Modifier.height(NexaTokens.SpacingXSmall))
-            Text(
-                text = if (filtered) {
-                    "No delivery record matches the current search or filters."
-                } else {
-                    "The notification service has no delivery records. This describes notification delivery only — it is not a statement about alerts or security events."
-                },
-                style = NexaType.BodySecondary,
-                color = NexaTextSecondary
-            )
-        }
-    }
-}
 
 @Composable
 private fun DeliveryFreshness(freshness: DataFreshness) {
@@ -415,7 +410,7 @@ private fun NotificationSort.next(): NotificationSort = when (this) {
 private fun deliverySummaryLine(state: NotificationCenterUiState.Content): String {
     val s = state.summary
     val parts = buildList {
-        add("${s.total} record(s)")
+        add(resultCountLabel(state.visible.size, state.all.size, "record"))
         if (s.failed > 0) add("${s.failed} failed")
         if (s.exhausted > 0) add("${s.exhausted} exhausted")
         if (s.retrying > 0) add("${s.retrying} retrying")

@@ -23,6 +23,8 @@ import com.example.nexa.ui.audit.AuditTimeRange
 import com.example.nexa.ui.audit.auditLabel
 import com.example.nexa.ui.audit.label
 import com.example.nexa.ui.common.ExecutionMode
+import com.example.nexa.ui.common.toggleFacet
+import com.example.nexa.ui.components.FilterGroup
 import com.example.nexa.ui.components.NexaBottomSheet
 import com.example.nexa.ui.components.NexaFilterChip
 import com.example.nexa.ui.components.NexaOutlinedButton
@@ -77,7 +79,7 @@ fun AuditFilterSheet(
                         label = value.label,
                         selected = value in filters.categories,
                         onClick = {
-                            onFiltersChange(filters.copy(categories = filters.categories.toggle(value)))
+                            onFiltersChange(filters.copy(categories = filters.categories.toggleFacet(value)))
                         }
                     )
                 }
@@ -89,7 +91,7 @@ fun AuditFilterSheet(
                         label = value.label,
                         selected = value in filters.outcomes,
                         onClick = {
-                            onFiltersChange(filters.copy(outcomes = filters.outcomes.toggle(value)))
+                            onFiltersChange(filters.copy(outcomes = filters.outcomes.toggleFacet(value)))
                         }
                     )
                 }
@@ -105,7 +107,7 @@ fun AuditFilterSheet(
                         selected = value in filters.executionModes,
                         onClick = {
                             onFiltersChange(
-                                filters.copy(executionModes = filters.executionModes.toggle(value))
+                                filters.copy(executionModes = filters.executionModes.toggleFacet(value))
                             )
                         }
                     )
@@ -119,7 +121,7 @@ fun AuditFilterSheet(
                             label = scope,
                             selected = scope in filters.scopes,
                             onClick = {
-                                onFiltersChange(filters.copy(scopes = filters.scopes.toggle(scope)))
+                                onFiltersChange(filters.copy(scopes = filters.scopes.toggleFacet(scope)))
                             }
                         )
                     }
@@ -156,4 +158,3 @@ private fun Group(title: String, note: String? = null, content: @Composable () -
     Spacer(modifier = Modifier.height(NexaTokens.SpacingMedium))
 }
 
-private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value
