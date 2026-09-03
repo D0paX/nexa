@@ -172,26 +172,31 @@ class ManifestSurfaceTest {
             // about the package name every path under the data directory has.
             .map { it.absolutePath.removePrefix(dataDir).trimStart('/') }
 
-        // androidx.profileinstaller's own bookkeeping, and the only files the
-        // app has. Neither carries NEXA state: one is a zero-byte marker
-        // recording that the baseline profile was applied, the other a
-        // timestamp recording which install it was applied for.
+        // Owned by a producer, not named one file at a time.
         //
-        // The second appears only after an update over an existing install,
-        // which is why release verification is where it turns up — a fresh
-        // install has just the first. Both are named rather than matched by
-        // pattern, so a third file appearing fails this test instead of
-        // slipping through a filter that grew to accommodate it.
-        val allowed = setOf(
-            "files/profileInstalled",
-            "files/profileinstaller_profileWrittenFor_lastUpdateTime.dat"
+        // This started as a list of filenames and had to be widened twice: the
+        // profile installer writes a second marker after an update rather than
+        // a fresh install, and the runtime writes a compiled image once it has
+        // had a reason to compile. Both are the platform's bookkeeping about
+        // NEXA rather than NEXA's own state, and enumerating their filenames
+        // was always going to lose — the next architecture or the next library
+        // version adds another.
+        //
+        // Scoped to the subtrees those producers own instead. A file NEXA
+        // wrote would land under files/ or cache/ with a name of its own and
+        // still fail this, which is the thing worth catching: the app has no
+        // SharedPreferences, no database and no file I/O at all, and every
+        // piece of state it holds is meant to die with the process.
+        val platformOwned = listOf(
+            // androidx.profileinstaller: applied-marker and its update record.
+            Regex("""files/profileInstalled"""),
+            Regex("""files/profileinstaller_.*"""),
+            // ART's ahead-of-time compiled image, per architecture.
+            Regex("""cache/oat_primary/.*""")
         )
 
-        assertEquals(
-            "something other than the profile marker was written to disk",
-            emptyList<String>(),
-            (onDisk - allowed).sorted()
-        )
+        val ours = onDisk.filterNot { path -> platformOwned.any { it.matches(path) } }
+        assertEquals("NEXA wrote state to disk", emptyList<String>(), ours.sorted())
     }
 
     /**
