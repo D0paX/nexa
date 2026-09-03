@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  How NEXA is allowed to talk to a network.
+
+  Today the client opens no sockets of its own: there is no HTTP client, no
+  WebSocket and no backend base URL anywhere in the app. The only traffic that
+  leaves it belongs to Firebase Messaging, which manages its own transport.
+
+  This file exists for the version of the app that does have a transport. The
+  platform defaults for targetSdk 36 already forbid cleartext and already
+  ignore user-installed certificate authorities, so nothing here changes
+  present behaviour — what it changes is what happens when someone adds a
+  client. A default is something you inherit without noticing; a policy is
+  something you have to edit deliberately, in a file whose whole subject is
+  the decision being made.
+
+  Two rules, both stated rather than assumed:
+
+    - No cleartext. A security console's traffic describes which devices are
+      quarantined and which identities are revoked, and that is not something
+      to send in the clear on an operator's phone network.
+
+    - System trust anchors only. A user-installed CA is how an intercepting
+      proxy reads TLS. Debug builds get no override here either: a proxy that
+      can be attached for convenience during development is a proxy that can
+      be attached by someone else.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

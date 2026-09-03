@@ -1,0 +1,36 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Firebase client configuration.
+#
+# Per-project configuration supplied by the project owner, not source. It is
+# ignored so that adding it locally to enable push cannot accidentally commit
+# it, and so the repository never carries one project's Firebase identifiers.
+# Service-account keys and Admin SDK credentials are server-side and must
+# never be placed in this module at all.
+google-services.json
+app/google-services.json
+
+# Signing material.
+#
+# None exists today — the release artifact is built unsigned and signed
+# locally for verification with the debug key. These patterns are here so
+# that the day a real upload key arrives, committing it takes a deliberate
+# act rather than an ordinary `git add .`.
+*.jks
+*.keystore
+keystore.properties
+signing.properties

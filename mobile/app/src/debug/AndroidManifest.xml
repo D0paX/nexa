@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only additions.
+
+  This manifest is merged into debug builds and no other. The receiver below
+  exists so the push path can be driven from adb without a Firebase project;
+  it is not present in a release build, and it re-checks the debuggable flag
+  at runtime before doing anything.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          Exported, because a broadcast from adb has to be able to reach it,
+          and gated on DUMP, because everything else must not.
+
+          What this receiver can do is the reason it needs a gate: it injects
+          push fixtures, replays realtime scenarios, and switches the app
+          between availability conditions — offline, stale, degraded,
+          unavailable. Exported with no permission, any application on the
+          same device could have done all three to an operator's debug build,
+          which is a strange thing to leave lying beside a security console
+          even in a build that never ships.
+
+          DUMP is the right key for that lock. It is signature|privileged, so
+          an ordinary app cannot hold it and cannot be granted it, while the
+          adb shell already has it — the test route stays open and everything
+          else closes. The runtime debuggable check in the receiver stays as
+          well: two independent conditions, neither relying on the other.
+        -->
+        <receiver
+            android:name="com.example.nexa.push.debug.NexaPushTestReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.example.nexa.debug.TEST_PUSH" />
+                <action android:name="com.example.nexa.debug.TEST_REALTIME" />
+                <action android:name="com.example.nexa.debug.TEST_STATE" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sampled from the supplied NEXA artwork's own background, so the
+         adaptive background layer is continuous with the mark rather than an
+         invented color. -->
+    <color name="ic_launcher_background">#0A0A0A</color>
+</resources>

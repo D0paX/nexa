@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Nexa</string>
+
+    <!-- Notification channels. Named for what an operator would recognise,
+         never for how the code is organised. -->
+    <string name="channel_critical_alerts">Critical security alerts</string>
+    <string name="channel_critical_alerts_description">Security incidents that need attention now.</string>
+    <string name="channel_security_notices">Security notices</string>
+    <string name="channel_security_notices_description">Lower-severity alerts, device and identity activity.</string>
+    <string name="channel_action_results">Action results</string>
+    <string name="channel_action_results_description">Outcomes of enforcement and trust actions, including simulations.</string>
+</resources>

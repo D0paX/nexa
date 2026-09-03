@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Required from API 33 to post notifications. Requested in context from the
+      Notification Center rather than on first launch, so an operator is asked
+      at the moment the permission is about to mean something.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      Backup is off because there is nothing to back up. NEXA writes no
+      preferences, no database and no files: every piece of state it holds is
+      in memory and is meant to die with the process — a prepared action
+      confirmation that survived a restart would be one nobody re-authorized.
+      Restoring a security console's cached state onto another device is not a
+      feature worth having, and the rules files record the same decision for
+      both extraction routes so that adding persistence later forces the
+      question rather than inheriting an answer.
+
+      The network policy is stated for the same reason: the client opens no
+      sockets of its own today, and the file is where a future transport has
+      to come and be allowed.
+    -->
+    <application
+        android:name=".NexaApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:windowSoftInputMode="adjustResize"
+        android:theme="@style/Theme.Nexa">
+
+        <!--
+          singleTop so a notification tap resumes the running task and delivers
+          the intent to onNewIntent, instead of stacking a second copy of the
+          app behind the one already open.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTop"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+              The NEXA deep-link surface.
+
+              Restricted to the nexa scheme, so an arbitrary external intent
+              cannot reach this activity as a link. Everything that does reach
+              it is re-parsed and re-validated by the deep-link router: the
+              filter narrows what arrives, it is not what makes it safe.
+            -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="nexa" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".push.NexaMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- The monochrome status-bar glyph and the accent Android tints it with. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_nexa" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/nexa_notification_accent" />
+        <!--
+          Messages NEXA sends are data-only, so this default channel is a
+          fallback for anything that arrives without one. It is the quiet
+          channel on purpose: an unrecognised message has not earned an
+          interruption.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="nexa_security_notices" />
+
+    </application>
+
+</manifest>
