@@ -23,3 +23,14 @@ local.properties
 # never be placed in this module at all.
 google-services.json
 app/google-services.json
+
+# Signing material.
+#
+# None exists today — the release artifact is built unsigned and signed
+# locally for verification with the debug key. These patterns are here so
+# that the day a real upload key arrives, committing it takes a deliberate
+# act rather than an ordinary `git add .`.
+*.jks
+*.keystore
+keystore.properties
+signing.properties

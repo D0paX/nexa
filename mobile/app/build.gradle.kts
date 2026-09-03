@@ -29,7 +29,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8, on. The app's reflective surface is small and declared: no
+            // Class.forName, no manual field lookup, and the only names that
+            // have to survive are the navigation keys, which are serialized
+            // into saved state. Everything else — Compose, Firebase,
+            // Navigation3, the serialization runtime — ships its own consumer
+            // rules with the library that needs them.
+            isMinifyEnabled = true
+            // Unused resources go with the unused code. Kept in step with
+            // minification deliberately: shrinking resources without shrinking
+            // code removes things the remaining code may still name.
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

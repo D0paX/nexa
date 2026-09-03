@@ -172,11 +172,20 @@ class ManifestSurfaceTest {
             // about the package name every path under the data directory has.
             .map { it.absolutePath.removePrefix(dataDir).trimStart('/') }
 
-        // androidx.profileinstaller writes a zero-byte marker recording that
-        // the baseline profile was applied. It is the only file the app has,
-        // it carries no NEXA state, and naming it here means a second file
-        // appearing fails this test rather than widening a filter.
-        val allowed = setOf("files/profileInstalled")
+        // androidx.profileinstaller's own bookkeeping, and the only files the
+        // app has. Neither carries NEXA state: one is a zero-byte marker
+        // recording that the baseline profile was applied, the other a
+        // timestamp recording which install it was applied for.
+        //
+        // The second appears only after an update over an existing install,
+        // which is why release verification is where it turns up — a fresh
+        // install has just the first. Both are named rather than matched by
+        // pattern, so a third file appearing fails this test instead of
+        // slipping through a filter that grew to accommodate it.
+        val allowed = setOf(
+            "files/profileInstalled",
+            "files/profileinstaller_profileWrittenFor_lastUpdateTime.dat"
+        )
 
         assertEquals(
             "something other than the profile marker was written to disk",
