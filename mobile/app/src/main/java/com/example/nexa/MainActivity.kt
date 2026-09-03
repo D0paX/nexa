@@ -22,7 +22,20 @@ class MainActivity : ComponentActivity() {
     // Cold start from a link. The router holds the resolution until the
     // navigation host composes and consumes it, so nothing races the graph
     // being ready.
-    handleDeepLinkIntent(intent)
+    //
+    // Only on a genuinely new start. onCreate also runs when the activity is
+    // recreated — a rotation, a font-scale change, a theme change — and
+    // getIntent() still returns the intent that launched the task however long
+    // ago that was. Handling it again re-navigated the operator to the link's
+    // destination on top of wherever they actually were: opening a device from
+    // a notification and then rotating buried the action confirmation under a
+    // second copy of the device screen, and every further recreation added
+    // another pair. The back stack that Android restores already contains
+    // where they were; a link that arrives after this point comes through
+    // onNewIntent, which is unaffected.
+    if (savedInstanceState == null) {
+      handleDeepLinkIntent(intent)
+    }
 
     // Screen capture is deliberately not blocked, and the reasoning belongs
     // next to where the flag would go rather than in a document nobody reads
